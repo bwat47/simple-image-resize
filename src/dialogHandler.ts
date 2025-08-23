@@ -118,6 +118,27 @@ export async function showResizeDialog(
       `
       }
       
+      /* When percentage mode is checked, enable percentage field and disable absolute */
+      #modePercent:checked ~ .resize-fieldset .percentage-row {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #modePercent:checked ~ .resize-fieldset .percentage-row input {
+        background-color: white;
+        cursor: text;
+      }
+      #modePercent:checked ~ .resize-fieldset .absolute-size-row {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      #modePercent:checked ~ .resize-fieldset .absolute-size-row input {
+        background-color: #f8f8f8;
+        cursor: not-allowed;
+      }
+      #modePercent:checked ~ .resize-fieldset .absolute-size-row .hint {
+        opacity: 0.4;
+      }
+      
       /* When absolute mode is checked, enable absolute fields and disable percentage */
       #modeAbsolute:checked ~ .resize-fieldset .absolute-size-row {
         opacity: 1;
