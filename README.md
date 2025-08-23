@@ -1,2 +1,3 @@
-# joplin-image-resize
-Switch image syntax between markdown/html and lossless image resizing
+# Simple Image Resize
+
+A Joplin plugin that provides a simple dialogue to resize images via markdown or html.
