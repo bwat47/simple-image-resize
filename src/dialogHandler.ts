@@ -52,8 +52,6 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
             <div class="row"><label for="absoluteHeight" style="width:55px;">Height</label><input type="number" name="absoluteHeight" id="absoluteHeight" placeholder="Height"><span>px</span></div>
             <div class="hint">Leave one dimension blank to keep aspect ratio.</div>
           </div>
-          <label>Preview</label>
-          <span id="preview"></span>
         </div>
       </fieldset>
       <fieldset>
@@ -63,51 +61,26 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
           <div class="row" style="padding:0;min-width:0;"><input type="text" id="altText" name="altText" value="${context.altText}" placeholder="Describe the image"></div>
           <label style="white-space:nowrap;">Syntax</label>
           <div class="stack">
-            <label class="row"><input type="radio" name="targetSyntax" value="html" checked> <span>HTML (&lt;img&gt;)</span></label>
-            <label class="row"><input type="radio" name="targetSyntax" value="markdown"> <span>Markdown</span></label>
+            <label class="row">
+              <input type="radio" name="targetSyntax" value="html" checked> 
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>HTML (supports resizing)</span>
+                <code style="font-size:11px;opacity:0.7;">&lt;img src=":/resourceId" alt="alt" width="200" /&gt;</code>
+              </span>
+            </label>
+            <label class="row">
+              <input type="radio" name="targetSyntax" value="markdown"> 
+              <span style="display:flex;flex-direction:column;gap:2px;">
+                <span>Markdown (original size only)</span>
+                <code style="font-size:11px;opacity:0.7;">![alt](:/resourceId)</code>
+              </span>
+            </label>
+            <div class="hint" style="margin-top:8px;">Note: Resize settings are ignored when Markdown is selected, as it doesn't support width/height attributes.</div>
           </div>
         </div>
       </fieldset>
     </form>
     </div>
-    <script>
-      (function(){
-        const form = document.forms.resizeForm; if(!form) return;
-        const ow = ${originalWidth}; const oh = ${originalHeight};
-        const els = {
-          modePercent: form.querySelector('#modePercent'),
-          percentage: form.elements.percentage,
-          modeAbsolute: form.querySelector('#modeAbsolute'),
-          w: form.elements.absoluteWidth,
-          h: form.elements.absoluteHeight,
-          preview: document.getElementById('preview')
-        };
-        function updateState(){
-          const percent = els.modePercent.checked;
-          els.percentage.disabled = !percent;
-          els.w.disabled = percent;
-          els.h.disabled = percent;
-          updatePreview();
-        }
-        function updatePreview(){
-          let w,h;
-          if(els.modePercent.checked){
-            const pct = parseFloat(els.percentage.value)||0;
-            w = Math.round(ow * pct/100); h = Math.round(oh * pct/100);
-          } else {
-            const iw = parseInt(els.w.value,10);
-            const ih = parseInt(els.h.value,10);
-            if(iw && !ih){ h = Math.round(iw * (oh/ow)); w = iw; }
-            else if(ih && !iw){ w = Math.round(ih * (ow/oh)); h = ih; }
-            else { w = iw || ow; h = ih || oh; }
-          }
-          els.preview.textContent = w + 'px × ' + h + 'px';
-        }
-        form.addEventListener('input', updatePreview);
-        form.addEventListener('change', (e)=>{ if(e.target.name==='resizeMode') updateState(); updatePreview(); });
-        updateState();
-      })();
-    </script>
         `
     );
     const result = await joplin.views.dialogs.open(dialogHandle);

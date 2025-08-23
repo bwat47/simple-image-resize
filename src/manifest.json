@@ -8,8 +8,8 @@
     "author": "bwat47",
     "homepage_url": "https://github.com/bwat47/simple-image-resize",
     "repository_url": "https://github.com/bwat47/simple-image-resize",
-    "keywords": [],
-    "categories": [],
+    "keywords": ["Image", "Images", "Resize", "Markdown", "HTML"],
+    "categories": ["productivity"],
     "screenshots": [],
     "icons": {},
     "promo_tile": {}
