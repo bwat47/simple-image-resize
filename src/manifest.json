@@ -10,7 +10,21 @@
     "repository_url": "https://github.com/bwat47/simple-image-resize",
     "keywords": ["Image", "Images", "Resize", "Markdown", "HTML"],
     "categories": ["productivity"],
-    "screenshots": [],
-    "icons": {},
-    "promo_tile": {}
+    "screenshots": [
+        { "src": "images/simple-resize1.png", "label": "simple resize example 1" },
+        { "src": "images/simple-resize2.png", "label": "simple resize example 2" },
+        { "src": "images/simple-resize3.png", "label": "simple resize example 3" },
+        { "src": "images/simple-resize4.png", "label": "simple resize example 4" }
+    ],
+    "icons": {
+        "128": "images/128.png",
+        "64": "images/64.png",
+        "48": "images/48.png",
+        "32": "images/32.png",
+        "16": "images/16.png"
+    },
+    "promo_tile": {
+        "src": "images/simple-image-resize_promo_tile.png",
+        "label": "Simple Resize Promo Tile"
+    }
 }
