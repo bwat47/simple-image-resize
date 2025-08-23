@@ -234,7 +234,7 @@ export async function showResizeDialog(
         <div class="grid">
           <div class="row">
             <input type="radio" name="resizeMode" value="percentage" ${defaultResizeMode === 'percentage' ? 'checked' : ''} onchange="document.getElementById('modePercent').checked=true">
-            <label>By percentage</label>
+            <label>Percentage</label>
           </div>
           <div class="row percentage-row">
             <input type="number" name="percentage" value="50" min="1" max="500">
@@ -242,7 +242,7 @@ export async function showResizeDialog(
           </div>
           <div class="row">
             <input type="radio" name="resizeMode" value="absolute" ${defaultResizeMode === 'absolute' ? 'checked' : ''} onchange="document.getElementById('modeAbsolute').checked=true">
-            <label>By absolute size</label>
+            <label>Absolute size</label>
           </div>
           <div class="stack absolute-size-row">
             <div class="row">
