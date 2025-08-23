@@ -5,6 +5,13 @@ import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
 
+// Helper function to check for multiple images
+function hasMultipleImages(text: string): boolean {
+    const markdownMatches = text.match(/!\[[^\]]*\]\(:\/{1,2}[a-f0-9]{32}\)/g) || [];
+    const htmlMatches = text.match(/<img\s+[^>]*src=["']:\/[a-f0-9]{32}["'][^>]*>/g) || [];
+    return markdownMatches.length + htmlMatches.length > 1;
+}
+
 joplin.plugins.register({
     onStart: async function () {
         // Register the command
@@ -18,9 +25,18 @@ joplin.plugins.register({
                         name: 'getSelection',
                     });
 
-                    if (!selectedText) {
+                    if (!selectedText?.trim()) {
                         await joplin.views.dialogs.showToast({
                             message: 'Please select an image syntax to resize.',
+                            type: ToastType.Info,
+                        });
+                        return;
+                    }
+
+                    // Check for multiple images for better UX
+                    if (hasMultipleImages(selectedText)) {
+                        await joplin.views.dialogs.showToast({
+                            message: 'Multiple images found. Please select a single image syntax.',
                             type: ToastType.Info,
                         });
                         return;
@@ -30,11 +46,15 @@ joplin.plugins.register({
 
                     if (!partialContext) {
                         await joplin.views.dialogs.showToast({
-                            message: 'No valid image syntax found in the selection.',
+                            message:
+                                'No valid image syntax found. Please select ![...](:/...) or <img src=":/..." ...>',
                             type: ToastType.Info,
                         });
                         return;
                     }
+
+                    // Show brief loading feedback for dimension calculation
+                    console.log(`[Image Resize] Loading dimensions for resource: ${partialContext.resourceId}`);
 
                     const originalDimensions = await getOriginalImageDimensions(partialContext.resourceId);
 
@@ -45,20 +65,18 @@ joplin.plugins.register({
 
                     if (result) {
                         const newSyntax = buildNewSyntax({ ...partialContext, originalDimensions }, result);
-
-                        // The safest approach is to copy the new syntax to the clipboard.
-                        // This avoids race conditions with editor selection and gives the user full control.
                         await joplin.clipboard.writeText(newSyntax);
 
                         await joplin.views.dialogs.showToast({
-                            message: 'Resized image syntax copied to clipboard!',
+                            message: 'Resized image syntax copied to clipboard! Paste to replace the original.',
                             type: ToastType.Success,
                         });
                     }
                 } catch (err) {
                     console.error('[Image Resize] Error:', err);
+                    const message = err?.message || 'Unknown error occurred';
                     await joplin.views.dialogs.showToast({
-                        message: 'Operation failed: ' + (err?.message || err),
+                        message: `Operation failed: ${message}`,
                         type: ToastType.Error,
                     });
                 }
