@@ -31,8 +31,44 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       label{user-select:none}
       input[type=number]{width:92px;padding:4px 6px}
       input[type=text]{width:100%;padding:6px 8px;min-width:0;}
-      #preview{font-weight:600;font-variant-numeric:tabular-nums}
       .hint{font-size:11px;opacity:.7;margin-top:4px}
+      
+      /* CSS-only field disabling based on radio button states */
+      
+      /* Default: Percentage mode is checked by default, so disable absolute size fields */
+      .absolute-size-row {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      .absolute-size-row input {
+        background-color: #f5f5f5;
+      }
+      
+      /* When absolute mode is checked, enable absolute fields and disable percentage */
+      #modeAbsolute:checked ~ .resize-fieldset .absolute-size-row {
+        opacity: 1;
+        pointer-events: auto;
+      }
+      #modeAbsolute:checked ~ .resize-fieldset .absolute-size-row input {
+        background-color: white;
+      }
+      #modeAbsolute:checked ~ .resize-fieldset .percentage-row {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      #modeAbsolute:checked ~ .resize-fieldset .percentage-row input {
+        background-color: #f5f5f5;
+      }
+      
+      /* When markdown syntax is selected, disable entire resize fieldset */
+      #syntaxMarkdown:checked ~ form .resize-fieldset {
+        opacity: 0.4;
+        pointer-events: none;
+      }
+      #syntaxMarkdown:checked ~ form .resize-fieldset input {
+        background-color: #f5f5f5;
+      }
+      
       @media (min-width:860px){body{min-width:600px}.grid{grid-template-columns:160px 1fr}}
     </style>
     <div class="container">
@@ -40,42 +76,70 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       <h4>Resize Image</h4>
       <p style="margin:0 0 4px;">Original: <strong>${originalWidth}px × ${originalHeight}px</strong></p>
     </div>
+    <!-- Place controlling radio buttons at the top level for CSS sibling selectors -->
+    <input type="radio" id="syntaxHtml" name="cssTargetSyntax" value="html" checked style="position:absolute;left:-9999px;">
+    <input type="radio" id="syntaxMarkdown" name="cssTargetSyntax" value="markdown" style="position:absolute;left:-9999px;">
+    
     <form name="resizeForm" autocomplete="off">
-      <fieldset>
-        <legend>Resizing</legend>
-        <div class="grid">
-          <div class="row"><input type="radio" id="modePercent" name="resizeMode" value="percentage" checked><label for="modePercent">By percentage</label></div>
-          <div class="row"><input type="number" name="percentage" value="50" min="1" max="500"><span>%</span></div>
-          <div class="row"><input type="radio" id="modeAbsolute" name="resizeMode" value="absolute"><label for="modeAbsolute">By absolute size</label></div>
-          <div class="stack">
-            <div class="row"><label for="absoluteWidth" style="width:55px;">Width</label><input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="Width"><span>px</span></div>
-            <div class="row"><label for="absoluteHeight" style="width:55px;">Height</label><input type="number" name="absoluteHeight" id="absoluteHeight" placeholder="Height"><span>px</span></div>
-            <div class="hint">Leave one dimension blank to keep aspect ratio.</div>
-          </div>
-        </div>
-      </fieldset>
       <fieldset>
         <legend>Output</legend>
         <div class="grid narrow">
           <label for="altText" style="white-space:nowrap;">Alt text</label>
-          <div class="row" style="padding:0;min-width:0;"><input type="text" id="altText" name="altText" value="${context.altText}" placeholder="Describe the image"></div>
+          <div class="row" style="padding:0;min-width:0;">
+            <input type="text" id="altText" name="altText" value="${context.altText}" placeholder="Describe the image">
+          </div>
           <label style="white-space:nowrap;">Syntax</label>
           <div class="stack">
             <label class="row">
-              <input type="radio" name="targetSyntax" value="html" checked> 
+              <input type="radio" name="targetSyntax" value="html" checked onchange="document.getElementById('syntaxHtml').checked=true"> 
               <span style="display:flex;flex-direction:column;gap:2px;">
                 <span>HTML (supports resizing)</span>
                 <code style="font-size:11px;opacity:0.7;">&lt;img src=":/resourceId" alt="alt" width="200" /&gt;</code>
               </span>
             </label>
             <label class="row">
-              <input type="radio" name="targetSyntax" value="markdown"> 
+              <input type="radio" name="targetSyntax" value="markdown" onchange="document.getElementById('syntaxMarkdown').checked=true"> 
               <span style="display:flex;flex-direction:column;gap:2px;">
                 <span>Markdown (original size only)</span>
                 <code style="font-size:11px;opacity:0.7;">![alt](:/resourceId)</code>
               </span>
             </label>
             <div class="hint" style="margin-top:8px;">Note: Resize settings are ignored when Markdown is selected, as it doesn't support width/height attributes.</div>
+          </div>
+        </div>
+      </fieldset>
+      
+      <!-- Place controlling radio buttons before the fieldset they control -->
+      <input type="radio" id="modePercent" name="cssResizeMode" value="percentage" checked style="position:absolute;left:-9999px;">
+      <input type="radio" id="modeAbsolute" name="cssResizeMode" value="absolute" style="position:absolute;left:-9999px;">
+      
+      <fieldset class="resize-fieldset">
+        <legend>Resizing</legend>
+        <div class="grid">
+          <div class="row">
+            <input type="radio" name="resizeMode" value="percentage" checked onchange="document.getElementById('modePercent').checked=true">
+            <label>By percentage</label>
+          </div>
+          <div class="row percentage-row">
+            <input type="number" name="percentage" value="50" min="1" max="500">
+            <span>%</span>
+          </div>
+          <div class="row">
+            <input type="radio" name="resizeMode" value="absolute" onchange="document.getElementById('modeAbsolute').checked=true">
+            <label>By absolute size</label>
+          </div>
+          <div class="stack absolute-size-row">
+            <div class="row">
+              <label for="absoluteWidth" style="width:55px;">Width</label>
+              <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="Width">
+              <span>px</span>
+            </div>
+            <div class="row">
+              <label for="absoluteHeight" style="width:55px;">Height</label>
+              <input type="number" name="absoluteHeight" id="absoluteHeight" placeholder="Height">
+              <span>px</span>
+            </div>
+            <div class="hint">Leave one dimension blank to keep aspect ratio.</div>
           </div>
         </div>
       </fieldset>
