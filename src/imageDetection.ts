@@ -4,14 +4,10 @@ import { ImageContext } from './types';
 // This function returns a partial context, without the dimensions.
 // The dimensions are added later in the main command logic.
 export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDimensions'> | null {
-    // Reset regex state due to global flag
-    REGEX_PATTERNS.MARKDOWN_IMAGE_FULL.lastIndex = 0;
-    REGEX_PATTERNS.HTML_IMAGE_FULL.lastIndex = 0;
-
     let match;
 
     // Check for markdown image: ![alt](:/resourceId)
-    match = REGEX_PATTERNS.MARKDOWN_IMAGE_FULL.exec(text);
+    match = text.match(REGEX_PATTERNS.MARKDOWN_IMAGE_FULL);
     if (match && match.groups) {
         return {
             type: 'markdown',
@@ -22,7 +18,7 @@ export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDim
     }
 
     // Check for HTML image: <img src=":/resourceId" ... >
-    match = REGEX_PATTERNS.HTML_IMAGE_FULL.exec(text);
+    match = text.match(REGEX_PATTERNS.HTML_IMAGE_FULL);
     if (match && match.groups) {
         // Basic alt text extraction for now
         const altMatch = match[0].match(REGEX_PATTERNS.IMG_ALT);

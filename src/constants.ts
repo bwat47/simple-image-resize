@@ -1,10 +1,10 @@
 // In constants.ts
 export const REGEX_PATTERNS = {
     // ![alt text](:/32charresourceid)
-    MARKDOWN_IMAGE_FULL: /!\[(?<altText>[^\]]*)\]\(:\/(?<resourceId>[a-f0-9]{32})\)/gi,
+    MARKDOWN_IMAGE_FULL: /!\[(?<altText>[^\]]*)\]\(:\/(?<resourceId>[a-f0-9]{32})\)/i,
 
     // <img src=":/resourceid" ... >
-    HTML_IMAGE_FULL: /<img\s+[^>]*src=["']:\/(?<resourceId>[a-f0-9]{32})["'][^>]*>/gi,
+    HTML_IMAGE_FULL: /<img\s+[^>]*src=["']:\/(?<resourceId>[a-f0-9]{32})["'][^>]*>/i,
 
     // Extract existing width/height from HTML img
     IMG_WIDTH: /\bwidth\s*=\s*["']?(\d+)["']?/i,
