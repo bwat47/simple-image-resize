@@ -1,17 +1,24 @@
 // In types.ts
+export interface ImageDimensions {
+  width: number;
+  height: number;
+}
+
 export interface ImageContext {
-    type: 'markdown' | 'html';
-    syntax: string;
-    resourceId: string;
-    altText: string;
-    range: { start: number; end: number };
-    // Additional properties for HTML context
-    width?: number;
-    height?: number;
+  type: 'markdown' | 'html';
+  syntax: string;
+  resourceId: string;
+  altText: string;
+  // The original, detected dimensions of the image
+  originalDimensions: ImageDimensions;
 }
 
 export interface ResizeDialogResult {
-    targetSyntax: 'markdown' | 'html';
-    altText: string;
-    // More properties will be added in Phase 2
+  targetSyntax: 'markdown' | 'html';
+  altText: string;
+  // Resize options
+  resizeMode: 'percentage' | 'absolute';
+  percentage?: number;
+  absoluteWidth?: number;
+  absoluteHeight?: number;
 }

@@ -9,3 +9,4 @@ publish/
 *:Zone.Identifier
 *.patch
 *.diff
+gemini/
