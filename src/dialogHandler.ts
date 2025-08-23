@@ -18,7 +18,7 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
         `
     <style>
       *,*::before,*::after{box-sizing:border-box}
-      body{font-family:system-ui,sans-serif;font-size:14px;margin:0;padding:0;min-width:540px;}
+      body{font-family:system-ui,sans-serif;font-size:14px;margin:0;padding:0;min-width:620px;}
       .container{padding:22px 26px 30px;display:flex;flex-direction:column;gap:18px;width:100%;}
       h4{margin:0 0 10px;font-size:16px}
       form{display:flex;flex-direction:column;gap:22px;width:100%;}
@@ -69,7 +69,7 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
         background-color: #f5f5f5;
       }
       
-      @media (min-width:860px){body{min-width:600px}.grid{grid-template-columns:160px 1fr}}
+      @media (min-width:860px){body{min-width:680px}.grid{grid-template-columns:160px 1fr}}
     </style>
     <div class="container">
     <div>
@@ -94,7 +94,7 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
               <input type="radio" name="targetSyntax" value="html" checked onchange="document.getElementById('syntaxHtml').checked=true"> 
               <span style="display:flex;flex-direction:column;gap:2px;">
                 <span>HTML (supports resizing)</span>
-                <code style="font-size:11px;opacity:0.7;">&lt;img src=":/resourceId" alt="alt" width="200" /&gt;</code>
+                <code style="font-size:11px;opacity:0.7;">&lt;img src=":/resourceId" alt="alt" width="300" height="200" /&gt;</code>
               </span>
             </label>
             <label class="row">
@@ -104,7 +104,7 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
                 <code style="font-size:11px;opacity:0.7;">![alt](:/resourceId)</code>
               </span>
             </label>
-            <div class="hint" style="margin-top:8px;">Note: Resize settings are only available when HTML Syntax is selected</div>
+            <div class="hint" style="margin-top:8px;">Note: Resize settings are only available when HTML Syntax is selected. Select Markdown if you want to return to original markdown syntax with no custom size.</div>
           </div>
         </div>
       </fieldset>
