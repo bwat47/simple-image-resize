@@ -5,6 +5,9 @@
 
 A Joplin plugin that provides a simple dialogue to switch image syntax between markdown/html and losslessly resize images by adjusting the width/height attributes.
 
+![resize-example](https://github.com/user-attachments/assets/5fee085e-a9f3-4c77-9693-fa199e7d55f1)
+
+
 ## How to use
 
 In the markdown editor, highlight the text for an image embed, and then right click | Resize Image.
