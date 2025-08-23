@@ -175,6 +175,13 @@ export async function showResizeDialog(
       }
       
       /* Responsive improvements */
+      @media (max-width: 700px) {
+        body { min-width: 480px; }
+        .grid { grid-template-columns: 120px 1fr; gap: 8px 12px; }
+        .container { padding: 16px 20px 24px; gap: 14px; }
+        code { font-size: 9px; }
+      }
+      
       @media (min-width: 860px) {
         body { min-width: 680px }
         .grid { grid-template-columns: 160px 1fr }
