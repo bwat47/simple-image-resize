@@ -104,7 +104,7 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
                 <code style="font-size:11px;opacity:0.7;">![alt](:/resourceId)</code>
               </span>
             </label>
-            <div class="hint" style="margin-top:8px;">Note: Resize settings are ignored when Markdown is selected, as it doesn't support width/height attributes.</div>
+            <div class="hint" style="margin-top:8px;">Note: Resize settings are only available when HTML Syntax is selected</div>
           </div>
         </div>
       </fieldset>
