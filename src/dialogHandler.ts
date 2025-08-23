@@ -4,7 +4,10 @@ import { ImageContext, ResizeDialogResult } from './types';
 // We create a fresh dialog each time (script now inlined so this is mostly to ensure clean state per open).
 let dialogHandle: string = null;
 
-export async function showResizeDialog(context: ImageContext): Promise<ResizeDialogResult | null> {
+export async function showResizeDialog(
+    context: ImageContext,
+    defaultResizeMode: 'percentage' | 'absolute' = 'percentage'
+): Promise<ResizeDialogResult | null> {
     // Always create a new dialog so we get a clean JS context (fixes issue where updated script didn't re-bind events)
     dialogHandle = await joplin.views.dialogs.create(`imageResizeDialog_${Date.now()}`);
     await joplin.views.dialogs.setFitToContent(dialogHandle, true);
@@ -85,7 +88,10 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       
       /* CSS-only field disabling based on radio button states */
       
-      /* Default: Percentage mode is checked by default, so disable absolute size fields */
+      /* Conditional default state based on user preference */
+      ${
+          defaultResizeMode === 'percentage'
+              ? `
       .absolute-size-row {
         opacity: 0.4;
         pointer-events: none;
@@ -97,6 +103,19 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       }
       .absolute-size-row .hint {
         opacity: 0.4;
+      }
+      `
+              : `
+      .percentage-row {
+        opacity: 0.4;
+        pointer-events: none;
+        transition: opacity 0.2s ease;
+      }
+      .percentage-row input {
+        background-color: #f8f8f8;
+        cursor: not-allowed;
+      }
+      `
       }
       
       /* When absolute mode is checked, enable absolute fields and disable percentage */
@@ -179,14 +198,14 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       </fieldset>
       
       <!-- Place controlling radio buttons before the fieldset they control -->
-      <input type="radio" id="modePercent" name="cssResizeMode" value="percentage" checked style="position:absolute;left:-9999px;">
-      <input type="radio" id="modeAbsolute" name="cssResizeMode" value="absolute" style="position:absolute;left:-9999px;">
+      <input type="radio" id="modePercent" name="cssResizeMode" value="percentage" ${defaultResizeMode === 'percentage' ? 'checked' : ''} style="position:absolute;left:-9999px;">
+      <input type="radio" id="modeAbsolute" name="cssResizeMode" value="absolute" ${defaultResizeMode === 'absolute' ? 'checked' : ''} style="position:absolute;left:-9999px;">
       
       <fieldset class="resize-fieldset">
         <legend>Resizing</legend>
         <div class="grid">
           <div class="row">
-            <input type="radio" name="resizeMode" value="percentage" checked onchange="document.getElementById('modePercent').checked=true">
+            <input type="radio" name="resizeMode" value="percentage" ${defaultResizeMode === 'percentage' ? 'checked' : ''} onchange="document.getElementById('modePercent').checked=true">
             <label>By percentage</label>
           </div>
           <div class="row percentage-row">
@@ -194,7 +213,7 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
             <span>%</span>
           </div>
           <div class="row">
-            <input type="radio" name="resizeMode" value="absolute" onchange="document.getElementById('modeAbsolute').checked=true">
+            <input type="radio" name="resizeMode" value="absolute" ${defaultResizeMode === 'absolute' ? 'checked' : ''} onchange="document.getElementById('modeAbsolute').checked=true">
             <label>By absolute size</label>
           </div>
           <div class="stack absolute-size-row">

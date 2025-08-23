@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { MenuItemLocation, ToastType } from 'api/types';
+import { MenuItemLocation, ToastType, SettingItemType } from 'api/types';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
@@ -14,6 +14,28 @@ function hasMultipleImages(text: string): boolean {
 
 joplin.plugins.register({
     onStart: async function () {
+        // Register plugin settings
+        await joplin.settings.registerSection('imageResize', {
+            label: 'Simple Image Resize',
+            iconName: 'fas fa-expand-alt',
+        });
+
+        await joplin.settings.registerSettings({
+            'imageResize.defaultResizeMode': {
+                value: 'percentage',
+                type: SettingItemType.String,
+                section: 'imageResize',
+                public: true,
+                label: 'Default resize mode',
+                description: 'The resize mode that will be selected by default when opening the resize dialog',
+                isEnum: true,
+                options: {
+                    percentage: 'Percentage',
+                    absolute: 'Absolute size',
+                },
+            },
+        });
+
         // Register the command
         await joplin.commands.register({
             name: 'resizeImage',
@@ -57,10 +79,18 @@ joplin.plugins.register({
 
                     const originalDimensions = await getOriginalImageDimensions(partialContext.resourceId);
 
-                    const result = await showResizeDialog({
-                        ...partialContext,
-                        originalDimensions,
-                    });
+                    // Get user's default resize mode preference
+                    const defaultResizeMode = (await joplin.settings.value('imageResize.defaultResizeMode')) as
+                        | 'percentage'
+                        | 'absolute';
+
+                    const result = await showResizeDialog(
+                        {
+                            ...partialContext,
+                            originalDimensions,
+                        },
+                        defaultResizeMode
+                    );
 
                     if (result) {
                         const newSyntax = buildNewSyntax({ ...partialContext, originalDimensions }, result);
