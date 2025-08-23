@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
 
-// We create a fresh dialog each time to ensure updated scripts load (avoids stale cached webview.js in reused dialog).
+// We create a fresh dialog each time (script now inlined so this is mostly to ensure clean state per open).
 let dialogHandle: string = null;
 
 export async function showResizeDialog(context: ImageContext): Promise<ResizeDialogResult | null> {
