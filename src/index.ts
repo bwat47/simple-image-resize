@@ -36,7 +36,7 @@ joplin.plugins.register({
                     // Check for multiple images for better UX
                     if (hasMultipleImages(selectedText)) {
                         await joplin.views.dialogs.showToast({
-                            message: 'Multiple images found. Please select a single image syntax.',
+                            message: 'Multiple images found in selection. Please select a single image.',
                             type: ToastType.Info,
                         });
                         return;
@@ -46,8 +46,7 @@ joplin.plugins.register({
 
                     if (!partialContext) {
                         await joplin.views.dialogs.showToast({
-                            message:
-                                'No valid image syntax found. Please select ![...](:/...) or <img src=":/..." ...>',
+                            message: 'No valid image syntax found. Please select ![...](:/...) or <img src=":/..." />',
                             type: ToastType.Info,
                         });
                         return;
