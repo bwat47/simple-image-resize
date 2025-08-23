@@ -26,5 +26,17 @@
     "promo_tile": {
         "src": "images/simple-image-resize_promo_tile.png",
         "label": "Simple Resize Promo Tile"
+    },
+    "settings": {
+        "defaultResizeMode": {
+            "type": "enum",
+            "label": "Default resize mode",
+            "description": "The resize mode that will be selected by default when opening the resize dialog",
+            "options": {
+                "percentage": "Percentage",
+                "absolute": "Absolute size"
+            },
+            "value": "percentage"
+        }
     }
 }
