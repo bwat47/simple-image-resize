@@ -17,21 +17,71 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
         dialogHandle,
         `
     <style>
-      *,*::before,*::after{box-sizing:border-box}
-      body{font-family:system-ui,sans-serif;font-size:14px;margin:0;padding:0;min-width:620px;}
-      .container{padding:22px 26px 30px;display:flex;flex-direction:column;gap:18px;width:100%;}
-      h4{margin:0 0 10px;font-size:16px}
-      form{display:flex;flex-direction:column;gap:22px;width:100%;}
-      fieldset{border:1px solid var(--joplin-divider-color,#ccc);border-radius:6px;padding:18px 20px 20px;margin:0;min-width:0;width:100%;}
-      legend{font-weight:600}
-      .grid{display:grid;grid-template-columns:140px 1fr;gap:10px 18px;align-items:center;width:100%;}
-      .grid.narrow{grid-template-columns:max-content 1fr;}
-      .stack{display:flex;flex-direction:column;gap:6px}
-      .row{display:flex;align-items:center;gap:6px;min-width:0;}
-      label{user-select:none}
-      input[type=number]{width:92px;padding:4px 6px}
-      input[type=text]{width:100%;padding:6px 8px;min-width:0;}
-      .hint{font-size:11px;opacity:.7;margin-top:4px}
+      *, *::before, *::after { box-sizing: border-box }
+      body { 
+        font-family: system-ui, sans-serif; 
+        font-size: 14px; 
+        margin: 0; 
+        padding: 0; 
+        min-width: 620px;
+      }
+      .container { 
+        padding: 22px 26px 30px; 
+        display: flex; 
+        flex-direction: column; 
+        gap: 18px; 
+        width: 100%;
+      }
+      h4 { margin: 0 0 10px; font-size: 16px }
+      form { display: flex; flex-direction: column; gap: 22px; width: 100%; }
+      fieldset { 
+        border: 1px solid var(--joplin-divider-color, #ccc); 
+        border-radius: 6px; 
+        padding: 18px 20px 20px; 
+        margin: 0; 
+        min-width: 0; 
+        width: 100%;
+        transition: opacity 0.2s ease, background-color 0.2s ease;
+      }
+      legend { font-weight: 600 }
+      .grid { 
+        display: grid; 
+        grid-template-columns: 140px 1fr; 
+        gap: 10px 18px; 
+        align-items: center; 
+        width: 100%;
+      }
+      .grid.narrow { grid-template-columns: max-content 1fr; }
+      .stack { display: flex; flex-direction: column; gap: 6px }
+      .row { display: flex; align-items: center; gap: 6px; min-width: 0; }
+      label { user-select: none; cursor: pointer; }
+      input[type=number] { 
+        width: 92px; 
+        padding: 4px 6px;
+        transition: background-color 0.2s ease, opacity 0.2s ease;
+      }
+      input[type=text] { 
+        width: 100%; 
+        padding: 6px 8px; 
+        min-width: 0;
+        transition: background-color 0.2s ease;
+      }
+      input[type=radio] { cursor: pointer; }
+      .hint { 
+        font-size: 11px; 
+        opacity: 0.7; 
+        margin-top: 4px;
+        transition: opacity 0.2s ease;
+      }
+      
+      /* Code examples styling */
+      code {
+        background-color: #f5f5f5;
+        padding: 2px 4px;
+        border-radius: 3px;
+        font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+        font-size: 10px;
+      }
       
       /* CSS-only field disabling based on radio button states */
       
@@ -39,9 +89,14 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       .absolute-size-row {
         opacity: 0.4;
         pointer-events: none;
+        transition: opacity 0.2s ease;
       }
       .absolute-size-row input {
-        background-color: #f5f5f5;
+        background-color: #f8f8f8;
+        cursor: not-allowed;
+      }
+      .absolute-size-row .hint {
+        opacity: 0.4;
       }
       
       /* When absolute mode is checked, enable absolute fields and disable percentage */
@@ -51,25 +106,39 @@ export async function showResizeDialog(context: ImageContext): Promise<ResizeDia
       }
       #modeAbsolute:checked ~ .resize-fieldset .absolute-size-row input {
         background-color: white;
+        cursor: text;
+      }
+      #modeAbsolute:checked ~ .resize-fieldset .absolute-size-row .hint {
+        opacity: 0.7;
       }
       #modeAbsolute:checked ~ .resize-fieldset .percentage-row {
         opacity: 0.4;
         pointer-events: none;
       }
       #modeAbsolute:checked ~ .resize-fieldset .percentage-row input {
-        background-color: #f5f5f5;
+        background-color: #f8f8f8;
+        cursor: not-allowed;
       }
       
       /* When markdown syntax is selected, disable entire resize fieldset */
       #syntaxMarkdown:checked ~ form .resize-fieldset {
         opacity: 0.4;
         pointer-events: none;
+        background-color: #fafafa;
       }
       #syntaxMarkdown:checked ~ form .resize-fieldset input {
-        background-color: #f5f5f5;
+        background-color: #f0f0f0;
+        cursor: not-allowed;
+      }
+      #syntaxMarkdown:checked ~ form .resize-fieldset .hint {
+        opacity: 0.3;
       }
       
-      @media (min-width:860px){body{min-width:680px}.grid{grid-template-columns:160px 1fr}}
+      /* Responsive improvements */
+      @media (min-width: 860px) {
+        body { min-width: 680px }
+        .grid { grid-template-columns: 160px 1fr }
+      }
     </style>
     <div class="container">
     <div>

@@ -1,0 +1,90 @@
+import joplin from 'api';
+import { MenuItemLocation, ToastType } from 'api/types';
+import { buildNewSyntax } from './imageSyntaxBuilder';
+import { detectImageSyntax } from './imageDetection';
+import { showResizeDialog } from './dialogHandler';
+import { getOriginalImageDimensions } from './imageSizeCalculator';
+
+// Helper function to check for multiple images
+function hasMultipleImages(text: string): boolean {
+    const markdownMatches = text.match(/!\[[^\]]*\]\(:\/{1,2}[a-f0-9]{32}\)/g) || [];
+    const htmlMatches = text.match(/<img\s+[^>]*src=["']:\/[a-f0-9]{32}["'][^>]*>/g) || [];
+    return (markdownMatches.length + htmlMatches.length) > 1;
+}
+
+joplin.plugins.register({
+    onStart: async function () {
+        await joplin.commands.register({
+            name: 'resizeImage',
+            label: 'Resize Image',
+            iconName: 'fas fa-expand-alt',
+            execute: async () => {
+                try {
+                    const selectedText = await joplin.commands.execute('editor.execCommand', {
+                        name: 'getSelection',
+                    });
+
+                    if (!selectedText?.trim()) {
+                        await joplin.views.dialogs.showToast({
+                            message: 'Please select an image syntax to resize.',
+                            type: ToastType.Info,
+                        });
+                        return;
+                    }
+
+                    // Check for multiple images for better UX
+                    if (hasMultipleImages(selectedText)) {
+                        await joplin.views.dialogs.showToast({
+                            message: 'Multiple images found. Please select a single image syntax.',
+                            type: ToastType.Info,
+                        });
+                        return;
+                    }
+
+                    const partialContext = detectImageSyntax(selectedText);
+
+                    if (!partialContext) {
+                        await joplin.views.dialogs.showToast({
+                            message: 'No valid image syntax found. Please select ![...](:/...) or <img src=":/..." ...>',
+                            type: ToastType.Info,
+                        });
+                        return;
+                    }
+
+                    // Show brief loading feedback for dimension calculation
+                    console.log(`[Image Resize] Loading dimensions for resource: ${partialContext.resourceId}`);
+                    
+                    const originalDimensions = await getOriginalImageDimensions(partialContext.resourceId);
+
+                    const result = await showResizeDialog({
+                        ...partialContext,
+                        originalDimensions,
+                    });
+
+                    if (result) {
+                        const newSyntax = buildNewSyntax({ ...partialContext, originalDimensions }, result);
+                        await joplin.clipboard.writeText(newSyntax);
+
+                        await joplin.views.dialogs.showToast({
+                            message: 'Resized image syntax copied to clipboard! Paste to replace the original.',
+                            type: ToastType.Success,
+                        });
+                    }
+                } catch (err) {
+                    console.error('[Image Resize] Error:', err);
+                    const message = err?.message || 'Unknown error occurred';
+                    await joplin.views.dialogs.showToast({
+                        message: `Operation failed: ${message}`,
+                        type: ToastType.Error,
+                    });
+                }
+            },
+        });
+
+        await joplin.views.menuItems.create(
+            'imageResizeContextMenuItem',
+            'resizeImage',
+            MenuItemLocation.EditorContextMenu
+        );
+    },
+});
