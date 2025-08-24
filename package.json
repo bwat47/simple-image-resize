@@ -18,12 +18,14 @@
         "publish"
     ],
     "devDependencies": {
+        "@eslint/eslintrc": "^3.3.1",
+        "@eslint/js": "^9.34.0",
         "@types/node": "^18.7.13",
         "@typescript-eslint/eslint-plugin": "^8.40.0",
         "@typescript-eslint/parser": "^8.40.0",
         "chalk": "^4.1.0",
         "copy-webpack-plugin": "^11.0.0",
-        "eslint": "^8.56.0",
+        "eslint": "^9.34.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-plugin-prettier": "^5.5.4",
         "fs-extra": "^10.1.0",
