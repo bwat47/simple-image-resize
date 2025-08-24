@@ -7,7 +7,6 @@ A Joplin plugin that provides a simple dialogue to switch image syntax between m
 
 ![resize-example](https://github.com/user-attachments/assets/5fee085e-a9f3-4c77-9693-fa199e7d55f1)
 
-
 ## How to use
 
 In the markdown editor, highlight the text for an image embed, and then right click | Resize Image.
@@ -28,6 +27,10 @@ Enter the desired image size (in percentage or pixels) and click OK, and the plu
 
 > [!note]
 > When using absolute size, populating one of the dimensions and leaving the other blank will automatically maintain aspect ratio.
+
+### Settings
+
+You can choose if the default resize mode is Percentage or Absolute in the plugin settings (default is Percentage).
 
 ### Other notes
 
