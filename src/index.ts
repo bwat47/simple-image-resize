@@ -54,7 +54,7 @@ joplin.plugins.register({
                     if (typeof selectedText !== 'string') {
                         await joplin.views.dialogs.showToast({
                             message:
-                                'Image Resize: This command only works in the Markdown editor. Switch to Markdown (code) editor and select an image syntax.',
+                                'Image Resize: This command only works in the Markdown editor. Switch to Markdown editor and select an image.',
                             type: ToastType.Info,
                         });
                         return;
@@ -62,7 +62,7 @@ joplin.plugins.register({
 
                     if (!selectedText.trim()) {
                         await joplin.views.dialogs.showToast({
-                            message: 'Please select an image syntax to resize.',
+                            message: 'Please select an image to resize.',
                             type: ToastType.Info,
                         });
                         return;
