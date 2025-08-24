@@ -41,7 +41,6 @@ joplin.plugins.register({
             name: 'resizeImage',
             label: 'Resize Image',
             iconName: 'fas fa-expand-alt',
-            when: 'markdownEditorVisible',
             execute: async () => {
                 try {
                     // Safely attempt to get selection (only valid in Markdown editor)
