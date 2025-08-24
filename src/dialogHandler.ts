@@ -233,16 +233,16 @@ export async function showResizeDialog(
         <legend>Resizing</legend>
         <div class="grid">
           <div class="row">
-            <input type="radio" name="resizeMode" value="percentage" ${defaultResizeMode === 'percentage' ? 'checked' : ''} onchange="document.getElementById('modePercent').checked=true">
-            <label>Percentage</label>
+            <input type="radio" id="percentageMode" name="resizeMode" value="percentage" ${defaultResizeMode === 'percentage' ? 'checked' : ''} onchange="document.getElementById('modePercent').checked=true">
+            <label for="percentageMode">Percentage</label>
           </div>
           <div class="row percentage-row">
             <input type="number" name="percentage" value="50" min="1" max="500">
             <span>%</span>
           </div>
           <div class="row">
-            <input type="radio" name="resizeMode" value="absolute" ${defaultResizeMode === 'absolute' ? 'checked' : ''} onchange="document.getElementById('modeAbsolute').checked=true">
-            <label>Absolute size</label>
+            <input type="radio" id="absoluteMode" name="resizeMode" value="absolute" ${defaultResizeMode === 'absolute' ? 'checked' : ''} onchange="document.getElementById('modeAbsolute').checked=true">
+            <label for="absoluteMode">Absolute size</label>
           </div>
           <div class="stack absolute-size-row">
             <div class="row">
