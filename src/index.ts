@@ -44,11 +44,24 @@ joplin.plugins.register({
             when: 'markdownEditorVisible',
             execute: async () => {
                 try {
-                    const selectedText = await joplin.commands.execute('editor.execCommand', {
-                        name: 'getSelection',
-                    });
+                    // Safely attempt to get selection (only valid in Markdown editor)
+                    let selectedText: string | null = null;
+                    try {
+                        selectedText = await joplin.commands.execute('editor.execCommand', { name: 'getSelection' });
+                    } catch {
+                        // Swallow; will handle below
+                    }
 
-                    if (!selectedText?.trim()) {
+                    if (typeof selectedText !== 'string') {
+                        await joplin.views.dialogs.showToast({
+                            message:
+                                'Image Resize: This command only works in the Markdown editor. Switch to Markdown (code) editor and select an image syntax.',
+                            type: ToastType.Info,
+                        });
+                        return;
+                    }
+
+                    if (!selectedText.trim()) {
                         await joplin.views.dialogs.showToast({
                             message: 'Please select an image syntax to resize.',
                             type: ToastType.Info,
