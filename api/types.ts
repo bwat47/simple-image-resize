@@ -1,4 +1,5 @@
 /* eslint-disable multiline-comment-style */
+/* eslint-disable @typescript-eslint/no-empty-object-type */
 
 // =================================================================
 // Command API types
@@ -57,6 +58,7 @@ export interface Command {
 	 * Note: Commands are enabled by default unless you use this property.
 	 */
 	enabledCondition?: string;
+    when?: string;
 }
 
 // =================================================================

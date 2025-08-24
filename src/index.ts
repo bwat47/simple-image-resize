@@ -41,6 +41,7 @@ joplin.plugins.register({
             name: 'resizeImage',
             label: 'Resize Image',
             iconName: 'fas fa-expand-alt',
+            when: 'markdownEditorVisible',
             execute: async () => {
                 try {
                     const selectedText = await joplin.commands.execute('editor.execCommand', {
