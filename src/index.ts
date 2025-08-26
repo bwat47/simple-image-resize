@@ -4,21 +4,21 @@ import { buildNewSyntax } from './imageSyntaxBuilder';
 import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
+import { REGEX_PATTERNS } from './constants';
 
 // Helper function to check for multiple images
 function hasMultipleImages(text: string): boolean {
-    const markdownMatches = text.match(/!\[[^\]]*\]\(:\/{1,2}[a-f0-9]{32}\)/g) || [];
-    const htmlMatches = text.match(/<img\s+[^>]*src=["']:\/[a-f0-9]{32}["'][^>]*>/g) || [];
+    const markdownMatches = text.match(REGEX_PATTERNS.MARKDOWN_IMAGE_GLOBAL) || [];
+    const htmlMatches = text.match(REGEX_PATTERNS.HTML_IMAGE_GLOBAL) || [];
     return markdownMatches.length + htmlMatches.length > 1;
 }
 
 // Helper to determine if selection has exactly one image and nothing else except whitespace/newlines
 function selectionHasOnlySingleImage(text: string): boolean {
-    const trimmed = text.trim(); // remove leading/trailing whitespace/newlines
+    const trimmed = text.trim();
     if (!trimmed) return false;
-    const markdownPattern = /^!\[[^\]]*\]\(:\/{1,2}[a-f0-9]{32}\)$/;
-    const htmlPattern = /^<img\s+[^>]*src=["']:\/[a-f0-9]{32}["'][^>]*>$/;
-    return markdownPattern.test(trimmed) || htmlPattern.test(trimmed);
+    // Use the imported constants for consistency
+    return REGEX_PATTERNS.MARKDOWN_IMAGE_ONLY.test(trimmed) || REGEX_PATTERNS.HTML_IMAGE_ONLY.test(trimmed);
 }
 
 joplin.plugins.register({
@@ -89,9 +89,9 @@ joplin.plugins.register({
                     // If selection has a single image but also other non-whitespace characters, ask user to isolate it
                     if (!hasMultipleImages(selectedText) && !selectionHasOnlySingleImage(selectedText)) {
                         // Detect if it at least contains one image; if none, existing logic will handle
-                        const imagePattern =
-                            /!\[[^\]]*\]\(:\/{1,2}[a-f0-9]{32}\)|<img\s+[^>]*src=["']:\/[a-f0-9]{32}["'][^>]*>/;
-                        const containsImage = imagePattern.test(selectedText);
+                        const containsImage =
+                            REGEX_PATTERNS.MARKDOWN_IMAGE_FULL.test(selectedText) ||
+                            REGEX_PATTERNS.HTML_IMAGE_FULL.test(selectedText);
                         if (containsImage) {
                             await joplin.views.dialogs.showToast({
                                 message: 'Please select only the image syntax (no extra text).',
