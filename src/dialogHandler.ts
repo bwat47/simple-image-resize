@@ -1,14 +1,12 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
 
-// We create a new dialog instance for each call to ensure a clean and predictable state.
-let dialogHandle: string = null;
-
 export async function showResizeDialog(
     context: ImageContext,
     defaultResizeMode: 'percentage' | 'absolute' = 'percentage'
 ): Promise<ResizeDialogResult | null> {
-    dialogHandle = await joplin.views.dialogs.create(`imageResizeDialog_${Date.now()}`);
+    // We create a new dialog instance for each call to ensure a clean and predictable state.
+    const dialogHandle = await joplin.views.dialogs.create(`imageResizeDialog_${Date.now()}`);
     await joplin.views.dialogs.setFitToContent(dialogHandle, true);
 
     const originalWidth = context.originalDimensions.width;
