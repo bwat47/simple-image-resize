@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { MenuItemLocation, ToastType, SettingItemType } from 'api/types';
+import { ToastType, SettingItemType, MenuItemLocation } from 'api/types';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
@@ -125,11 +125,49 @@ joplin.plugins.register({
             },
         });
 
-        // Add a context menu item to trigger the command
-        await joplin.views.menuItems.create(
-            'imageResizeContextMenuItem',
-            'resizeImage',
-            MenuItemLocation.EditorContextMenu
-        );
+        // Register keyboard shortcut for Image Resize (Edit menu as fallback)
+        await joplin.views.menuItems.create('imageResizeContextMenuItem', 'resizeImage', MenuItemLocation.Edit);
+
+        // Filter context menu to dynamically add our command only in markdown editor
+        joplin.workspace.filterEditorContextMenu(async (contextMenu) => {
+            // Debug: log what we see in the context menu
+            console.log(
+                '[simple-image-resize] Context menu items:',
+                contextMenu.items.map((item) => item.commandName)
+            );
+
+            // Simple approach: try to execute a markdown-specific command
+            // If it succeeds, we're in the markdown editor
+            let isMarkdownEditor = false;
+            try {
+                // Try to get the cursor position - this should only work in markdown editor
+                await joplin.commands.execute('editor.execCommand', {
+                    name: 'getCursor',
+                });
+                isMarkdownEditor = true;
+                console.log('[simple-image-resize] Detected markdown editor - adding context menu item');
+            } catch {
+                // If getCursor fails, we're likely in rich text editor
+                isMarkdownEditor = false;
+                console.log('[simple-image-resize] Detected rich text editor - not adding context menu item');
+            }
+
+            // Only add our command to the context menu if we're in markdown editor
+            if (isMarkdownEditor) {
+                // Check if our command is already in the menu to avoid duplicates
+                const hasResizeCommand = contextMenu.items.some((item) => item.commandName === 'resizeImage');
+
+                if (!hasResizeCommand) {
+                    contextMenu.items.push({
+                        commandName: 'resizeImage',
+                        label: 'Resize Image',
+                    });
+                }
+
+                console.log('[simple-image-resize] Added context menu item, total:', contextMenu.items.length);
+            }
+
+            return contextMenu;
+        });
     },
 });
