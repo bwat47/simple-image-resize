@@ -3,6 +3,7 @@ import { ImageContext } from './types';
 
 // This function returns a partial context, without the dimensions.
 // The dimensions are added later in the main command logic.
+// It now includes the original user selection to preserve whitespace.
 export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDimensions'> | null {
     let match;
 
@@ -14,6 +15,7 @@ export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDim
             syntax: match[0],
             resourceId: match.groups.resourceId,
             altText: match.groups.altText,
+            originalSelection: text, // Capture the original selection
         };
     }
 
@@ -29,6 +31,7 @@ export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDim
             syntax: match[0],
             resourceId: match.groups.resourceId,
             altText: altText,
+            originalSelection: text, // Capture the original selection
         };
     }
 

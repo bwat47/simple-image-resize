@@ -11,6 +11,8 @@ export interface ImageContext {
     altText: string;
     // The original, detected dimensions of the image
     originalDimensions: ImageDimensions;
+    // The full text of the user's original selection
+    originalSelection: string;
 }
 
 export interface ResizeDialogResult {
