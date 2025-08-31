@@ -4,22 +4,7 @@ import { buildNewSyntax } from './imageSyntaxBuilder';
 import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
-import { REGEX_PATTERNS } from './constants';
-
-// Helper function to check for multiple images
-function hasMultipleImages(text: string): boolean {
-    const markdownMatches = text.match(REGEX_PATTERNS.MARKDOWN_IMAGE_GLOBAL) || [];
-    const htmlMatches = text.match(REGEX_PATTERNS.HTML_IMAGE_GLOBAL) || [];
-    return markdownMatches.length + htmlMatches.length > 1;
-}
-
-// Helper to determine if selection has exactly one image and nothing else except whitespace/newlines
-function selectionHasOnlySingleImage(text: string): boolean {
-    const trimmed = text.trim();
-    if (!trimmed) return false;
-    // Use the imported constants for consistency
-    return REGEX_PATTERNS.MARKDOWN_IMAGE_ONLY.test(trimmed) || REGEX_PATTERNS.HTML_IMAGE_ONLY.test(trimmed);
-}
+import { hasMultipleImages, selectionHasOnlySingleImage, containsAnyImage } from './selectionValidation';
 
 joplin.plugins.register({
     onStart: async function () {
@@ -88,11 +73,7 @@ joplin.plugins.register({
 
                     // If selection has a single image but also other non-whitespace characters, ask user to isolate it
                     if (!hasMultipleImages(selectedText) && !selectionHasOnlySingleImage(selectedText)) {
-                        // Detect if it at least contains one image; if none, existing logic will handle
-                        const containsImage =
-                            REGEX_PATTERNS.MARKDOWN_IMAGE_FULL.test(selectedText) ||
-                            REGEX_PATTERNS.HTML_IMAGE_FULL.test(selectedText);
-                        if (containsImage) {
+                        if (containsAnyImage(selectedText)) {
                             await joplin.views.dialogs.showToast({
                                 message: 'Please select only the image syntax (no extra text).',
                                 type: ToastType.Info,
