@@ -5,6 +5,7 @@ import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
 import { hasMultipleImages, selectionHasOnlySingleImage, containsAnyImage } from './selectionValidation';
+import { CONSTANTS } from './constants';
 
 joplin.plugins.register({
     onStart: async function () {
@@ -86,16 +87,47 @@ joplin.plugins.register({
 
                     if (!partialContext) {
                         await joplin.views.dialogs.showToast({
-                            message: 'No valid image syntax found. Please select ![...](:/...) or <img src=":/..." />',
+                            message:
+                                'No valid image syntax found. Please select ![...](:/...), ![...](https://...), or <img src="..." />',
                             type: ToastType.Info,
                         });
                         return;
                     }
 
                     // Show brief loading feedback for dimension calculation
-                    console.log(`[Image Resize] Loading dimensions for resource: ${partialContext.resourceId}`);
+                    console.log(
+                        `[Image Resize] Loading dimensions for ${partialContext.sourceType}: ${partialContext.source}`
+                    );
 
-                    const originalDimensions = await getOriginalImageDimensions(partialContext.resourceId);
+                    // Try to get original dimensions with fallback for external images
+                    let originalDimensions;
+                    try {
+                        originalDimensions = await getOriginalImageDimensions(
+                            partialContext.source,
+                            partialContext.sourceType
+                        );
+                    } catch (err) {
+                        console.warn(
+                            `[Image Resize] Could not get dimensions for ${partialContext.sourceType} ${partialContext.source}, using defaults:`,
+                            err
+                        );
+
+                        if (partialContext.sourceType === 'external') {
+                            // Use fallback dimensions for external images
+                            originalDimensions = {
+                                width: CONSTANTS.DEFAULT_EXTERNAL_WIDTH,
+                                height: CONSTANTS.DEFAULT_EXTERNAL_HEIGHT,
+                            };
+
+                            await joplin.views.dialogs.showToast({
+                                message: `Could not load external image dimensions. Using default size (${CONSTANTS.DEFAULT_EXTERNAL_WIDTH}×${CONSTANTS.DEFAULT_EXTERNAL_HEIGHT}).`,
+                                type: ToastType.Info,
+                            });
+                        } else {
+                            // For Joplin resources, this is a more serious error
+                            throw err;
+                        }
+                    }
 
                     // Get user's default resize mode preference
                     const defaultResizeMode = (await joplin.settings.value('imageResize.defaultResizeMode')) as

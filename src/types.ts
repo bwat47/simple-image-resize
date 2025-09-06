@@ -7,7 +7,8 @@ export interface ImageDimensions {
 export interface ImageContext {
     type: 'markdown' | 'html';
     syntax: string;
-    resourceId: string;
+    source: string; // Can be resourceId or external URL
+    sourceType: 'resource' | 'external';
     altText: string;
     // The original, detected dimensions of the image
     originalDimensions: ImageDimensions;

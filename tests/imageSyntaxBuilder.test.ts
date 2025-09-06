@@ -5,7 +5,8 @@ describe('buildNewSyntax', () => {
     const baseContext: ImageContext = {
         type: 'markdown',
         syntax: '![Alt](:/0123456789abcdef0123456789abcdef)',
-        resourceId: '0123456789abcdef0123456789abcdef',
+        source: '0123456789abcdef0123456789abcdef',
+        sourceType: 'resource',
         altText: 'Alt',
         originalDimensions: { width: 800, height: 600 },
         originalSelection: '![Alt](:/0123456789abcdef0123456789abcdef)\n\n', // includes trailing newlines
@@ -73,5 +74,27 @@ describe('buildNewSyntax', () => {
         // Width should scale: 800/600 * 300 = 400
         expect(syntax).toContain('width="400"');
         expect(syntax).toContain('height="300"');
+    });
+
+    test('builds syntax for external URL source', () => {
+        const externalCtx: ImageContext = {
+            type: 'markdown',
+            syntax: '![Logo](https://example.com/logo.png)',
+            source: 'https://example.com/logo.png',
+            sourceType: 'external',
+            altText: 'Logo',
+            originalDimensions: { width: 1024, height: 512 },
+            originalSelection: '![Logo](https://example.com/logo.png)\n',
+        };
+        const result: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: 'Logo',
+            resizeMode: 'percentage',
+            percentage: 50,
+        };
+        const syntax = buildNewSyntax(externalCtx, result);
+        expect(syntax).toContain('<img src="https://example.com/logo.png"');
+        expect(syntax).toContain('width="512"');
+        expect(syntax).toContain('height="256"');
     });
 });

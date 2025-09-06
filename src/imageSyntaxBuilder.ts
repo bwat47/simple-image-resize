@@ -11,10 +11,14 @@ function getTrailingWhitespace(text: string): string {
 // Builds the new image syntax and preserves trailing whitespace from the original selection.
 export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
     const trailingWhitespace = getTrailingWhitespace(context.originalSelection);
+
+    // Determine the correct source path format
+    const srcPath = context.sourceType === 'resource' ? `:/${context.source}` : context.source;
+
     let newSyntax: string;
 
     if (result.targetSyntax === 'markdown') {
-        newSyntax = `![${result.altText}](:/${context.resourceId})`;
+        newSyntax = `![${result.altText}](${srcPath})`;
     } else {
         let newWidth: number;
         let newHeight: number;
@@ -42,7 +46,7 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
                 newHeight = origH;
             }
         }
-        newSyntax = `<img src=":/${context.resourceId}" alt="${result.altText}" width="${newWidth}" height="${newHeight}" />`;
+        newSyntax = `<img src="${srcPath}" alt="${result.altText}" width="${newWidth}" height="${newHeight}" />`;
     }
 
     // Append the original trailing whitespace to the new syntax
