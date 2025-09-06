@@ -3,7 +3,12 @@
 // Escapes a string for safe inclusion inside a double-quoted HTML attribute value
 export function escapeHtmlAttribute(value: string): string {
     if (value == null) return '';
-    return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    return String(value)
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 }
 
 // Escapes a Markdown title that will be emitted inside double quotes: "title"
@@ -25,6 +30,7 @@ export function decodeHtmlEntities(value: string): string {
     // Named entities we care about
     str = str
         .replace(/&quot;/g, '"')
+        .replace(/&apos;/g, "'")
         .replace(/&lt;/g, '<')
         .replace(/&gt;/g, '>');
     return str;

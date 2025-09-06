@@ -41,9 +41,9 @@ export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDim
 
         // Basic alt text extraction for now
         const altMatch = match[0].match(REGEX_PATTERNS.IMG_ALT);
-        const altText = altMatch ? decodeHtmlEntities(altMatch[1]) : '';
+        const altText = altMatch ? decodeHtmlEntities(altMatch[2]) : '';
         const titleMatch = match[0].match(REGEX_PATTERNS.IMG_TITLE);
-        const title = titleMatch ? decodeHtmlEntities(titleMatch[1]) : '';
+        const title = titleMatch ? decodeHtmlEntities(titleMatch[2]) : '';
 
         return {
             type: 'html',

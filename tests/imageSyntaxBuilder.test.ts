@@ -134,6 +134,17 @@ describe('buildNewSyntax', () => {
         expect(html).toContain('alt="Quote: &quot;double&quot; &amp; &lt;tag&gt;"');
     });
 
+    test('escapes single quotes in alt text for html output', () => {
+        const res: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: "It's fine",
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const html = buildNewSyntax(baseContext, res);
+        expect(html).toContain('alt="It&#39;s fine"');
+    });
+
     test('builds syntax for external URL source', () => {
         const externalCtx: ImageContext = {
             type: 'markdown',

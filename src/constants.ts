@@ -12,8 +12,8 @@ export const REGEX_PATTERNS = {
     // Extract existing width/height from HTML img
     IMG_WIDTH: /\bwidth\s*=\s*["']?(\d+)["']?/i,
     IMG_HEIGHT: /\bheight\s*=\s*["']?(\d+)["']?/i,
-    IMG_ALT: /\balt\s*=\s*["']([^"']*)["']/i,
-    IMG_TITLE: /\btitle\s*=\s*["']([^"']*)["']/i,
+    IMG_ALT: /\balt\s*=\s*(["'])(.*?)\1/i,
+    IMG_TITLE: /\btitle\s*=\s*(["'])(.*?)\1/i,
 
     // For validating a string that is ONLY a markdown image (resource or external) with optional title and escaped ) support
     MARKDOWN_IMAGE_ONLY:

@@ -70,6 +70,20 @@ describe('detectImageSyntax', () => {
         expect(ctx!.altText).toBe('"test"');
     });
 
+    test('preserves apostrophe in alt text', () => {
+        const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="honor\'s-magic" />';
+        const ctx = detectImageSyntax(sel);
+        expect(ctx).not.toBeNull();
+        expect(ctx!.altText).toBe("honor's-magic");
+    });
+
+    test('decodes &apos; to apostrophe in alt text', () => {
+        const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="honor&amp;apos;s-magic" />';
+        const ctx = detectImageSyntax(sel);
+        expect(ctx).not.toBeNull();
+        expect(ctx!.altText).toBe("honor's-magic");
+    });
+
     test('returns null for non-image text', () => {
         expect(detectImageSyntax('Some text without image')).toBeNull();
     });
