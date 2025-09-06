@@ -10,6 +10,7 @@ export interface ImageContext {
     source: string; // Can be resourceId or external URL
     sourceType: 'resource' | 'external';
     altText: string;
+    title?: string;
     // The original, detected dimensions of the image
     originalDimensions: ImageDimensions;
     // The full text of the user's original selection

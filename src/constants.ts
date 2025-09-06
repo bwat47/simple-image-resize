@@ -4,7 +4,7 @@ export const REGEX_PATTERNS = {
     // URL part allows escaped right-paren: ")" via (?:\\\)|[^)])+
     // Optional title (single or double quotes) after URL
     MARKDOWN_IMAGE_FULL:
-        /!\[(?<altText>[^\]]*)\]\(\s*(?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/(?:\\\)|[^)\s])+))\s*(?:"[^"]*"|'[^']*')?\s*\)/i, // single (non-global) for detection with groups
+        /!\[(?<altText>[^\]]*)\]\(\s*(?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/(?:\\\)|[^)\s])+))\s*(?:"(?<titleDouble>[^"]*)"|'(?<titleSingle>[^']*)')?\s*\)/i, // single (non-global) for detection with groups
 
     // <img src=":/resourceid" ... > OR <img src="https://..." ... >
     HTML_IMAGE_FULL: /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i, // single (non-global) for detection with groups
@@ -13,6 +13,7 @@ export const REGEX_PATTERNS = {
     IMG_WIDTH: /\bwidth\s*=\s*["']?(\d+)["']?/i,
     IMG_HEIGHT: /\bheight\s*=\s*["']?(\d+)["']?/i,
     IMG_ALT: /\balt\s*=\s*["']([^"']*)["']/i,
+    IMG_TITLE: /\btitle\s*=\s*["']([^"']*)["']/i,
 
     // For validating a string that is ONLY a markdown image (resource or external) with optional title and escaped ) support
     MARKDOWN_IMAGE_ONLY:

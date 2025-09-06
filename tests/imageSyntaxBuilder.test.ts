@@ -8,6 +8,7 @@ describe('buildNewSyntax', () => {
         source: '0123456789abcdef0123456789abcdef',
         sourceType: 'resource',
         altText: 'Alt',
+        title: undefined,
         originalDimensions: { width: 800, height: 600 },
         originalSelection: '![Alt](:/0123456789abcdef0123456789abcdef)\n\n', // includes trailing newlines
     };
@@ -74,6 +75,63 @@ describe('buildNewSyntax', () => {
         // Width should scale: 800/600 * 300 = 400
         expect(syntax).toContain('width="400"');
         expect(syntax).toContain('height="300"');
+    });
+
+    test('preserves title when generating HTML', () => {
+        const ctx: ImageContext = { ...baseContext, title: 'My Title' };
+        const result: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: 'Alt',
+            resizeMode: 'percentage',
+            percentage: 50,
+        };
+        const syntax = buildNewSyntax(ctx, result);
+        expect(syntax).toContain('title="My Title"');
+    });
+
+    test('preserves title when generating markdown', () => {
+        const ctx: ImageContext = { ...baseContext, title: 'My Title' };
+        const result: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: 'Alt2',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const syntax = buildNewSyntax(ctx, result);
+        expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")\n\n');
+    });
+
+    test('escapes quotes in title for markdown and html output', () => {
+        const ctx: ImageContext = { ...baseContext, title: 'He said "hi" & <ok>' };
+        // HTML
+        const htmlRes: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: 'Alt',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const html = buildNewSyntax(ctx, htmlRes);
+        expect(html).toContain('title="He said &quot;hi&quot; &amp; &lt;ok&gt;"');
+        // Markdown
+        const mdRes: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: 'Alt',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const md = buildNewSyntax(ctx, mdRes);
+        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said &quot;hi&quot; &amp; &lt;ok&gt;")\n\n');
+    });
+
+    test('escapes quotes in alt text for html output', () => {
+        const res: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: 'Quote: "double" & <tag>',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const html = buildNewSyntax(baseContext, res);
+        expect(html).toContain('alt="Quote: &quot;double&quot; &amp; &lt;tag&gt;"');
     });
 
     test('builds syntax for external URL source', () => {

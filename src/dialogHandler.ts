@@ -1,5 +1,6 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
+import { escapeHtmlAttribute } from './stringUtils';
 
 export async function showResizeDialog(
     context: ImageContext,
@@ -199,7 +200,7 @@ export async function showResizeDialog(
         <div class="grid narrow">
           <label for="altText" style="white-space:nowrap;">Alt text</label>
           <div class="row" style="padding:0;min-width:0;">
-            <input type="text" id="altText" name="altText" value="${context.altText}" placeholder="Describe the image">
+            <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
           </div>
           <label style="white-space:nowrap;">Syntax</label>
           <div class="stack">

@@ -33,13 +33,14 @@ describe('detectImageSyntax', () => {
     });
 
     test('detects external URL in html image', () => {
-        const sel = '<img src="https://example.com/img.png" alt="X" />';
+        const sel = '<img src="https://example.com/img.png" alt="X" title="Nice" />';
         const ctx = detectImageSyntax(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('html');
         expect(ctx!.sourceType).toBe('external');
         expect(ctx!.source).toBe('https://example.com/img.png');
         expect(ctx!.altText).toBe('X');
+        expect(ctx!.title).toBe('Nice');
     });
 
     test('detects markdown image with escaped ) in URL', () => {
@@ -57,6 +58,16 @@ describe('detectImageSyntax', () => {
         expect(ctx!.type).toBe('markdown');
         expect(ctx!.source).toBe('https://example.com/picture.png');
         expect(ctx!.altText).toBe('Alt');
+        expect(ctx!.title).toBe('Title here');
+    });
+
+    test('decodes HTML-escaped quotes in alt text', () => {
+        const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="&quot;test&quot;" />';
+        const ctx = detectImageSyntax(sel);
+        expect(ctx).not.toBeNull();
+        expect(ctx!.type).toBe('html');
+        expect(ctx!.sourceType).toBe('resource');
+        expect(ctx!.altText).toBe('"test"');
     });
 
     test('returns null for non-image text', () => {

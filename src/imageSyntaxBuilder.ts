@@ -1,4 +1,5 @@
 import { ImageContext, ResizeDialogResult } from './types';
+import { escapeHtmlAttribute, escapeMarkdownTitle } from './stringUtils';
 
 // This module no longer modifies the editor directly; it just returns the string to place on the clipboard.
 
@@ -18,7 +19,8 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
     let newSyntax: string;
 
     if (result.targetSyntax === 'markdown') {
-        newSyntax = `![${result.altText}](${srcPath})`;
+        const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
+        newSyntax = `![${result.altText}](${srcPath}${titlePart})`;
     } else {
         let newWidth: number;
         let newHeight: number;
@@ -46,7 +48,9 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
                 newHeight = origH;
             }
         }
-        newSyntax = `<img src="${srcPath}" alt="${result.altText}" width="${newWidth}" height="${newHeight}" />`;
+        const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
+        const safeAlt = escapeHtmlAttribute(result.altText);
+        newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}" height="${newHeight}"${titleAttr} />`;
     }
 
     // Append the original trailing whitespace to the new syntax
