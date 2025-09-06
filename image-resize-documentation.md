@@ -9,14 +9,21 @@ A Joplin plugin that provides a simple dialog interface for switching between im
 The plugin uses a **Command + Modal Dialog** pattern with the following key components:
 
 ```
-src/
-├── index.ts              # Main plugin registration, settings, and command logic
-├── dialogHandler.ts      # Modal dialog with pure CSS-based field controls
-├── imageDetection.ts     # Detects image syntax in selected text
-├── imageSizeCalculator.ts # Gets original dimensions from Joplin resources
-├── imageSyntaxBuilder.ts # Builds new HTML/Markdown syntax
-├── constants.ts          # Regex patterns and settings keys
-└── types.ts              # TypeScript interfaces
+simple-image-resize/
+├── src/
+│   ├── index.ts               # 🎯 Main plugin entry, settings, command logic
+│   ├── dialogHandler.ts       # 🎨 Modal dialog with polished CSS controls
+│   ├── imageDetection.ts      # 🔍 Smart syntax detection (resource/external; title/alt decode)
+│   ├── imageSizeCalculator.ts # 📏 Dimension extraction via Imaging API + fallbacks
+│   ├── imageSyntaxBuilder.ts  # 🔨 Output generation (preserve/escape alt/title)
+│   ├── selectionValidation.ts # ✅ Single-image validation helpers
+│   ├── stringUtils.ts         # 🔣 Escaping/decoding helpers
+│   ├── utils.ts               # 🧰 Joplin-specific helpers (resource base64, etc.)
+│   ├── constants.ts           # ⚙️ Regex patterns and settings
+│   └── types.ts               # 📝 TypeScript interfaces
+├── tests/                     # 🧪 Jest tests (detection, builder, validation)
+├── api/                       # Joplin API definitions
+└── manifest.json              # Plugin metadata
 ```
 
 ### Key Design Decisions Made
@@ -54,21 +61,56 @@ src/
 - **Code Examples**: Styling with monospace fonts and backgrounds
 - **Responsive**: Adapts from small laptops (480px) to 4K monitors (680px+)
 
+#### 6. Editor Scope: **Markdown-only Context Menu**
+
+- **Choice**: Only offer the command in the Markdown editor by dynamically filtering the context menu.
+- **Rationale**: Avoids confusion in rich text editor contexts.
+- **Mechanics**: We probe the Markdown editor via a safe command (e.g., getCursor) inside `workspace.filterEditorContextMenu`.
+
+#### 7. Title and Alt Handling: **Preserve, Decode, and Escape**
+
+- **Preservation**: Title is round-tripped between Markdown and HTML.
+- **Decode on Input**: HTML entities in alt/title (e.g., `&quot;`, `&apos;`) are decoded when reading HTML so the dialog and Markdown show plain text.
+- **Escape on Output**:
+    - HTML attributes: escape `&`, `"`, `'` (to `&#39;`), `<`, `>`.
+    - Markdown title (inside `"..."`): escape `&`, `"`, `<`, `>`.
+- **Outcome**: Alt/title text isn’t lost; quotes and apostrophes render correctly in the dialog and output.
+
+#### 8. External Images: **http(s) URL Support**
+
+- **Detection**: Regex supports external URLs in both Markdown and HTML.
+- **Behavior**: External images are treated similarly to resources for sizing and conversion.
+
+#### 9. Image Dimensions: **Imaging API + Fallbacks**
+
+- **Primary**: Joplin Imaging API for both resources and external URLs.
+- **Fallbacks**:
+    - Resource: Convert to base64 and probe with DOM `Image` when Imaging returns 0×0/invalid (helps with certain formats like WEBP).
+    - External: Probe with DOM `Image` using `crossOrigin='anonymous'` and `referrerPolicy='no-referrer'`.
+- **Timeouts & Defaults**: External probes have longer timeouts; failed external sizing defaults to 400×300 to keep UX flowing.
+
+#### 10. Privacy
+
+- External probes avoid sending referrers and use anonymous CORS to minimize leakage.
+
 ## Technical Implementation Details
 
 ### Image Detection Logic
 
 ```typescript
-// Fixed regex state management - no global flags for single detection
-MARKDOWN_IMAGE_FULL: /!\[(?<altText>[^\]]*)\]\(:\/(?<resourceId>[a-f0-9]{32})\)/i;
-HTML_IMAGE_FULL: /<img\s+[^>]*src=["']:\/(?<resourceId>[a-f0-9]{32})["'][^>]*>/i;
+// Single-detection (no global flag). Supports resource or external URLs, escaped ')' in URLs, and optional titles.
+const MARKDOWN_IMAGE_FULL =
+    /!\[(?<altText>[^\]]*)\]\(\s*(?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/(?:\\\)|[^)\s])+))\s*(?:"(?<titleDouble>[^"]*)"|'(?<titleSingle>[^']*)')?\s*\)/i;
 
-// Multi-image detection uses global flags for counting
-function hasMultipleImages(text: string): boolean {
-    const markdownMatches = text.match(/!\[[^\]]*\]\(:\/{1,2}[a-f0-9]{32}\)/g) || [];
-    const htmlMatches = text.match(/<img\s+[^>]*src=["']:\/[a-f0-9]{32}["'][^>]*>/g) || [];
-    return markdownMatches.length + htmlMatches.length > 1;
-}
+// HTML single-detection supports resource or external src
+const HTML_IMAGE_FULL = /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i;
+
+// Attribute extraction uses quote-aware backreferences (group 2 is the attribute value)
+const IMG_ALT = /\balt\s*=\s*(["'])(.*?)\1/i;
+const IMG_TITLE = /\btitle\s*=\s*(["'])(.*?)\1/i;
+
+// Multi-image/global counting uses global variants
+const ANY_IMAGE_GLOBAL = /(?:!\[[^\]]*\]\([^)]*\))|(?:<img\s+[^>]*>)/gi;
 ```
 
 ### Dialog Field Control System
@@ -82,7 +124,7 @@ function hasMultipleImages(text: string): boolean {
 ```css
 /* Default state based on user preference */
 $ {
-    defaultresizemode==='percentage'?'absolute-size-row disabled' : 'percentage-row disabled';
+    defaultresizemode==='percentage'?'absolute-size-row disabled': 'percentage-row disabled';
 }
 
 /* Bidirectional switching support */
@@ -125,18 +167,20 @@ try {
 
 ### ✅ Core Functionality
 
-- [x] Markdown ↔ HTML image syntax conversion
+- [x] Markdown ↔ HTML image syntax conversion (preserves alt and optional title)
 - [x] Percentage-based resizing with aspect ratio preservation
 - [x] Absolute size resizing with auto-calculation when one dimension omitted
-- [x] Alt text preservation and editing
-- [x] Original image dimension detection from Joplin resources
+- [x] Alt text preservation and editing (decode entities on input; escape on output)
+- [x] Title preservation and editing (Markdown ↔ HTML)
+- [x] Original image dimension detection via Joplin Imaging API with fallbacks
+- [x] External http(s) image support
 
 ### ✅ User Experience
 
 - [x] Multi-image detection with helpful error messages
 - [x] User preference for default resize mode
 - [x] Clipboard-based workflow for safe operation
-- [x] Context menu integration
+- [x] Context menu integration (Markdown editor only)
 - [x] Professional dialog with smooth animations
 - [x] Responsive design for different screen sizes
 
@@ -145,8 +189,9 @@ try {
 - [x] TypeScript interfaces for type safety
 - [x] Proper error handling and logging
 - [x] Settings integration with Joplin preferences
-- [x] Clean separation of concerns across modules
+- [x] Clean separation of concerns across modules (detection, builder, validation, imaging, escaping)
 - [x] CSS-only field control without complex JavaScript
+- [x] Unit tests (Jest + ts-jest) for detection, builder, and validation
 
 ## Plugin Settings
 
@@ -167,8 +212,17 @@ try {
 
 ## Supported Image Formats
 
-- **Markdown**: `![alt text](:/resourceId)`
-- **HTML**: `<img src=":/resourceId" alt="alt text" width="200" height="150" />`
+- **Markdown (resource)**: `![alt](:/resourceId)`
+- **Markdown (external)**: `![alt](https://example.com/image.png "optional title")`
+- **HTML (resource)**: `<img src=":/resourceId" alt="alt" width="200" height="150" title="optional" />`
+- **HTML (external)**: `<img src="https://example.com/image.png" alt="alt" width="200" height="150" title="optional" />`
+
+Notes
+
+- Markdown URLs support escaped right-paren `)` via `%29` or a backslash escape in the regex.
+- Titles are optional and preserved when converting formats.
+- HTML alt/title values are decoded from entities (e.g., `&quot;`, `&apos;`) before showing in the dialog or emitting Markdown.
+- HTML output escapes `&`, `"`, `'` (as `&#39;`), `<`, and `>` in alt/title attributes.
 
 ## Browser/Environment Compatibility
 
@@ -208,19 +262,3 @@ try {
 - **Custom presets**: Save frequently used resize settings
 - **Keyboard shortcuts**: Quick resize options
 - **Export formats**: Additional output syntax formats (e.g. markdown with pandoc notation).
-
-## File Structure Reference
-
-```
-simple-image-resize/
-├── src/
-│   ├── index.ts              # 🎯 Main plugin entry, settings, command logic
-│   ├── dialogHandler.ts      # 🎨 Modal dialog with polished CSS controls
-│   ├── imageDetection.ts     # 🔍 Smart syntax detection with multi-image validation
-│   ├── imageSizeCalculator.ts # 📏 Dimension extraction from Joplin resources
-│   ├── imageSyntaxBuilder.ts # 🔨 Clean output generation
-│   ├── constants.ts          # ⚙️ Fixed regex patterns and settings
-│   └── types.ts              # 📝 TypeScript interfaces
-├── api/                      # Joplin API definitions
-└── manifest.json             # Plugin metadata
-```
