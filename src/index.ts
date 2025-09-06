@@ -87,8 +87,7 @@ joplin.plugins.register({
 
                     if (!partialContext) {
                         await joplin.views.dialogs.showToast({
-                            message:
-                                'No valid image syntax found. Please select ![...](:/...), ![...](https://...), or <img src="..." />',
+                            message: 'No valid image syntax found. Please select ![...](...), or <img src="..." />',
                             type: ToastType.Info,
                         });
                         return;
