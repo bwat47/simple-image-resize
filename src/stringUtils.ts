@@ -1,4 +1,4 @@
-// Joplin-free string escaping helpers for HTML and Markdown
+// String escaping helpers for HTML and Markdown
 
 // Escapes a string for safe inclusion inside a double-quoted HTML attribute value
 export function escapeHtmlAttribute(value: string): string {
