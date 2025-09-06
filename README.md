@@ -17,6 +17,8 @@ This will open a simple image resize dialogue, the following options are provide
 
 You can switch the image syntax between markdown (`![alt text](:/resourceId)`) and HTML (`<img src=":/resourceId" alt="alt text" width="315" height="238" />`).
 
+External URLs are also supported (`![alt text](https://example.com/image.png)` and `<img src="https://example.com/image.png" alt="alt text" width="315" height="238 />`).
+
 HTML Syntax is selected by default (and resizing is only supported using HTML syntax). You can switch to markdown syntax if you want to revert the image to a standard markdown image embed without a custom size.
 
 ### Resize Image
