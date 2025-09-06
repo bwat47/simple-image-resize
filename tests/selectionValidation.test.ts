@@ -32,6 +32,12 @@ describe('selection validation helpers', () => {
         test('true for exactly one html image (trim whitespace/newlines)', () => {
             expect(selectionHasOnlySingleImage(`\n${htmlImg1}\n`)).toBe(true);
         });
+        test('true for markdown image with optional title', () => {
+            expect(selectionHasOnlySingleImage('![Alt](https://example.com/pic.png "Title")')).toBe(true);
+        });
+        test('true for markdown image with escaped ) in URL', () => {
+            expect(selectionHasOnlySingleImage('![Alt](https://example.com/pic_%29.png)')).toBe(true);
+        });
         test('false when extra non-whitespace text present with image', () => {
             expect(selectionHasOnlySingleImage(`${mdImg1} trailing`)).toBe(false);
         });

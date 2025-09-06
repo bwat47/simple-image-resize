@@ -42,6 +42,23 @@ describe('detectImageSyntax', () => {
         expect(ctx!.altText).toBe('X');
     });
 
+    test('detects markdown image with escaped ) in URL', () => {
+        const sel = '![Alt](https://example.com/img_%29_final.png)';
+        const ctx = detectImageSyntax(sel);
+        expect(ctx).not.toBeNull();
+        expect(ctx!.type).toBe('markdown');
+        expect(ctx!.source).toBe('https://example.com/img_%29_final.png');
+    });
+
+    test('detects markdown image with optional title', () => {
+        const sel = '![Alt](https://example.com/picture.png "Title here")';
+        const ctx = detectImageSyntax(sel);
+        expect(ctx).not.toBeNull();
+        expect(ctx!.type).toBe('markdown');
+        expect(ctx!.source).toBe('https://example.com/picture.png');
+        expect(ctx!.altText).toBe('Alt');
+    });
+
     test('returns null for non-image text', () => {
         expect(detectImageSyntax('Some text without image')).toBeNull();
     });
