@@ -1,4 +1,3 @@
-// src/index.ts - Enhanced version
 import joplin from 'api';
 import { ToastType, SettingItemType, MenuItemLocation } from 'api/types';
 import { buildNewSyntax } from './imageSyntaxBuilder';
