@@ -6,8 +6,8 @@ import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
 import { hasMultipleImages, selectionHasOnlySingleImage, containsAnyImage } from './selectionValidation';
-import { detectImageAtCursor, isOnImageInMarkdownEditor, EditorRange } from './cursorDetection';
-import { ImageContext } from './types';
+import { detectImageAtCursor, isOnImageInMarkdownEditor } from './cursorDetection';
+import { ImageContext, EditorRange } from './types';
 import { CONSTANTS } from './constants';
 
 joplin.plugins.register({

@@ -1,17 +1,7 @@
 import joplin from 'api';
 import { REGEX_PATTERNS } from './constants';
 import { detectImageSyntax } from './imageDetection';
-import { ImageContext } from './types';
-
-export interface EditorPosition {
-    line: number;
-    ch: number;
-}
-
-export interface EditorRange {
-    from: EditorPosition;
-    to: EditorPosition;
-}
+import { ImageContext, EditorPosition, EditorRange } from './types';
 
 export interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions'>;

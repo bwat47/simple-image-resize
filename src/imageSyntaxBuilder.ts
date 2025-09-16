@@ -1,8 +1,6 @@
 import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle } from './stringUtils';
 
-// This module no longer modifies the editor directly; it just returns the string to place on the clipboard.
-
 // Extracts trailing whitespace (including newlines) from a string.
 function getTrailingWhitespace(text: string): string {
     const match = text.match(/(\s*)$/);
