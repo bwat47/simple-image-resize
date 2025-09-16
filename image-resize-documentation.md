@@ -28,11 +28,11 @@ simple-image-resize/
 
 ### Key Design Decisions Made
 
-#### 1. User Experience Pattern: **Clipboard-Based Workflow**
+#### 1. User Experience Pattern: **Direct Replacement Workflow**
 
-- **Choice**: Copy resized syntax to clipboard rather than direct editor replacement
-- **Rationale**: Avoids race conditions, gives users control, safer approach
-- **User Flow**: Select image → Run command → Dialog opens → Configure → New syntax copied to clipboard → Paste to replace
+- **Choice**: Replace the image embed in the editor automatically instead of round-tripping through the clipboard
+- **Rationale**: Removes an extra paste step, ensures the selection/cursor position stays intact, and mirrors user expectations for context-menu commands
+- **User Flow**: Place the cursor anywhere within an image (or select the full embed) → Run command → Dialog opens → Configure → Plugin replaces the image syntax in place and shows a success toast
 
 #### 2. Dialog Implementation: **Pure CSS + Minimal JavaScript**
 
@@ -113,6 +113,13 @@ const IMG_TITLE = /\btitle\s*=\s*(["'])(.*?)\1/i;
 const ANY_IMAGE_GLOBAL = /(?:!\[[^\]]*\]\([^)]*\))|(?:<img\s+[^>]*>)/gi;
 ```
 
+### Cursor-Based Detection & Replacement
+
+- `detectImageAtCursor` queries the Markdown editor for the current cursor location and scans the active line for Markdown or HTML image embeds.
+- When the cursor sits within a detected embed, the function returns both the partial image context (without dimensions) and the exact editor range to replace.
+- `isOnImageInMarkdownEditor` reuses this detection to decide whether to surface the "Resize Image" command in the context menu, keeping the option limited to relevant scenarios.
+- The main command prefers a validated selection but falls back to the cursor detection, so users can simply right-click inside an image embed without preselecting it.
+
 ### Dialog Field Control System
 
 - **Hidden CSS Control Radios**: Use different names (`cssResizeMode`, `cssTargetSyntax`) for CSS targeting
@@ -146,16 +153,32 @@ $ {
 ```typescript
 try {
     const defaultResizeMode = await joplin.settings.value('imageResize.defaultResizeMode');
-    const originalDimensions = await getOriginalImageDimensions(partialContext.resourceId);
-    // ... process dialog
-    await joplin.clipboard.writeText(newSyntax);
-    await joplin.views.dialogs.showToast({
-        message: 'Resized image syntax copied to clipboard! Paste to replace the original.',
-        type: ToastType.Success,
-    });
-} catch (err) {
-    console.error('[Image Resize] Error:', err);
-    const message = err?.message || 'Unknown error occurred';
+    const fullContext: ImageContext = { ...partialContext, originalDimensions };
+    const result = await showResizeDialog(fullContext, defaultResizeMode);
+
+    if (result) {
+        const newSyntax = buildNewSyntax(fullContext, result);
+
+        if (useSelection) {
+            await joplin.commands.execute('editor.execCommand', {
+                name: 'replaceSelection',
+                args: [newSyntax],
+            });
+        } else if (replacementRange) {
+            await joplin.commands.execute('editor.execCommand', {
+                name: 'replaceRange',
+                args: [newSyntax, replacementRange.from, replacementRange.to],
+            });
+        }
+
+        await joplin.views.dialogs.showToast({
+            message: 'Image resized successfully!',
+            type: ToastType.Success,
+        });
+    }
+} catch (error) {
+    console.error('[Image Resize] Error:', error);
+    const message = error?.message || 'Unknown error occurred';
     await joplin.views.dialogs.showToast({
         message: `Operation failed: ${message}`,
         type: ToastType.Error,
@@ -179,7 +202,7 @@ try {
 
 - [x] Multi-image detection with helpful error messages
 - [x] User preference for default resize mode
-- [x] Clipboard-based workflow for safe operation
+- [x] Direct in-editor replacement with optional selection or cursor fallback
 - [x] Context menu integration (Markdown editor only)
 - [x] Professional dialog with smooth animations
 - [x] Responsive design for different screen sizes
@@ -201,14 +224,13 @@ try {
 
 ## Usage Instructions
 
-1. **Select image syntax** in the Joplin editor (Markdown or HTML format)
+1. **Place the cursor inside an image embed** (or select the full syntax) in the Markdown editor
 2. **Right-click** and choose "Resize Image" or use the command palette
 3. **Configure resize options**:
     - Choose output syntax (HTML supports resizing, Markdown original size only)
     - Select resize mode (Percentage or Absolute size)
     - Adjust alt text if needed
-4. **Click OK** - New syntax is copied to clipboard
-5. **Paste** to replace the original image syntax
+4. **Click OK** - Plugin replaces the image embed in the editor
 
 ## Supported Image Formats
 

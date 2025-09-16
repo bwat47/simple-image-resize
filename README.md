@@ -9,7 +9,9 @@ A Joplin plugin that provides a simple dialogue to switch image syntax between m
 
 ## How to use
 
-In the markdown editor, highlight the text for an image embed, and then right click | Resize Image.
+In the markdown editor, right click anywhere inside a markdown or HTML image embed and select "Resize Image".
+
+Alternately, you can highlight the entire image embed and select Edit | Resize Image (or use the keyboard shortcut is bound).
 
 This will open a simple image resize dialogue, the following options are provided.
 
@@ -25,7 +27,7 @@ HTML Syntax is selected by default (and resizing is only supported using HTML sy
 
 With image syntax set to HTML, you can resize the image by Percentage (default) or Absolute size.
 
-Enter the desired image size (in percentage or pixels) and click OK, and the plugin will populate the clipboard with the new image syntax (HTML syntax with the specified width/height). You can then paste to overwrite the original image embed with the new one.
+Enter the desired image size (in percentage or pixels) and click OK, and the plugin will automatically update the image embed with the new image syntax.
 
 > [!note]
 > When using absolute size, populating one of the dimensions and leaving the other blank will automatically maintain aspect ratio.
@@ -33,8 +35,3 @@ Enter the desired image size (in percentage or pixels) and click OK, and the plu
 ### Settings
 
 You can choose if the default resize mode is Percentage or Absolute in the plugin settings (default is Percentage).
-
-### Other notes
-
-- The plugin only works if it finds a complete image embed in the highlighted text.
-- The plugin will not work if more than one image embed is found in the highlighted text (you will see a toast message that multiple images are selected).
