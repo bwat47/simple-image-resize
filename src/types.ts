@@ -1,4 +1,3 @@
-// In types.ts
 export interface ImageDimensions {
     width: number;
     height: number;
@@ -25,4 +24,15 @@ export interface ResizeDialogResult {
     percentage?: number;
     absoluteWidth?: number;
     absoluteHeight?: number;
+}
+
+// New types for cursor-based detection
+export interface EditorPosition {
+    line: number;
+    ch: number;
+}
+
+export interface EditorRange {
+    from: EditorPosition;
+    to: EditorPosition;
 }

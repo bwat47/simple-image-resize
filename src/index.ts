@@ -1,3 +1,4 @@
+// src/index.ts - Enhanced version
 import joplin from 'api';
 import { ToastType, SettingItemType, MenuItemLocation } from 'api/types';
 import { buildNewSyntax } from './imageSyntaxBuilder';
@@ -5,6 +6,8 @@ import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
 import { hasMultipleImages, selectionHasOnlySingleImage, containsAnyImage } from './selectionValidation';
+import { detectImageAtCursor, isOnImageInMarkdownEditor, EditorRange } from './cursorDetection';
+import { ImageContext } from './types';
 import { CONSTANTS } from './constants';
 
 joplin.plugins.register({
@@ -31,74 +34,71 @@ joplin.plugins.register({
             },
         });
 
-        // Register the command
+        // Enhanced resize command with intelligent detection
         await joplin.commands.register({
             name: 'resizeImage',
             label: 'Resize Image',
             iconName: 'fas fa-expand-alt',
             execute: async () => {
                 try {
-                    // Safely attempt to get selection (only valid in Markdown editor)
-                    let selectedText: string | null = null;
+                    let partialContext: Omit<ImageContext, 'originalDimensions'> | null = null;
+                    let replacementRange: EditorRange | null = null;
+                    let useSelection = false;
+
+                    // Strategy 1: Check if user has selected a single valid image
                     try {
-                        selectedText = await joplin.commands.execute('editor.execCommand', { name: 'getSelection' });
+                        const selectedText = (await joplin.commands.execute('editor.execCommand', {
+                            name: 'getSelection',
+                        })) as string;
+
+                        if (selectedText && selectedText.trim()) {
+                            if (hasMultipleImages(selectedText)) {
+                                await joplin.views.dialogs.showToast({
+                                    message:
+                                        'Multiple images found in selection. Please select a single image or place cursor inside one.',
+                                    type: ToastType.Info,
+                                });
+                                return;
+                            }
+
+                            if (selectionHasOnlySingleImage(selectedText)) {
+                                partialContext = detectImageSyntax(selectedText);
+                                if (partialContext) {
+                                    useSelection = true;
+                                }
+                            } else if (containsAnyImage(selectedText)) {
+                                await joplin.views.dialogs.showToast({
+                                    message: 'Please select only the image syntax, or place cursor inside the image.',
+                                    type: ToastType.Info,
+                                });
+                                return;
+                            }
+                        }
                     } catch {
-                        // Swallow; will handle below
+                        // Selection failed, fall back to cursor detection
                     }
 
-                    if (typeof selectedText !== 'string') {
-                        await joplin.views.dialogs.showToast({
-                            message:
-                                'Image Resize: This command only works in the Markdown editor. Switch to Markdown editor and select an image.',
-                            type: ToastType.Info,
-                        });
-                        return;
-                    }
-
-                    if (!selectedText.trim()) {
-                        await joplin.views.dialogs.showToast({
-                            message: 'Please select an image to resize.',
-                            type: ToastType.Info,
-                        });
-                        return;
-                    }
-
-                    // Check for multiple images for better UX
-                    if (hasMultipleImages(selectedText)) {
-                        await joplin.views.dialogs.showToast({
-                            message: 'Multiple images found in selection. Please select a single image.',
-                            type: ToastType.Info,
-                        });
-                        return;
-                    }
-
-                    // If selection has a single image but also other non-whitespace characters, ask user to isolate it
-                    if (!hasMultipleImages(selectedText) && !selectionHasOnlySingleImage(selectedText)) {
-                        if (containsAnyImage(selectedText)) {
-                            await joplin.views.dialogs.showToast({
-                                message: 'Please select only the image syntax (no extra text).',
-                                type: ToastType.Info,
-                            });
-                            return;
+                    // Strategy 2: No valid selection, try cursor detection
+                    if (!partialContext) {
+                        const cursorDetection = await detectImageAtCursor();
+                        if (cursorDetection) {
+                            partialContext = cursorDetection.context;
+                            replacementRange = cursorDetection.range;
                         }
                     }
 
-                    const partialContext = detectImageSyntax(selectedText);
-
+                    // Strategy 3: No valid image found
                     if (!partialContext) {
                         await joplin.views.dialogs.showToast({
-                            message: 'No valid image syntax found. Please select ![...](...), or <img src="..." />',
+                            message: 'No valid image found. Place cursor inside an image or select an image syntax.',
                             type: ToastType.Info,
                         });
                         return;
                     }
 
-                    // Show brief loading feedback for dimension calculation
-                    console.log(
-                        `[Image Resize] Loading dimensions for ${partialContext.sourceType}: ${partialContext.source}`
-                    );
+                    // Get original dimensions
+                    console.log(`[Image Resize] Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
-                    // Try to get original dimensions with fallback for external images
                     let originalDimensions;
                     try {
                         originalDimensions = await getOriginalImageDimensions(
@@ -106,47 +106,47 @@ joplin.plugins.register({
                             partialContext.sourceType
                         );
                     } catch (err) {
-                        console.warn(
-                            `[Image Resize] Could not get dimensions for ${partialContext.sourceType} ${partialContext.source}, using defaults:`,
-                            err
-                        );
+                        console.warn(`[Image Resize] Dimension fetch failed:`, err);
 
                         if (partialContext.sourceType === 'external') {
-                            // Use fallback dimensions for external images
                             originalDimensions = {
                                 width: CONSTANTS.DEFAULT_EXTERNAL_WIDTH,
                                 height: CONSTANTS.DEFAULT_EXTERNAL_HEIGHT,
                             };
-
                             await joplin.views.dialogs.showToast({
-                                message: `Could not load external image dimensions. Using default size (${CONSTANTS.DEFAULT_EXTERNAL_WIDTH}×${CONSTANTS.DEFAULT_EXTERNAL_HEIGHT}).`,
+                                message: `Using default dimensions for external image (${CONSTANTS.DEFAULT_EXTERNAL_WIDTH}×${CONSTANTS.DEFAULT_EXTERNAL_HEIGHT}).`,
                                 type: ToastType.Info,
                             });
                         } else {
-                            // For Joplin resources, this is a more serious error
                             throw err;
                         }
                     }
 
-                    // Get user's default resize mode preference
+                    // Show dialog
                     const defaultResizeMode = (await joplin.settings.value('imageResize.defaultResizeMode')) as
                         | 'percentage'
                         | 'absolute';
-
-                    const result = await showResizeDialog(
-                        {
-                            ...partialContext,
-                            originalDimensions,
-                        },
-                        defaultResizeMode
-                    );
+                    const fullContext: ImageContext = { ...partialContext, originalDimensions };
+                    const result = await showResizeDialog(fullContext, defaultResizeMode);
 
                     if (result) {
-                        const newSyntax = buildNewSyntax({ ...partialContext, originalDimensions }, result);
-                        await joplin.clipboard.writeText(newSyntax);
+                        const newSyntax = buildNewSyntax(fullContext, result);
+
+                        // Automatic replacement instead of clipboard
+                        if (useSelection) {
+                            await joplin.commands.execute('editor.execCommand', {
+                                name: 'replaceSelection',
+                                args: [newSyntax],
+                            });
+                        } else if (replacementRange) {
+                            await joplin.commands.execute('editor.execCommand', {
+                                name: 'replaceRange',
+                                args: [newSyntax, replacementRange.from, replacementRange.to],
+                            });
+                        }
 
                         await joplin.views.dialogs.showToast({
-                            message: 'Resized image syntax copied to clipboard! Paste to replace the original.',
+                            message: 'Image resized successfully!',
                             type: ToastType.Success,
                         });
                     }
@@ -161,36 +161,15 @@ joplin.plugins.register({
             },
         });
 
-        // Register keyboard shortcut for Image Resize (Edit menu as fallback)
-        await joplin.views.menuItems.create('imageResizeContextMenuItem', 'resizeImage', MenuItemLocation.Edit);
+        // Keep fallback menu item in Edit menu
+        await joplin.views.menuItems.create('imageResizeMenuItem', 'resizeImage', MenuItemLocation.Edit);
 
-        // Filter context menu to dynamically add our command only in markdown editor
+        // Enhanced context menu with intelligent showing
         joplin.workspace.filterEditorContextMenu(async (contextMenu) => {
-            // Debug: log what we see in the context menu
-            console.log(
-                '[simple-image-resize] Context menu items:',
-                contextMenu.items.map((item) => item.commandName)
-            );
+            // Only show resize option when cursor is on an image in markdown editor
+            const shouldShowResize = await isOnImageInMarkdownEditor();
 
-            // Simple approach: try to execute a markdown-specific command
-            // If it succeeds, we're in the markdown editor
-            let isMarkdownEditor = false;
-            try {
-                // Try to get the cursor position - this should only work in markdown editor
-                await joplin.commands.execute('editor.execCommand', {
-                    name: 'getCursor',
-                });
-                isMarkdownEditor = true;
-                console.log('[simple-image-resize] Detected markdown editor - adding context menu item');
-            } catch {
-                // If getCursor fails, we're likely in rich text editor
-                isMarkdownEditor = false;
-                console.log('[simple-image-resize] Detected rich text editor - not adding context menu item');
-            }
-
-            // Only add our command to the context menu if we're in markdown editor
-            if (isMarkdownEditor) {
-                // Check if our command is already in the menu to avoid duplicates
+            if (shouldShowResize) {
                 const hasResizeCommand = contextMenu.items.some((item) => item.commandName === 'resizeImage');
 
                 if (!hasResizeCommand) {
@@ -198,9 +177,8 @@ joplin.plugins.register({
                         commandName: 'resizeImage',
                         label: 'Resize Image',
                     });
+                    console.log('[Image Resize] Added context menu item - cursor on image');
                 }
-
-                console.log('[simple-image-resize] Added context menu item, total:', contextMenu.items.length);
             }
 
             return contextMenu;
