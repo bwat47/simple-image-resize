@@ -105,8 +105,8 @@ joplin.plugins.register({
                             partialContext.source,
                             partialContext.sourceType
                         );
-                    } catch (err) {
-                        console.warn(`[Image Resize] Dimension fetch failed:`, err);
+                    } catch (error) {
+                        console.warn(`[Image Resize] Dimension fetch failed:`, error);
 
                         if (partialContext.sourceType === 'external') {
                             originalDimensions = {
@@ -118,7 +118,7 @@ joplin.plugins.register({
                                 type: ToastType.Info,
                             });
                         } else {
-                            throw err;
+                            throw error;
                         }
                     }
 

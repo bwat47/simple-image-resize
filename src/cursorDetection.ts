@@ -16,9 +16,11 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
     try {
         const cursor = (await joplin.commands.execute('editor.execCommand', {
             name: 'getCursor',
-        })) as EditorPosition;
+        })) as EditorPosition | null;
 
-        if (!cursor) return null;
+        if (!cursor || typeof cursor.line !== 'number' || typeof cursor.ch !== 'number') {
+            return null;
+        }
 
         const lineText = (await joplin.commands.execute('editor.execCommand', {
             name: 'getLine',
