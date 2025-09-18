@@ -1,4 +1,3 @@
-// In constants.ts
 export const REGEX_PATTERNS = {
     // ![alt text](:/32charresourceid ["title"]) OR ![alt text](https://... ["title"]) with escaped ) allowed in URL
     // URL part allows escaped right-paren: ")" via (?:\\\)|[^)])+
