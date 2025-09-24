@@ -1,286 +1,119 @@
-# Simple Image Resize Plugin - Implementation Documentation
+# simple-image-resize – Architecture (Concise)
 
-A Joplin plugin that provides a simple dialog interface for switching between image syntax formats (Markdown ↔ HTML) and resizing images by adjusting width/height attributes.
+Goal: Markdown ↔ HTML image syntax conversion and lossless image resizing in Joplin with direct, in-editor replacement of the image embed.
 
-## Current Implementation Overview
+## Flow Overview
 
-### Architecture Summary
+1. Acquire input: prefer validated selection; else detect image at cursor (same line scan) and compute replace range.
+2. Detect syntax: parse Markdown or HTML image (resource or external); extract alt/title; build `ImageContext`.
+3. Determine dimensions: query Joplin Imaging API; fall back to DOM `Image` probes when needed (resource base64 / external with CORS safeguards). Apply timeouts and defaults.
+4. Show dialog: CSS-driven UI with minimal JS sync; default resize mode from settings. User chooses target syntax + resize mode + values + alt/title.
+5. Emit + replace: build new syntax (escape/encode consistently) and replace selection or range; toast on success.
 
-The plugin uses a **Command + Modal Dialog** pattern with the following key components:
+## Core Modules (src/)
 
-```
-simple-image-resize/
-├── src/
-│   ├── index.ts               # 🎯 Main plugin entry, settings, command logic
-│   ├── dialogHandler.ts       # 🎨 Modal dialog with polished CSS controls
-│   ├── imageDetection.ts      # 🔍 Smart syntax detection (resource/external; title/alt decode)
-│   ├── imageSizeCalculator.ts # 📏 Dimension extraction via Imaging API + fallbacks
-│   ├── imageSyntaxBuilder.ts  # 🔨 Output generation (preserve/escape alt/title)
-│   ├── selectionValidation.ts # ✅ Single-image validation helpers
-│   ├── stringUtils.ts         # 🔣 Escaping/decoding helpers
-│   ├── utils.ts               # 🧰 Joplin-specific helpers (resource base64, etc.)
-│   ├── constants.ts           # ⚙️ Regex patterns and settings
-│   └── types.ts               # 📝 TypeScript interfaces
-├── tests/                     # 🧪 Jest tests (detection, builder, validation)
-├── api/                       # Joplin API definitions
-└── manifest.json              # Plugin metadata
-```
+- `index.ts` — Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
+- `dialogHandler.ts` — Modal dialog HTML/CSS/JS; radio-based CSS state control; collects result.
+- `imageDetection.ts` — Detects Markdown/HTML image, extracts alt/title, resourceId/url, computes editor range; cursor-based detection.
+- `imageSizeCalculator.ts` — Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
+- `imageSyntaxBuilder.ts` — Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
+- `selectionValidation.ts` — Ensures exactly one image; friendly messages for empty/multiple/invalid selections.
+- `stringUtils.ts` — Decode HTML entities on input; escape for HTML attributes and Markdown title.
+- `utils.ts` — Joplin helpers (resource base64, command wrappers, toasts).
+- `constants.ts` — Regex patterns, timeouts, setting keys, small helpers.
+- `types.ts` — Strong types for contexts, options, dialog result, dimensions.
 
-### Key Design Decisions Made
+## Detection Rules (essentials)
 
-#### 1. User Experience Pattern: **Direct Replacement Workflow**
-
-- **Choice**: Replace the image embed in the editor automatically instead of round-tripping through the clipboard
-- **Rationale**: Removes an extra paste step, ensures the selection/cursor position stays intact, and mirrors user expectations for context-menu commands
-- **User Flow**: Place the cursor anywhere within an image (or select the full embed) → Run command → Dialog opens → Configure → Plugin replaces the image syntax in place and shows a success toast
-
-#### 2. Dialog Implementation: **Pure CSS + Minimal JavaScript**
-
-- **Choice**: CSS-only field disable/enable logic with simple JavaScript synchronization
-- **Avoided**: Complex CodeMirror extensions, heavy JavaScript state management
-- **Benefits**: Reliable, works in Joplin's dialog environment, smooth transitions
-
-#### 3. Multi-Image Detection: **Smart Input Validation**
-
-- **Implementation**: Detects multiple images in selection and provides clear error messages
-- **User Messages**:
-    - Empty selection: "Please select an image syntax to resize."
-    - Multiple images: "Multiple images found. Please select a single image syntax."
-    - Invalid syntax: "No valid image syntax found. Please select ![...](:/...) or <img src=":/..." ...>"
-
-#### 4. Settings Integration: **Default Resize Mode Preference**
-
-- **Setting**: "Default resize mode" (Percentage/Absolute size)
-- **Location**: Joplin Settings → Plugins → Simple Image Resize
-- **Behavior**: Dialog opens with user's preferred mode pre-selected
-
-#### 5. Visual Design: **Polished CSS with Smooth Transitions**
-
-- **Animations**: 200ms ease transitions for opacity and background changes
-- **Accessibility**: Proper cursor states (pointer, not-allowed, text)
-- **Code Examples**: Styling with monospace fonts and backgrounds
-- **Responsive**: Adapts from small laptops (480px) to 4K monitors (680px+)
-
-#### 6. Editor Scope: **Markdown-only Context Menu**
-
-- **Choice**: Only offer the command in the Markdown editor by dynamically filtering the context menu.
-- **Rationale**: Avoids confusion in rich text editor contexts.
-- **Mechanics**: We probe the Markdown editor via a safe command (e.g., getCursor) inside `workspace.filterEditorContextMenu`.
-
-#### 7. Title and Alt Handling: **Preserve, Decode, and Escape**
-
-- **Preservation**: Title is round-tripped between Markdown and HTML.
-- **Decode on Input**: HTML entities in alt/title (e.g., `&quot;`, `&apos;`) are decoded when reading HTML so the dialog and Markdown show plain text.
-- **Escape on Output**:
-    - HTML attributes: escape `&`, `"`, `'` (to `&#39;`), `<`, `>`.
-    - Markdown title (inside `"..."`): escape `&`, `"`, `<`, `>`.
-- **Outcome**: Alt/title text isn’t lost; quotes and apostrophes render correctly in the dialog and output.
-
-#### 8. External Images: **http(s) URL Support**
-
-- **Detection**: Regex supports external URLs in both Markdown and HTML.
-- **Behavior**: External images are treated similarly to resources for sizing and conversion.
-
-#### 9. Image Dimensions: **Imaging API + Fallbacks**
-
-- **Primary**: Joplin Imaging API for both resources and external URLs.
-- **Fallbacks**:
-    - Resource: Convert to base64 and probe with DOM `Image` when Imaging returns 0×0/invalid (helps with certain formats like WEBP).
-    - External: Probe with DOM `Image` using `crossOrigin='anonymous'` and `referrerPolicy='no-referrer'`.
-- **Timeouts & Defaults**: External probes have longer timeouts; failed external sizing defaults to 400×300 to keep UX flowing.
-
-#### 10. Privacy
-
-- External probes avoid sending referrers and use anonymous CORS to minimize leakage.
-
-## Technical Implementation Details
-
-### Image Detection Logic
-
-```typescript
-// Single-detection (no global flag). Supports resource or external URLs, escaped ')' in URLs, and optional titles.
+```ts
+// Markdown (single; resource or external; optional title)
 const MARKDOWN_IMAGE_FULL =
     /!\[(?<altText>[^\]]*)\]\(\s*(?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/(?:\\\)|[^)\s])+))\s*(?:"(?<titleDouble>[^"]*)"|'(?<titleSingle>[^']*)')?\s*\)/i;
 
-// HTML single-detection supports resource or external src
+// HTML <img> (single; resource or external)
 const HTML_IMAGE_FULL = /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i;
 
-// Attribute extraction uses quote-aware backreferences (group 2 is the attribute value)
+// Attribute extraction
 const IMG_ALT = /\balt\s*=\s*(["'])(.*?)\1/i;
 const IMG_TITLE = /\btitle\s*=\s*(["'])(.*?)\1/i;
 
-// Multi-image/global counting uses global variants
+// Multi-image/global count
 const ANY_IMAGE_GLOBAL = /(?:!\[[^\]]*\]\([^)]*\))|(?:<img\s+[^>]*>)/gi;
 ```
 
-### Cursor-Based Detection & Replacement
+Notes:
 
-- `detectImageAtCursor` queries the Markdown editor for the current cursor location and scans the active line for Markdown or HTML image embeds.
-- When the cursor sits within a detected embed, the function returns both the partial image context (without dimensions) and the exact editor range to replace.
-- `isOnImageInMarkdownEditor` reuses this detection to decide whether to surface the "Resize Image" command in the context menu, keeping the option limited to relevant scenarios.
-- The main command prefers a validated selection but falls back to the cursor detection, so users can simply right-click inside an image embed without preselecting it.
+- Markdown URL supports escaped `)` via `%29` or backslash.
+- Titles are optional; preserved across conversions.
 
-### Dialog Field Control System
+## Cursor/Selection Logic
 
-- **Hidden CSS Control Radios**: Use different names (`cssResizeMode`, `cssTargetSyntax`) for CSS targeting
-- **Visible Form Radios**: Use standard names (`resizeMode`, `targetSyntax`) for form submission
-- **JavaScript Sync**: Simple `onchange` handlers sync hidden controls for CSS styling
+- `detectImageAtCursor` scans the current line; if cursor lies within a detected embed, returns partial context + `{ from, to }` range.
+- `isOnImageInMarkdownEditor` gates the context menu: a safe `editor.execCommand` probe (e.g., `getCursor`) determines Markdown editor scope.
+- Command prefers validated selection; otherwise uses cursor detection to avoid requiring preselection.
 
-### CSS State Management
+## Resizing & Emission
 
-```css
-/* Default state based on user preference */
-$ {
-    defaultresizemode==='percentage'?'absolute-size-row disabled': 'percentage-row disabled';
-}
+- Resize modes:
+    - Percentage: preserve aspect ratio; compute width/height from original.
+    - Absolute: width/height; auto-calc the missing dimension.
+- Markdown output: original size only (resize controls disabled when targeting Markdown).
+- HTML output: include `width` and `height` attributes when resizing.
 
-/* Bidirectional switching support */
-#modePercent:checked ~ .resize-fieldset .percentage-row {
-    /* enabled */
-}
-#modeAbsolute:checked ~ .resize-fieldset .absolute-size-row {
-    /* enabled */
-}
+## Alt/Title Handling (Round-trip)
 
-/* Markdown mode disables entire resize section */
-#syntaxMarkdown:checked ~ form .resize-fieldset {
-    /* disabled */
-}
-```
+- Input: decode entities from HTML (`&quot;`, `&apos;`, `&amp;`, etc.) so dialog shows plain text.
+- Output escaping:
+    - HTML attributes: escape `&`, `"`, `'` (as `&#39;`), `<`, `>`.
+    - Markdown title (within quotes): escape `&`, `"`, `<`, `>`.
 
-### Error Handling & User Feedback
+## Settings
 
-```typescript
-try {
-    const defaultResizeMode = await joplin.settings.value('imageResize.defaultResizeMode');
-    const fullContext: ImageContext = { ...partialContext, originalDimensions };
-    const result = await showResizeDialog(fullContext, defaultResizeMode);
+- `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` — used to preselect dialog mode.
 
-    if (result) {
-        const newSyntax = buildNewSyntax(fullContext, result);
+## Editor Integration
 
-        if (useSelection) {
-            await joplin.commands.execute('editor.execCommand', {
-                name: 'replaceSelection',
-                args: [newSyntax],
-            });
-        } else if (replacementRange) {
-            await joplin.commands.execute('editor.execCommand', {
-                name: 'replaceRange',
-                args: [newSyntax, replacementRange.from, replacementRange.to],
-            });
-        }
+- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` + safe probe; avoids showing in rich text editor.
+- Replacement uses `editor.execCommand`:
+    - `replaceSelection(newSyntax)` when selection is valid.
+    - `replaceRange(newSyntax, from, to)` when using cursor-based detection.
 
-        await joplin.views.dialogs.showToast({
-            message: 'Image resized successfully!',
-            type: ToastType.Success,
-        });
-    }
-} catch (error) {
-    console.error('[Image Resize] Error:', error);
-    const message = error?.message || 'Unknown error occurred';
-    await joplin.views.dialogs.showToast({
-        message: `Operation failed: ${message}`,
-        type: ToastType.Error,
-    });
-}
-```
+## Errors & UX
 
-## Features Implemented
+- Validation messages:
+    - Empty selection: “Please select an image syntax to resize.”
+    - Multiple images: “Multiple images found. Please select a single image syntax.”
+    - Invalid syntax: “No valid image syntax found. Please select ![...](:/...) or <img src=":/..." ...>”.
+- Try/catch around command execution with `[Image Resize]` error logs and user toasts (success/error).
 
-### ✅ Core Functionality
+## Performance & Privacy
 
-- [x] Markdown ↔ HTML image syntax conversion (preserves alt and optional title)
-- [x] Percentage-based resizing with aspect ratio preservation
-- [x] Absolute size resizing with auto-calculation when one dimension omitted
-- [x] Alt text preservation and editing (decode entities on input; escape on output)
-- [x] Title preservation and editing (Markdown ↔ HTML)
-- [x] Original image dimension detection via Joplin Imaging API with fallbacks
-- [x] External http(s) image support
+- Timeouts for image probes; external probe defaults applied on failure (e.g., 400×300) to keep UX responsive.
+- Resource fallback: base64 + DOM Image when Imaging API reports 0×0 (e.g., WEBP).
+- External fallback: DOM Image with `crossOrigin='anonymous'` and `referrerPolicy='no-referrer'` to minimize leakage.
+- Lightweight dialog (CSS transitions; minimal JS), avoids heavy editor integrations.
 
-### ✅ User Experience
+## Testing Focus (Jest)
 
-- [x] Multi-image detection with helpful error messages
-- [x] User preference for default resize mode
-- [x] Direct in-editor replacement with optional selection or cursor fallback
-- [x] Context menu integration (Markdown editor only)
-- [x] Professional dialog with smooth animations
-- [x] Responsive design for different screen sizes
+- `imageDetection` — Markdown/HTML detection, resource vs external, titles, escaped `)`.
+- `imageSyntaxBuilder` — Markdown↔HTML conversion, alt/title escaping/decoding, width/height emission.
+- `selectionValidation` — single-image enforcement and messages.
 
-### ✅ Technical Quality
+## Non-Goals / Exclusions
 
-- [x] TypeScript interfaces for type safety
-- [x] Proper error handling and logging
-- [x] Settings integration with Joplin preferences
-- [x] Clean separation of concerns across modules (detection, builder, validation, imaging, escaping)
-- [x] CSS-only field control without complex JavaScript
-- [x] Unit tests (Jest + ts-jest) for detection, builder, and validation
+- No batch processing (single image per operation).
+- No inline preview in dialog.
+- Markdown syntax does not support explicit width/height (by design of this plugin).
+- Mobile not tested.
 
-## Plugin Settings
+## Future Ideas
 
-| Setting                 | Default    | Description                                                               |
-| ----------------------- | ---------- | ------------------------------------------------------------------------- |
-| **Default resize mode** | Percentage | Controls which resize mode is selected by default when opening the dialog |
+- Batch processing across a selection.
+- Inline thumbnail preview.
+- Presets (e.g., 25/50/75/100%).
+- Keyboard shortcuts for quick resize.
+- Additional output formats (e.g., Pandoc-style Markdown width hints).
 
-## Usage Instructions
+## Summary
 
-1. **Place the cursor inside an image embed** (or select the full syntax) in the Markdown editor
-2. **Right-click** and choose "Resize Image" or use the command palette
-3. **Configure resize options**:
-    - Choose output syntax (HTML supports resizing, Markdown original size only)
-    - Select resize mode (Percentage or Absolute size)
-    - Adjust alt text if needed
-4. **Click OK** - Plugin replaces the image embed in the editor
-
-## Supported Image Formats
-
-- **Markdown (resource)**: `![alt](:/resourceId)`
-- **Markdown (external)**: `![alt](https://example.com/image.png "optional title")`
-- **HTML (resource)**: `<img src=":/resourceId" alt="alt" width="200" height="150" title="optional" />`
-- **HTML (external)**: `<img src="https://example.com/image.png" alt="alt" width="200" height="150" title="optional" />`
-
-Notes
-
-- Markdown URLs support escaped right-paren `)` via `%29` or a backslash escape in the regex.
-- Titles are optional and preserved when converting formats.
-- HTML alt/title values are decoded from entities (e.g., `&quot;`, `&apos;`) before showing in the dialog or emitting Markdown.
-- HTML output escapes `&`, `"`, `'` (as `&#39;`), `<`, and `>` in alt/title attributes.
-
-## Browser/Environment Compatibility
-
-- ✅ **Joplin Desktop**: Full functionality
-- ✅ **Joplin Mobile**: Not tested
-- ✅ **Different screen sizes**: Responsive from 480px to 4K monitors
-- ✅ **Accessibility**: Proper cursor states and visual feedback
-
-## Development Approach & Lessons Learned
-
-### Why This Approach Works Well
-
-1. **Simplicity**: Clean, maintainable code without over-engineering
-2. **Reliability**: Uses well-established Joplin APIs and standard web technologies
-3. **User Control**: Clipboard workflow gives users full control over changes
-4. **Performance**: Minimal JavaScript, efficient CSS transitions
-5. **Scalability**: Easy to extend with new features or settings
-
-### Key Technical Decisions
-
-#### CSS-Only Field Control
-
-- **Problem**: JavaScript in Joplin dialogs has limitations
-- **Solution**: Pure CSS with hidden radio buttons for styling, minimal JS for synchronization
-- **Result**: Smooth transitions, reliable state management
-
-#### Multi-Image Validation
-
-- **Problem**: Users selecting large text blocks with multiple images
-- **Solution**: Upfront validation with clear, actionable error messages
-- **Result**: Better user experience, prevents confusion
-
-### Future Enhancement Possibilities
-
-- **Batch processing**: Handle multiple images in one operation
-- **Image preview**: Show thumbnail in dialog
-- **Custom presets**: Save frequently used resize settings
-- **Keyboard shortcuts**: Quick resize options
-- **Export formats**: Additional output syntax formats (e.g. markdown with pandoc notation).
+A focused command + dialog plugin: detect a single image (Markdown or HTML, resource or external), gather dimensions with reliable fallbacks, offer simple resize choices, and emit clean, escaped syntax with direct in-editor replacement and clear user feedback.
