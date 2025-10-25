@@ -1,20 +1,27 @@
 # Repository Guidelines
 
+## Project Documentation
+
+image-resize-documentation.md
+
+- Keep up to date with architecture changes
+- Keep concise, file is meant for LLM consumption
+
 ## Project Structure & Module Organization
 
 - `src/` TypeScript sources for the Joplin plugin.
-	- `index.ts` Main plugin entry point; keep lean (registration, commands, settings only).
-	- `dialogHandler.ts` Modal dialog with CSS controls and form handling.
-	- `imageDetection.ts` Smart syntax detection for Markdown/HTML images.
-	- `imageSizeCalculator.ts` Dimension extraction via Imaging API with fallbacks.
-	- `imageSyntaxBuilder.ts` Output generation with proper escaping/encoding.
-	- `cursorDetection.ts` Editor cursor position and range detection.
-	- `selectionValidation.ts` Multi-image validation and selection helpers.
-	- `stringUtils.ts` HTML/Markdown escaping and entity decoding.
-	- `utils.ts` Joplin-specific utilities (resource validation, base64 conversion).
-	- `constants.ts` Regex patterns, settings keys, timeouts.
-	- `types.ts` TypeScript interfaces and type definitions.
-	- `manifest.json` Plugin metadata; sync when adding features or settings.
+    - `index.ts` Main plugin entry point; keep lean (registration, commands, settings only).
+    - `dialogHandler.ts` Modal dialog with CSS controls and form handling.
+    - `imageDetection.ts` Smart syntax detection for Markdown/HTML images.
+    - `imageSizeCalculator.ts` Dimension extraction via Imaging API with fallbacks.
+    - `imageSyntaxBuilder.ts` Output generation with proper escaping/encoding.
+    - `cursorDetection.ts` Editor cursor position and range detection.
+    - `selectionValidation.ts` Multi-image validation and selection helpers.
+    - `stringUtils.ts` HTML/Markdown escaping and entity decoding.
+    - `utils.ts` Joplin-specific utilities (resource validation, base64 conversion).
+    - `constants.ts` Regex patterns, settings keys, timeouts.
+    - `types.ts` TypeScript interfaces and type definitions.
+    - `manifest.json` Plugin metadata; sync when adding features or settings.
 - Tests live alongside sources as `*.test.ts` files.
 - `publish/` Build artifacts (`*.jpl`) created by the dist task.
 - `api/` Joplin API type definitions (read-only).
@@ -54,8 +61,8 @@ Use Node LTS (18+) and npm 9+ for consistency.
 - **Multi-format support**: Handle both Markdown (`![](...)`) and HTML (`<img ...>`) syntax.
 - **External URLs**: Support `http(s)://` alongside Joplin resources (`:/resourceId`).
 - **Escaping strategy**:
-	- Decode HTML entities on input (dialog display, Markdown output).
-	- Escape properly on output (HTML attributes, Markdown titles).
+    - Decode HTML entities on input (dialog display, Markdown output).
+    - Escape properly on output (HTML attributes, Markdown titles).
 - **Dimension detection**: Primary via Imaging API; fallback to DOM `Image` with timeouts.
 
 ## Dialog & User Experience
