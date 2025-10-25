@@ -7,7 +7,7 @@ Goal: Markdown ↔ HTML image syntax conversion and lossless image resizing in J
 1. Acquire input: prefer validated selection; else detect image at cursor (same line scan) and compute replace range.
 2. Detect syntax: parse Markdown or HTML image (resource or external); extract alt/title; build `ImageContext`.
 3. Determine dimensions: query Joplin Imaging API; fall back to DOM `Image` probes when needed (resource base64 / external with CORS safeguards). Apply timeouts and defaults.
-4. Show dialog: Inline JS-powered modal (see `dialog/resizeDialog.js`) toggles syntax/mode availability; default resize mode from settings. User chooses target syntax + resize mode + values + alt/title.
+4. Show dialog: Inline JS-powered modal (see `dialog/resizeDialog.js`) toggles syntax/mode availability; syntax defaults to HTML while resize mode respects settings. User chooses target syntax + resize mode + values + alt/title.
 5. Emit + replace: build new syntax (escape/encode consistently) and replace selection or range; toast on success.
 
 ## Core Modules (src/)

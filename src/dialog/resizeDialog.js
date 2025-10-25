@@ -26,7 +26,7 @@
     }
 
     const defaultResizeMode = root.dataset.defaultResizeMode || 'percentage';
-    const initialSyntax = root.dataset.initialSyntax || 'html';
+    const initialSyntax = 'html';
     const defaultWidth = root.dataset.originalWidth || '';
     const defaultHeight = root.dataset.originalHeight || '';
 

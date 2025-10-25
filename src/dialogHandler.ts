@@ -13,7 +13,8 @@ export async function showResizeDialog(
 
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
-    const htmlSyntaxSelected = context.type === 'html';
+    const defaultSyntax: 'html' | 'markdown' = 'html';
+    const htmlSyntaxSelected = defaultSyntax === 'html';
     const percentageModeDefault = defaultResizeMode === 'percentage';
     const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
     const absoluteInitiallyDisabled = !htmlSyntaxSelected || percentageModeDefault;
@@ -132,7 +133,7 @@ export async function showResizeDialog(
     </style>
     <div id="dialog-root"
          data-default-resize-mode="${escapeHtmlAttribute(defaultResizeMode)}"
-         data-initial-syntax="${escapeHtmlAttribute(context.type)}"
+         data-initial-syntax="${escapeHtmlAttribute(defaultSyntax)}"
          data-original-width="${escapeHtmlAttribute(String(originalWidth))}"
          data-original-height="${escapeHtmlAttribute(String(originalHeight))}">
       <div class="container">
