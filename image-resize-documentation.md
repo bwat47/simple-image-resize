@@ -57,7 +57,7 @@ Notes:
 
 - Resize modes:
     - Percentage: preserve aspect ratio; compute width/height from original.
-    - Absolute: width/height; auto-calc the missing dimension.
+    - Absolute: width/height; auto-calc the missing dimension and keep both fields synced to preserve aspect ratio.
 - Markdown output: original size only (resize controls disabled when targeting Markdown).
 - HTML output: include `width` and `height` attributes when resizing.
 

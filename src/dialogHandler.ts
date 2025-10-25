@@ -196,7 +196,6 @@ export async function showResizeDialog(
                   <input type="number" name="absoluteHeight" id="absoluteHeight" placeholder="${originalHeight}"${absoluteDisabledAttr}>
                   <span>px</span>
                 </div>
-                <div class="hint">Leave one dimension blank to keep aspect ratio.</div>
               </div>
             </div>
           </fieldset>

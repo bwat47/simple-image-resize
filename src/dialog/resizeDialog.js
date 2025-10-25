@@ -29,9 +29,57 @@
     const initialSyntax = 'html';
     const defaultWidth = root.dataset.originalWidth || '';
     const defaultHeight = root.dataset.originalHeight || '';
+    const originalWidthValue = Number.parseFloat(defaultWidth);
+    const originalHeightValue = Number.parseFloat(defaultHeight);
+    const hasOriginalDimensions =
+        Number.isFinite(originalWidthValue) &&
+        Number.isFinite(originalHeightValue) &&
+        originalWidthValue > 0 &&
+        originalHeightValue > 0;
 
     let currentSyntax = initialSyntax;
     let currentResizeMode = defaultResizeMode;
+
+    const shouldSyncDimensions = () =>
+        currentSyntax === 'html' && currentResizeMode === 'absolute' && hasOriginalDimensions;
+
+    const syncHeightFromWidth = () => {
+        const raw = absoluteWidthInput.value.trim();
+        if (!raw) {
+            absoluteHeightInput.value = '';
+            return;
+        }
+        const widthValue = Number.parseFloat(raw);
+        if (!Number.isFinite(widthValue)) return;
+        if (widthValue <= 0) {
+            absoluteHeightInput.value = '';
+            return;
+        }
+        if (!shouldSyncDimensions()) return;
+        const newHeight = Math.max(1, Math.round((widthValue / originalWidthValue) * originalHeightValue));
+        if (Number.isFinite(newHeight)) {
+            absoluteHeightInput.value = String(newHeight);
+        }
+    };
+
+    const syncWidthFromHeight = () => {
+        const raw = absoluteHeightInput.value.trim();
+        if (!raw) {
+            absoluteWidthInput.value = '';
+            return;
+        }
+        const heightValue = Number.parseFloat(raw);
+        if (!Number.isFinite(heightValue)) return;
+        if (heightValue <= 0) {
+            absoluteWidthInput.value = '';
+            return;
+        }
+        if (!shouldSyncDimensions()) return;
+        const newWidth = Math.max(1, Math.round((heightValue / originalHeightValue) * originalWidthValue));
+        if (Number.isFinite(newWidth)) {
+            absoluteWidthInput.value = String(newWidth);
+        }
+    };
 
     const setRowDisabled = (element, disabled) => {
         element.classList.toggle('is-disabled', disabled);
@@ -86,6 +134,9 @@
         if (radio.value === initialSyntax) radio.checked = true;
         radio.addEventListener('change', () => applySyntaxMode(radio.value));
     });
+
+    absoluteWidthInput.addEventListener('input', syncHeightFromWidth);
+    absoluteHeightInput.addEventListener('input', syncWidthFromHeight);
 
     modeRadios.forEach((radio) => {
         if (radio.value === defaultResizeMode) radio.checked = true;
