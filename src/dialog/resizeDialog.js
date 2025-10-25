@@ -43,6 +43,9 @@
     const shouldSyncDimensions = () =>
         currentSyntax === 'html' && currentResizeMode === 'absolute' && hasOriginalDimensions;
 
+    const shouldPreviewPercentage = () =>
+        currentSyntax === 'html' && currentResizeMode === 'percentage' && hasOriginalDimensions;
+
     const syncHeightFromWidth = () => {
         const raw = absoluteWidthInput.value.trim();
         if (!raw) {
@@ -81,6 +84,29 @@
         }
     };
 
+    const syncAbsoluteFromPercentage = () => {
+        if (!shouldPreviewPercentage()) {
+            return;
+        }
+        const raw = percentageInput.value.trim();
+        if (!raw) {
+            absoluteWidthInput.value = '';
+            absoluteHeightInput.value = '';
+            return;
+        }
+        const percentageValue = Number.parseFloat(raw);
+        if (!Number.isFinite(percentageValue) || percentageValue <= 0) {
+            absoluteWidthInput.value = '';
+            absoluteHeightInput.value = '';
+            return;
+        }
+        const ratio = percentageValue / 100;
+        const width = Math.max(1, Math.round(originalWidthValue * ratio));
+        const height = Math.max(1, Math.round(originalHeightValue * ratio));
+        absoluteWidthInput.value = String(width);
+        absoluteHeightInput.value = String(height);
+    };
+
     const setRowDisabled = (element, disabled) => {
         element.classList.toggle('is-disabled', disabled);
         element.querySelectorAll('input, select, textarea, button').forEach((field) => {
@@ -111,6 +137,10 @@
             if (!absoluteWidthInput.value && defaultWidth) absoluteWidthInput.value = defaultWidth;
             if (!absoluteHeightInput.value && defaultHeight) absoluteHeightInput.value = defaultHeight;
         }
+
+        if (htmlActive && isPercentage) {
+            syncAbsoluteFromPercentage();
+        }
     };
 
     const applySyntaxMode = (syntax) => {
@@ -137,6 +167,12 @@
 
     absoluteWidthInput.addEventListener('input', syncHeightFromWidth);
     absoluteHeightInput.addEventListener('input', syncWidthFromHeight);
+    percentageInput.addEventListener('input', () => {
+        syncAbsoluteFromPercentage();
+    });
+    percentageInput.addEventListener('change', () => {
+        syncAbsoluteFromPercentage();
+    });
 
     modeRadios.forEach((radio) => {
         if (radio.value === defaultResizeMode) radio.checked = true;
