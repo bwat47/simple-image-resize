@@ -170,9 +170,6 @@
     percentageInput.addEventListener('input', () => {
         syncAbsoluteFromPercentage();
     });
-    percentageInput.addEventListener('change', () => {
-        syncAbsoluteFromPercentage();
-    });
 
     modeRadios.forEach((radio) => {
         if (radio.value === defaultResizeMode) radio.checked = true;
