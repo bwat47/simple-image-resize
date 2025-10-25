@@ -7,13 +7,14 @@ Goal: Markdown ↔ HTML image syntax conversion and lossless image resizing in J
 1. Acquire input: prefer validated selection; else detect image at cursor (same line scan) and compute replace range.
 2. Detect syntax: parse Markdown or HTML image (resource or external); extract alt/title; build `ImageContext`.
 3. Determine dimensions: query Joplin Imaging API; fall back to DOM `Image` probes when needed (resource base64 / external with CORS safeguards). Apply timeouts and defaults.
-4. Show dialog: CSS-driven UI with minimal JS sync; default resize mode from settings. User chooses target syntax + resize mode + values + alt/title.
+4. Show dialog: Inline JS-powered modal (see `dialog/resizeDialog.js`) toggles syntax/mode availability; syntax defaults to HTML while resize mode respects settings. User chooses target syntax + resize mode + values + alt/title.
 5. Emit + replace: build new syntax (escape/encode consistently) and replace selection or range; toast on success.
 
 ## Core Modules (src/)
 
 - `index.ts` — Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
-- `dialogHandler.ts` — Modal dialog HTML/CSS/JS; radio-based CSS state control; collects result.
+- `dialogHandler.ts` — Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults.
+- `dialog/resizeDialog.js` — Browser-side controller: syncs syntax + resize radios, disables fields, restores defaults.
 - `imageDetection.ts` — Detects Markdown/HTML image, extracts alt/title, resourceId/url, computes editor range; cursor-based detection.
 - `imageSizeCalculator.ts` — Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
 - `imageSyntaxBuilder.ts` — Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
@@ -56,7 +57,8 @@ Notes:
 
 - Resize modes:
     - Percentage: preserve aspect ratio; compute width/height from original.
-    - Absolute: width/height; auto-calc the missing dimension.
+    - Absolute: width/height; auto-calc the missing dimension and keep both fields synced to preserve aspect ratio.
+    - When targeting HTML with percentage mode, the dialog previews the computed width/height so users can see resulting dimensions while the absolute inputs remain disabled.
 - Markdown output: original size only (resize controls disabled when targeting Markdown).
 - HTML output: include `width` and `height` attributes when resizing.
 
@@ -92,6 +94,7 @@ Notes:
 - Resource fallback: base64 + DOM Image when Imaging API reports 0×0 (e.g., WEBP).
 - External fallback: DOM Image with `crossOrigin='anonymous'` and `referrerPolicy='no-referrer'` to minimize leakage.
 - Lightweight dialog (CSS transitions; minimal JS), avoids heavy editor integrations.
+- Dialog controller is inlined to sidestep platform-specific dev vs. packaged path differences (e.g., WSL).
 
 ## Testing Focus (Jest)
 
