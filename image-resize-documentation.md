@@ -1,6 +1,6 @@
-# simple-image-resize – Architecture (Concise)
+# simple-image-resize - Architecture (Concise)
 
-Goal: Markdown ↔ HTML image syntax conversion and lossless image resizing in Joplin with direct, in-editor replacement of the image embed.
+Goal: Markdown + HTML image syntax conversion and lossless image resizing in Joplin with direct, in-editor replacement of the image embed.
 
 ## Flow Overview
 
@@ -12,17 +12,18 @@ Goal: Markdown ↔ HTML image syntax conversion and lossless image resizing in J
 
 ## Core Modules (src/)
 
-- `index.ts` — Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
-- `dialogHandler.ts` — Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults.
-- `dialog/resizeDialog.js` — Browser-side controller: syncs syntax + resize radios, disables fields, restores defaults.
-- `imageDetection.ts` — Detects Markdown/HTML image, extracts alt/title, resourceId/url, computes editor range; cursor-based detection.
-- `imageSizeCalculator.ts` — Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
-- `imageSyntaxBuilder.ts` — Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
-- `selectionValidation.ts` — Ensures exactly one image; friendly messages for empty/multiple/invalid selections.
-- `stringUtils.ts` — Decode HTML entities on input; escape for HTML attributes and Markdown title.
-- `utils.ts` — Joplin helpers (resource base64, command wrappers, toasts).
-- `constants.ts` — Regex patterns, timeouts, setting keys, small helpers.
-- `types.ts` — Strong types for contexts, options, dialog result, dimensions.
+- `index.ts` - Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
+- `dialogHandler.ts` - Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults.
+- `dialog/resizeDialog.js` - Browser-side controller: syncs syntax + resize radios, disables fields, restores defaults.
+- `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url, computes editor range; cursor-based detection.
+- `imageSizeCalculator.ts` - Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
+- `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
+- `selectionValidation.ts` - Ensures exactly one image; friendly messages for empty/multiple/invalid selections.
+- `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
+- `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
+- `logger.ts` - Wrapper around console to keep `[Image Resize]` prefix consistent.
+- `constants.ts` - Regex patterns, timeouts, setting keys, small helpers.
+- `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 
 ## Detection Rules (essentials)
 
@@ -71,7 +72,8 @@ Notes:
 
 ## Settings
 
-- `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` — used to preselect dialog mode.
+- `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` - used to preselect dialog mode.
+- **Note**: Syntax always defaults to HTML in the dialog (not user-configurable).
 
 ## Editor Integration
 
@@ -82,25 +84,22 @@ Notes:
 
 ## Errors & UX
 
-- Validation messages:
-    - Empty selection: “Please select an image syntax to resize.”
-    - Multiple images: “Multiple images found. Please select a single image syntax.”
-    - Invalid syntax: “No valid image syntax found. Please select ![...](:/...) or <img src=":/..." ...>”.
-- Try/catch around command execution with `[Image Resize]` error logs and user toasts (success/error).
+- Validation messages (for legacy path where user manually highlights image syntax):
+    - Empty selection or Invalid syntax: "No valid image found. Place cursor inside an image or select an image syntax."
+    - Multiple images: "Multiple images found in selection. Please select a single image or place cursor inside one."
+- Try/catch around command execution with error logs and user toasts (success/error).
 
 ## Performance & Privacy
 
-- Timeouts for image probes; external probe defaults applied on failure (e.g., 400×300) to keep UX responsive.
-- Resource fallback: base64 + DOM Image when Imaging API reports 0×0 (e.g., WEBP).
+- Timeouts for image probes; external probe defaults applied on failure (e.g., 400x300) to keep UX responsive.
+- Resource fallback: base64 + DOM Image when Imaging API reports 0x0 (e.g., WEBP).
 - External fallback: DOM Image with `crossOrigin='anonymous'` and `referrerPolicy='no-referrer'` to minimize leakage.
-- Lightweight dialog (CSS transitions; minimal JS), avoids heavy editor integrations.
-- Dialog controller is inlined to sidestep platform-specific dev vs. packaged path differences (e.g., WSL).
 
 ## Testing Focus (Jest)
 
-- `imageDetection` — Markdown/HTML detection, resource vs external, titles, escaped `)`.
-- `imageSyntaxBuilder` — Markdown↔HTML conversion, alt/title escaping/decoding, width/height emission.
-- `selectionValidation` — single-image enforcement and messages.
+- `imageDetection` - Markdown/HTML detection, resource vs external, titles, escaped `)`.
+- `imageSyntaxBuilder` - Markdown/HTML conversion, alt/title escaping/decoding, width/height emission.
+- `selectionValidation` - single-image enforcement and messages.
 
 ## Non-Goals / Exclusions
 

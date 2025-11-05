@@ -2,6 +2,7 @@ import joplin from 'api';
 import { REGEX_PATTERNS } from './constants';
 import { detectImageSyntax } from './imageDetection';
 import { ImageContext, EditorPosition, EditorRange } from './types';
+import { logger } from './logger';
 
 export interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions'>;
@@ -60,7 +61,7 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
 
         return null;
     } catch (error) {
-        console.warn('[Image Resize] Cursor detection failed:', error);
+        logger.warn('Cursor detection failed:', error);
         return null;
     }
 }

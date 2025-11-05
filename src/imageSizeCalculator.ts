@@ -1,6 +1,7 @@
 import joplin from 'api';
 import { CONSTANTS } from './constants';
 import { convertResourceToBase64, validateResourceId } from './utils';
+import { logger } from './logger';
 
 export interface ImageDimensions {
     width: number;
@@ -34,10 +35,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
         // Fall through to base64 fallback
         throw new Error('Invalid image dimensions returned by imaging API.');
     } catch (err: unknown) {
-        console.warn(
-            `[image-resize] Imaging API failed to get resource dimensions for ${resourceId}, trying base64 fallback:`,
-            err
-        );
+        logger.warn(`Imaging API failed to get resource dimensions for ${resourceId}, trying base64 fallback:`, err);
         // Fallback: convert to base64 and probe with DOM Image
         try {
             const dataUrl = await convertResourceToBase64(resourceId);
@@ -47,7 +45,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
             const dims = await measureImageFromDataUrl(dataUrl, CONSTANTS.BASE64_TIMEOUT_MS);
             return dims;
         } catch (err2: unknown) {
-            console.error(`[image-resize] Base64 fallback failed to get dimensions for resource ${resourceId}:`, err2);
+            logger.error(`Base64 fallback failed to get dimensions for resource ${resourceId}:`, err2);
             const e = err2 as { message?: unknown } | string;
             const msg = typeof e === 'object' && e && 'message' in e ? String(e.message) : String(err2);
             throw new Error(`Could not determine image dimensions: ${msg}`);
@@ -74,15 +72,12 @@ async function getExternalImageDimensions(url: string): Promise<ImageDimensions>
         // Fall through to DOM-based measurement as a secondary fallback
         throw new Error('Invalid external image dimensions returned by imaging API.');
     } catch (err: unknown) {
-        console.warn(
-            `[image-resize] Imaging API failed to get external dimensions for ${url}, trying DOM Image fallback:`,
-            err
-        );
+        logger.warn(`Imaging API failed to get external dimensions for ${url}, trying DOM Image fallback:`, err);
         try {
             const dims = await measureExternalImageFromUrl(url, CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS);
             return dims;
         } catch (err2: unknown) {
-            console.error(`[image-resize] Failed to get dimensions for external URL ${url}:`, err2);
+            logger.error(`Failed to get dimensions for external URL ${url}:`, err2);
             const e = err2 as { message?: unknown } | string;
             const msg = typeof e === 'object' && e && 'message' in e ? String(e.message) : String(err2);
             throw new Error(`Could not determine external image dimensions: ${msg}`);

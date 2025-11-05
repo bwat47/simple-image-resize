@@ -29,3 +29,7 @@ image-resize-documentation.md
 - **Exports**: Prefer explicit types and narrow public exports.
 - **Style enforcement**: Run `npm run format` before commits or if you encounter formatting errors from prettier.
 - **Documentation**: Use JSDoc for complex functions; document regex patterns with examples.
+
+## Log messages
+
+- Use `src\logger.ts` wrapper

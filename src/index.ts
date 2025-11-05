@@ -8,6 +8,7 @@ import { hasMultipleImages, selectionHasOnlySingleImage, containsAnyImage } from
 import { detectImageAtCursor, isOnImageInMarkdownEditor } from './cursorDetection';
 import { ImageContext, EditorRange } from './types';
 import { CONSTANTS } from './constants';
+import { logger } from './logger';
 
 joplin.plugins.register({
     onStart: async function () {
@@ -96,7 +97,7 @@ joplin.plugins.register({
                     }
 
                     // Get original dimensions
-                    console.log(`[Image Resize] Processing ${partialContext.sourceType}: ${partialContext.source}`);
+                    logger.info(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
                     let originalDimensions;
                     try {
@@ -105,7 +106,7 @@ joplin.plugins.register({
                             partialContext.sourceType
                         );
                     } catch (error) {
-                        console.warn(`[Image Resize] Dimension fetch failed:`, error);
+                        logger.warn('Dimension fetch failed:', error);
 
                         if (partialContext.sourceType === 'external') {
                             originalDimensions = {
@@ -150,7 +151,7 @@ joplin.plugins.register({
                         });
                     }
                 } catch (err) {
-                    console.error('[Image Resize] Error:', err);
+                    logger.error('Error:', err);
                     const message = err?.message || 'Unknown error occurred';
                     await joplin.views.dialogs.showToast({
                         message: `Operation failed: ${message}`,
@@ -176,7 +177,7 @@ joplin.plugins.register({
                         commandName: 'resizeImage',
                         label: 'Resize Image',
                     });
-                    console.log('[Image Resize] Added context menu item - cursor on image');
+                    logger.info('Added context menu item - cursor on image');
                 }
             }
 

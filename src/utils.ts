@@ -1,4 +1,5 @@
 import joplin from 'api';
+import { logger } from './logger';
 
 /**
  * A simple validator for Joplin resource IDs (32-character hex string).
@@ -30,7 +31,7 @@ export async function convertResourceToBase64(resourceId: string): Promise<strin
 
         return `data:${resource.mime};base64,${base64}`;
     } catch (err) {
-        console.error(`[Image Resize] Error converting resource ${resourceId} to base64:`, err);
+        logger.error(`Error converting resource ${resourceId} to base64:`, err);
         throw new Error(`Could not convert resource to base64: ${err.message}`);
     }
 }
