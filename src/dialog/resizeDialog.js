@@ -46,42 +46,38 @@
     const shouldPreviewPercentage = () =>
         currentSyntax === 'html' && currentResizeMode === 'percentage' && hasOriginalDimensions;
 
-    const syncHeightFromWidth = () => {
-        const raw = absoluteWidthInput.value.trim();
+    /**
+     * Syncs target dimension from source dimension while preserving aspect ratio.
+     * @param {HTMLInputElement} sourceInput - The input being changed
+     * @param {HTMLInputElement} targetInput - The input to update
+     * @param {number} sourceOrig - Original dimension value for source
+     * @param {number} targetOrig - Original dimension value for target
+     */
+    const syncDimension = (sourceInput, targetInput, sourceOrig, targetOrig) => {
+        const raw = sourceInput.value.trim();
         if (!raw) {
-            absoluteHeightInput.value = '';
+            targetInput.value = '';
             return;
         }
-        const widthValue = Number.parseFloat(raw);
-        if (!Number.isFinite(widthValue)) return;
-        if (widthValue <= 0) {
-            absoluteHeightInput.value = '';
+        const sourceValue = Number.parseFloat(raw);
+        if (!Number.isFinite(sourceValue)) return;
+        if (sourceValue <= 0) {
+            targetInput.value = '';
             return;
         }
         if (!shouldSyncDimensions()) return;
-        const newHeight = Math.max(1, Math.round((widthValue / originalWidthValue) * originalHeightValue));
-        if (Number.isFinite(newHeight)) {
-            absoluteHeightInput.value = String(newHeight);
+        const newTargetValue = Math.max(1, Math.round((sourceValue / sourceOrig) * targetOrig));
+        if (Number.isFinite(newTargetValue)) {
+            targetInput.value = String(newTargetValue);
         }
     };
 
+    const syncHeightFromWidth = () => {
+        syncDimension(absoluteWidthInput, absoluteHeightInput, originalWidthValue, originalHeightValue);
+    };
+
     const syncWidthFromHeight = () => {
-        const raw = absoluteHeightInput.value.trim();
-        if (!raw) {
-            absoluteWidthInput.value = '';
-            return;
-        }
-        const heightValue = Number.parseFloat(raw);
-        if (!Number.isFinite(heightValue)) return;
-        if (heightValue <= 0) {
-            absoluteWidthInput.value = '';
-            return;
-        }
-        if (!shouldSyncDimensions()) return;
-        const newWidth = Math.max(1, Math.round((heightValue / originalHeightValue) * originalWidthValue));
-        if (Number.isFinite(newWidth)) {
-            absoluteWidthInput.value = String(newWidth);
-        }
+        syncDimension(absoluteHeightInput, absoluteWidthInput, originalHeightValue, originalWidthValue);
     };
 
     const syncAbsoluteFromPercentage = () => {
