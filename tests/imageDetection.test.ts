@@ -9,7 +9,6 @@ describe('detectImageSyntax', () => {
         expect(ctx!.sourceType).toBe('resource');
         expect(ctx!.source).toBe('0123456789abcdef0123456789abcdef');
         expect(ctx!.altText).toBe('Alt text');
-        expect(ctx!.originalSelection).toBe(sel);
     });
 
     test('detects html image and extracts alt', () => {

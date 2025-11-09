@@ -10,10 +10,9 @@ describe('buildNewSyntax', () => {
         altText: 'Alt',
         title: undefined,
         originalDimensions: { width: 800, height: 600 },
-        originalSelection: '![Alt](:/0123456789abcdef0123456789abcdef)\n\n', // includes trailing newlines
     };
 
-    test('returns markdown syntax when targetSyntax=markdown and preserves trailing whitespace', () => {
+    test('returns markdown syntax when targetSyntax=markdown', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'New Alt',
@@ -22,7 +21,7 @@ describe('buildNewSyntax', () => {
         };
 
         const syntax = buildNewSyntax(baseContext, result);
-        expect(syntax).toBe('![New Alt](:/0123456789abcdef0123456789abcdef)\n\n');
+        expect(syntax).toBe('![New Alt](:/0123456789abcdef0123456789abcdef)');
     });
 
     test('calculates percentage resize for HTML output', () => {
@@ -98,7 +97,7 @@ describe('buildNewSyntax', () => {
             percentage: 100,
         };
         const syntax = buildNewSyntax(ctx, result);
-        expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")\n\n');
+        expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
     });
 
     test('escapes quotes in title for markdown and html output', () => {
@@ -120,7 +119,7 @@ describe('buildNewSyntax', () => {
             percentage: 100,
         };
         const md = buildNewSyntax(ctx, mdRes);
-        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said &quot;hi&quot; &amp; &lt;ok&gt;")\n\n');
+        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said &quot;hi&quot; &amp; &lt;ok&gt;")');
     });
 
     test('escapes quotes in alt text for html output', () => {
@@ -153,7 +152,6 @@ describe('buildNewSyntax', () => {
             sourceType: 'external',
             altText: 'Logo',
             originalDimensions: { width: 1024, height: 512 },
-            originalSelection: '![Logo](https://example.com/logo.png)\n',
         };
         const result: ResizeDialogResult = {
             targetSyntax: 'html',

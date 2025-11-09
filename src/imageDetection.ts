@@ -35,7 +35,6 @@ export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDim
             sourceType: resourceId ? 'resource' : 'external',
             altText: groups.altText,
             title: title,
-            originalSelection: text, // Capture the original selection
         };
     }
 
@@ -58,7 +57,6 @@ export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDim
             sourceType: resourceId ? 'resource' : 'external',
             altText: altText,
             title: title,
-            originalSelection: text, // Capture the original selection
         };
     }
 

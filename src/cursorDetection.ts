@@ -49,7 +49,7 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
 
                 if (partialContext) {
                     return {
-                        context: { ...partialContext, originalSelection: match[0] },
+                        context: partialContext,
                         range: {
                             from: { line: cursor.line, ch: startCh },
                             to: { line: cursor.line, ch: endCh },

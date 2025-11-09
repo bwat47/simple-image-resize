@@ -1,25 +1,17 @@
 import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle } from './stringUtils';
 
-// Extracts trailing whitespace (including newlines) from a string.
-function getTrailingWhitespace(text: string): string {
-    const match = text.match(/(\s*)$/);
-    return match ? match[1] : '';
-}
-
 /**
- * Generates new image syntax based on user selections, preserving trailing whitespace.
+ * Generates new image syntax based on user selections.
  *
  * Handles conversion between Markdown and HTML formats, applies resizing (percentage or absolute),
  * and preserves aspect ratio when only one dimension is specified.
  *
  * @param context - Original image metadata and dimensions
  * @param result - User's selections from the resize dialog
- * @returns New image syntax with preserved trailing whitespace
+ * @returns New image syntax
  */
 export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
-    const trailingWhitespace = getTrailingWhitespace(context.originalSelection);
-
     // Determine the correct source path format
     const srcPath = context.sourceType === 'resource' ? `:/${context.source}` : context.source;
 
@@ -60,6 +52,5 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
         newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}" height="${newHeight}"${titleAttr} />`;
     }
 
-    // Append the original trailing whitespace to the new syntax
-    return newSyntax + trailingWhitespace;
+    return newSyntax;
 }
