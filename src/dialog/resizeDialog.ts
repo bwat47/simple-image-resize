@@ -1,18 +1,20 @@
+import { SYNTAX_TYPES, RESIZE_MODES, SyntaxType, ResizeMode } from '../constants';
+
 (() => {
-    const root = document.getElementById('dialog-root');
+    const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root) return;
 
     const form = document.forms.namedItem('resizeForm');
     if (!form) return;
 
-    const syntaxRadios = Array.from(form.querySelectorAll('input[name="targetSyntax"]'));
-    const modeRadios = Array.from(form.querySelectorAll('input[name="resizeMode"]'));
-    const percentageInput = form.querySelector('input[name="percentage"]');
-    const percentageRow = form.querySelector('[data-percentage-row]');
-    const absoluteWidthInput = form.querySelector('input[name="absoluteWidth"]');
-    const absoluteHeightInput = form.querySelector('input[name="absoluteHeight"]');
-    const absoluteGroup = form.querySelector('[data-absolute-group]');
-    const resizeFieldset = form.querySelector('[data-resize-fieldset]');
+    const syntaxRadios = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="targetSyntax"]'));
+    const modeRadios = Array.from(form.querySelectorAll<HTMLInputElement>('input[name="resizeMode"]'));
+    const percentageInput = form.querySelector<HTMLInputElement>('input[name="percentage"]');
+    const percentageRow = form.querySelector<HTMLElement>('[data-percentage-row]');
+    const absoluteWidthInput = form.querySelector<HTMLInputElement>('input[name="absoluteWidth"]');
+    const absoluteHeightInput = form.querySelector<HTMLInputElement>('input[name="absoluteHeight"]');
+    const absoluteGroup = form.querySelector<HTMLElement>('[data-absolute-group]');
+    const resizeFieldset = form.querySelector<HTMLElement>('[data-resize-fieldset]');
 
     if (
         !percentageInput ||
@@ -25,8 +27,8 @@
         return;
     }
 
-    const defaultResizeMode = root.dataset.defaultResizeMode || 'percentage';
-    const initialSyntax = 'html';
+    const defaultResizeMode = (root.dataset.defaultResizeMode as ResizeMode) || RESIZE_MODES.PERCENTAGE;
+    const initialSyntax: SyntaxType = SYNTAX_TYPES.HTML;
     const defaultWidth = root.dataset.originalWidth || '';
     const defaultHeight = root.dataset.originalHeight || '';
     const originalWidthValue = Number.parseFloat(defaultWidth);
@@ -37,23 +39,24 @@
         originalWidthValue > 0 &&
         originalHeightValue > 0;
 
-    let currentSyntax = initialSyntax;
-    let currentResizeMode = defaultResizeMode;
+    let currentSyntax: SyntaxType = initialSyntax;
+    let currentResizeMode: ResizeMode = defaultResizeMode;
 
-    const shouldSyncDimensions = () =>
-        currentSyntax === 'html' && currentResizeMode === 'absolute' && hasOriginalDimensions;
+    const shouldSyncDimensions = (): boolean =>
+        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.ABSOLUTE && hasOriginalDimensions;
 
-    const shouldPreviewPercentage = () =>
-        currentSyntax === 'html' && currentResizeMode === 'percentage' && hasOriginalDimensions;
+    const shouldPreviewPercentage = (): boolean =>
+        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.PERCENTAGE && hasOriginalDimensions;
 
     /**
      * Syncs target dimension from source dimension while preserving aspect ratio.
-     * @param {HTMLInputElement} sourceInput - The input being changed
-     * @param {HTMLInputElement} targetInput - The input to update
-     * @param {number} sourceOrig - Original dimension value for source
-     * @param {number} targetOrig - Original dimension value for target
      */
-    const syncDimension = (sourceInput, targetInput, sourceOrig, targetOrig) => {
+    const syncDimension = (
+        sourceInput: HTMLInputElement,
+        targetInput: HTMLInputElement,
+        sourceOrig: number,
+        targetOrig: number
+    ): void => {
         const raw = sourceInput.value.trim();
         if (!raw) {
             targetInput.value = '';
@@ -72,15 +75,15 @@
         }
     };
 
-    const syncHeightFromWidth = () => {
+    const syncHeightFromWidth = (): void => {
         syncDimension(absoluteWidthInput, absoluteHeightInput, originalWidthValue, originalHeightValue);
     };
 
-    const syncWidthFromHeight = () => {
+    const syncWidthFromHeight = (): void => {
         syncDimension(absoluteHeightInput, absoluteWidthInput, originalHeightValue, originalWidthValue);
     };
 
-    const syncAbsoluteFromPercentage = () => {
+    const syncAbsoluteFromPercentage = (): void => {
         if (!shouldPreviewPercentage()) {
             return;
         }
@@ -103,17 +106,21 @@
         absoluteHeightInput.value = String(height);
     };
 
-    const setRowDisabled = (element, disabled) => {
+    const setRowDisabled = (element: HTMLElement, disabled: boolean): void => {
         element.classList.toggle('is-disabled', disabled);
-        element.querySelectorAll('input, select, textarea, button').forEach((field) => {
-            field.disabled = disabled;
-        });
+        element
+            .querySelectorAll<
+                HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement
+            >('input, select, textarea, button')
+            .forEach((field) => {
+                field.disabled = disabled;
+            });
     };
 
-    const applyResizeMode = (mode) => {
+    const applyResizeMode = (mode: ResizeMode): void => {
         currentResizeMode = mode;
-        const htmlActive = currentSyntax === 'html';
-        const isPercentage = mode === 'percentage';
+        const htmlActive = currentSyntax === SYNTAX_TYPES.HTML;
+        const isPercentage = mode === RESIZE_MODES.PERCENTAGE;
 
         const percentageDisabled = !htmlActive || !isPercentage;
         const absoluteDisabled = !htmlActive || isPercentage;
@@ -139,9 +146,9 @@
         }
     };
 
-    const applySyntaxMode = (syntax) => {
+    const applySyntaxMode = (syntax: SyntaxType): void => {
         currentSyntax = syntax;
-        const htmlActive = syntax === 'html';
+        const htmlActive = syntax === SYNTAX_TYPES.HTML;
 
         resizeFieldset.classList.toggle('is-locked', !htmlActive);
 
@@ -149,8 +156,8 @@
             setRowDisabled(percentageRow, true);
             setRowDisabled(absoluteGroup, true);
         } else {
-            setRowDisabled(percentageRow, currentResizeMode !== 'percentage');
-            setRowDisabled(absoluteGroup, currentResizeMode === 'percentage');
+            setRowDisabled(percentageRow, currentResizeMode !== RESIZE_MODES.PERCENTAGE);
+            setRowDisabled(absoluteGroup, currentResizeMode === RESIZE_MODES.PERCENTAGE);
         }
 
         applyResizeMode(currentResizeMode);
@@ -158,7 +165,7 @@
 
     syntaxRadios.forEach((radio) => {
         if (radio.value === initialSyntax) radio.checked = true;
-        radio.addEventListener('change', () => applySyntaxMode(radio.value));
+        radio.addEventListener('change', () => applySyntaxMode(radio.value as SyntaxType));
     });
 
     absoluteWidthInput.addEventListener('input', syncHeightFromWidth);
@@ -169,7 +176,7 @@
 
     modeRadios.forEach((radio) => {
         if (radio.value === defaultResizeMode) radio.checked = true;
-        radio.addEventListener('change', () => applyResizeMode(radio.value));
+        radio.addEventListener('change', () => applyResizeMode(radio.value as ResizeMode));
     });
 
     applySyntaxMode(initialSyntax);
