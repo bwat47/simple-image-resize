@@ -40,16 +40,3 @@ export const CONSTANTS = {
     DEFAULT_EXTERNAL_WIDTH: 400, // Fallback dimensions when external image fails
     DEFAULT_EXTERNAL_HEIGHT: 300,
 };
-
-export const SYNTAX_TYPES = {
-    HTML: 'html',
-    MARKDOWN: 'markdown',
-} as const;
-
-export const RESIZE_MODES = {
-    PERCENTAGE: 'percentage',
-    ABSOLUTE: 'absolute',
-} as const;
-
-export type SyntaxType = (typeof SYNTAX_TYPES)[keyof typeof SYNTAX_TYPES];
-export type ResizeMode = (typeof RESIZE_MODES)[keyof typeof RESIZE_MODES];

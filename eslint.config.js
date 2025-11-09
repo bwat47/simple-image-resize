@@ -15,14 +15,19 @@ const compat = new FlatCompat({
     allConfig: js.configs.all
 });
 
-module.exports = defineConfig([{
-    languageOptions: {
-        parser: tsParser,
-        ecmaVersion: 2020,
-        sourceType: "module",
-        parserOptions: {},
+module.exports = defineConfig([
+    {
+        ignores: ["src/dialog/resizeDialog.js"],
     },
+    {
+        languageOptions: {
+            parser: tsParser,
+            ecmaVersion: 2020,
+            sourceType: "module",
+            parserOptions: {},
+        },
 
-    extends: compat.extends("plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"),
-    rules: {},
-}]);
+        extends: compat.extends("plugin:@typescript-eslint/recommended", "plugin:prettier/recommended"),
+        rules: {},
+    }
+]);
