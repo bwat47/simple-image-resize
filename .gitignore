@@ -12,3 +12,4 @@ publish/
 src/dialog/resizeDialog.js
 gemini/
 prompts/
+.claude/settings.local.json

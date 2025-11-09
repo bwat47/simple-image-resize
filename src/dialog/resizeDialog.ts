@@ -20,8 +20,8 @@ const RESIZE_MODES = {
     ABSOLUTE: 'absolute',
 } as const;
 
-type SyntaxType = (typeof SYNTAX_TYPES)[keyof typeof SYNTAX_TYPES];
-type ResizeMode = (typeof RESIZE_MODES)[keyof typeof RESIZE_MODES];
+type SyntaxType = 'html' | 'markdown';
+type ResizeMode = 'percentage' | 'absolute';
 
 (() => {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
