@@ -6,7 +6,10 @@ import { escapeHtmlAttribute } from './stringUtils';
  * Calculates the initial state for the dialog based on default syntax and resize mode.
  * Centralizes all state calculation logic to avoid duplication and improve maintainability.
  */
-function getInitialDialogState(defaultSyntax: 'html' | 'markdown', defaultResizeMode: 'percentage' | 'absolute') {
+export function getInitialDialogState(
+    defaultSyntax: 'html' | 'markdown',
+    defaultResizeMode: 'percentage' | 'absolute'
+) {
     const htmlSyntaxSelected = defaultSyntax === 'html';
     const percentageModeDefault = defaultResizeMode === 'percentage';
     const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
