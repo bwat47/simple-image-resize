@@ -7,12 +7,9 @@ A Joplin plugin that provides a simple dialogue to switch image syntax between m
 
 ![simple-image-resize-example](https://github.com/user-attachments/assets/72540ff9-f8bc-4f6e-b332-32b7c0b6c3b5)
 
-
 ## How to use
 
-In the markdown editor, right click anywhere inside a markdown or HTML image embed and select "Resize Image".
-
-Alternately, you can highlight the entire image embed and select Edit | Resize Image (or use the keyboard shortcut if bound).
+In the markdown editor, right click anywhere inside a markdown or HTML image embed and select "Resize Image" (or put your cursor inside the image embed and use the keyboard shortcut if bound).
 
 This will open a simple image resize dialogue, the following options are provided.
 
