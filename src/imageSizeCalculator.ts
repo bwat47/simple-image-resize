@@ -2,11 +2,7 @@ import joplin from 'api';
 import { CONSTANTS } from './constants';
 import { convertResourceToBase64, validateResourceId } from './utils';
 import { logger } from './logger';
-
-export interface ImageDimensions {
-    width: number;
-    height: number;
-}
+import { ImageDimensions } from './types';
 
 /**
  * Retrieves image dimensions from either a Joplin resource or external URL.

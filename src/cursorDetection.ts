@@ -4,7 +4,7 @@ import { detectImageSyntax } from './imageDetection';
 import { ImageContext, EditorPosition, EditorRange } from './types';
 import { logger } from './logger';
 
-export interface CursorDetectionResult {
+interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions'>;
     range: EditorRange;
 }
