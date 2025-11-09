@@ -2,7 +2,8 @@
     "name": "joplin-plugin-simple-image-resize",
     "version": "1.2.0",
     "scripts": {
-        "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
+        "compile:dialog": "tsc src/dialog/resizeDialog.ts --outFile src/dialog/resizeDialog.js --target ES2017 --module None --lib ES2017,DOM --skipLibCheck",
+        "dist": "npm run compile:dialog && webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
         "prepare": "npm run dist",
         "updateVersion": "webpack --env joplin-plugin-config=updateVersion",
         "update": "npm install -g generator-joplin && yo joplin --node-package-manager npm --update --force",
