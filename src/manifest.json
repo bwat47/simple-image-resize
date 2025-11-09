@@ -13,7 +13,6 @@
     "screenshots": [
         { "src": "images/simple-resize1.png", "label": "simple resize example 1" },
         { "src": "images/simple-resize2.png", "label": "simple resize example 2" },
-        { "src": "images/simple-resize3.png", "label": "simple resize example 3" },
         { "src": "images/simple-resize4.png", "label": "simple resize example 4" }
     ],
     "icons": {
