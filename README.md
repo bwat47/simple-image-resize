@@ -28,7 +28,7 @@ With image syntax set to HTML, you can resize the image by Percentage (default) 
 Enter the desired image size (in percentage or pixels) and click OK, and the plugin will automatically update the image embed with the new image syntax.
 
 > [!note]
-> When using absolute size, populating one of the dimensions and leaving the other blank will automatically maintain aspect ratio.
+> When using absolute size, the plugin will always update the other dimension to maintain aspect ratio.
 
 ### Settings
 
