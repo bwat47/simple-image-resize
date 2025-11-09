@@ -69,87 +69,100 @@ export async function showResizeDialog(
         `
     <style>
       *, *::before, *::after { box-sizing: border-box }
-      body { 
-        font-family: system-ui, sans-serif; 
-        font-size: 14px; 
-        margin: 0; 
-        padding: 0; 
+      body {
+        font-family: system-ui, sans-serif;
+        font-size: 14px;
+        margin: 0;
+        padding: 0;
         min-width: 620px;
+        background-color: var(--joplin-background-color, #ffffff);
+        color: var(--joplin-color, #32373F);
       }
-      .container { 
-        padding: 22px 26px 30px; 
-        display: flex; 
-        flex-direction: column; 
-        gap: 18px; 
+      .container {
+        padding: 22px 26px 30px;
+        display: flex;
+        flex-direction: column;
+        gap: 18px;
         width: 100%;
       }
-      h4 { margin: 0 0 10px; font-size: 16px }
+      h4 { margin: 0 0 10px; font-size: 16px; color: var(--joplin-color, #32373F); }
       form { display: flex; flex-direction: column; gap: 22px; width: 100%; }
-      fieldset { 
-        border: 1px solid var(--joplin-divider-color, #ccc); 
-        border-radius: 6px; 
-        padding: 18px 20px 20px; 
-        margin: 0; 
-        min-width: 0; 
+      fieldset {
+        border: 1px solid var(--joplin-divider-color, #dddddd);
+        border-radius: 6px;
+        padding: 18px 20px 20px;
+        margin: 0;
+        min-width: 0;
         width: 100%;
         transition: opacity 0.2s ease, background-color 0.2s ease;
       }
-      legend { font-weight: 600 }
-      .grid { 
-        display: grid; 
-        grid-template-columns: 140px 1fr; 
-        gap: 10px 18px; 
-        align-items: center; 
+      legend { font-weight: 600; color: var(--joplin-color, #32373F); }
+      .grid {
+        display: grid;
+        grid-template-columns: 140px 1fr;
+        gap: 10px 18px;
+        align-items: center;
         width: 100%;
       }
       .grid.narrow { grid-template-columns: max-content 1fr; }
       .stack { display: flex; flex-direction: column; gap: 6px }
       .row { display: flex; align-items: center; gap: 6px; min-width: 0; }
-      label { user-select: none; cursor: pointer; }
-      input[type=number] { 
-        width: 92px; 
+      label { user-select: none; cursor: pointer; color: var(--joplin-color, #32373F); }
+      input[type=number] {
+        width: 92px;
         padding: 4px 6px;
+        background-color: var(--joplin-background-color, #ffffff);
+        color: var(--joplin-color, #32373F);
+        border: 1px solid var(--joplin-divider-color, #dddddd);
+        border-radius: 3px;
         transition: background-color 0.2s ease, opacity 0.2s ease;
       }
-      input[type=text] { 
-        width: 100%; 
-        padding: 6px 8px; 
+      input[type=text] {
+        width: 100%;
+        padding: 6px 8px;
         min-width: 0;
+        background-color: var(--joplin-background-color, #ffffff);
+        color: var(--joplin-color, #32373F);
+        border: 1px solid var(--joplin-divider-color, #dddddd);
+        border-radius: 3px;
         transition: background-color 0.2s ease;
       }
       input[type=radio] { cursor: pointer; }
-      .hint { 
-        font-size: 11px; 
-        opacity: 0.7; 
+      .hint {
+        font-size: 11px;
+        opacity: 0.7;
         margin-top: 4px;
+        color: var(--joplin-color-faded, #7C8B9E);
         transition: opacity 0.2s ease;
       }
       .row.is-disabled,
       .stack.is-disabled { opacity: 0.6 }
       .row.is-disabled input,
       .stack.is-disabled input {
-        background-color: #f0f0f0;
+        background-color: var(--joplin-raised-background-color, #e5e5e5);
         cursor: not-allowed;
       }
       .stack.is-disabled .hint { opacity: 0.4 }
       .resize-fieldset.is-locked {
         opacity: 0.4;
         pointer-events: none;
-        background-color: #fafafa;
+        background-color: var(--joplin-background-color3, #F4F5F6);
       }
       .resize-fieldset.is-locked input {
         cursor: not-allowed;
       }
-      
+
       /* Code examples styling */
       code {
-        background-color: #f5f5f5;
+        background-color: var(--joplin-code-background-color, rgb(243, 243, 243));
+        color: var(--joplin-code-color, rgb(0, 0, 0));
         padding: 2px 4px;
         border-radius: 3px;
+        border: 1px solid var(--joplin-code-border-color, rgb(220, 220, 220));
         font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
         font-size: 10px;
       }
-      
+
       /* Responsive improvements */
       @media (max-width: 700px) {
         body { min-width: 480px; }
@@ -157,7 +170,7 @@ export async function showResizeDialog(
         .container { padding: 16px 20px 24px; gap: 14px; }
         code { font-size: 9px; }
       }
-      
+
       @media (min-width: 860px) {
         body { min-width: 680px }
         .grid { grid-template-columns: 160px 1fr }
