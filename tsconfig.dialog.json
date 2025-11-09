@@ -1,0 +1,15 @@
+{
+    "compilerOptions": {
+        "target": "ES2017",
+        "module": "None",
+        "lib": ["ES2017", "DOM"],
+        "outFile": "src/dialog/resizeDialog.js",
+        "skipLibCheck": true,
+        "strict": true,
+        "noImplicitAny": true,
+        "strictNullChecks": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
+    },
+    "include": ["src/dialog/resizeDialog.ts"]
+}

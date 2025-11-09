@@ -7,7 +7,16 @@ function getTrailingWhitespace(text: string): string {
     return match ? match[1] : '';
 }
 
-// Builds the new image syntax and preserves trailing whitespace from the original selection.
+/**
+ * Generates new image syntax based on user selections, preserving trailing whitespace.
+ *
+ * Handles conversion between Markdown and HTML formats, applies resizing (percentage or absolute),
+ * and preserves aspect ratio when only one dimension is specified.
+ *
+ * @param context - Original image metadata and dimensions
+ * @param result - User's selections from the resize dialog
+ * @returns New image syntax with preserved trailing whitespace
+ */
 export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
     const trailingWhitespace = getTrailingWhitespace(context.originalSelection);
 

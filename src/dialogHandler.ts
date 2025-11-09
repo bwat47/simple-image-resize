@@ -2,6 +2,42 @@ import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute } from './stringUtils';
 
+/**
+ * Calculates the initial state for the dialog based on default syntax and resize mode.
+ * Centralizes all state calculation logic to avoid duplication and improve maintainability.
+ */
+export function getInitialDialogState(
+    defaultSyntax: 'html' | 'markdown',
+    defaultResizeMode: 'percentage' | 'absolute'
+) {
+    const htmlSyntaxSelected = defaultSyntax === 'html';
+    const percentageModeDefault = defaultResizeMode === 'percentage';
+    const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
+    const absoluteInitiallyDisabled = !htmlSyntaxSelected || percentageModeDefault;
+
+    return {
+        // CSS classes
+        resizeFieldsetClass: `resize-fieldset${htmlSyntaxSelected ? '' : ' is-locked'}`,
+        percentageRowClass: `row${percentageInitiallyDisabled ? ' is-disabled' : ''}`,
+        absoluteGroupClass: `stack absolute-size-group${absoluteInitiallyDisabled ? ' is-disabled' : ''}`,
+        // HTML checked attributes
+        htmlCheckedAttr: htmlSyntaxSelected ? ' checked' : '',
+        markdownCheckedAttr: htmlSyntaxSelected ? '' : ' checked',
+        percentageModeCheckedAttr: percentageModeDefault ? ' checked' : '',
+        absoluteModeCheckedAttr: percentageModeDefault ? '' : ' checked',
+        // HTML disabled attributes
+        percentageDisabledAttr: percentageInitiallyDisabled ? ' disabled' : '',
+        absoluteDisabledAttr: absoluteInitiallyDisabled ? ' disabled' : '',
+    };
+}
+
+/**
+ * Shows the image resize dialog and returns the user's selections.
+ *
+ * @param context - Image metadata including dimensions, source, and alt text
+ * @param defaultResizeMode - Default resize mode to preselect in the dialog
+ * @returns User's dialog selections, or null if canceled
+ */
 export async function showResizeDialog(
     context: ImageContext,
     defaultResizeMode: 'percentage' | 'absolute' = 'percentage'
@@ -14,22 +50,18 @@ export async function showResizeDialog(
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
     const defaultSyntax: 'html' | 'markdown' = 'html';
-    const htmlSyntaxSelected = defaultSyntax === 'html';
-    const percentageModeDefault = defaultResizeMode === 'percentage';
-    const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
-    const absoluteInitiallyDisabled = !htmlSyntaxSelected || percentageModeDefault;
 
-    const resizeFieldsetClass = `resize-fieldset${htmlSyntaxSelected ? '' : ' is-locked'}`;
-    const percentageRowClass = `row${percentageInitiallyDisabled ? ' is-disabled' : ''}`;
-    const absoluteGroupClass = `stack absolute-size-group${absoluteInitiallyDisabled ? ' is-disabled' : ''}`;
-
-    const htmlCheckedAttr = htmlSyntaxSelected ? ' checked' : '';
-    const markdownCheckedAttr = htmlSyntaxSelected ? '' : ' checked';
-    const percentageModeCheckedAttr = percentageModeDefault ? ' checked' : '';
-    const absoluteModeCheckedAttr = percentageModeDefault ? '' : ' checked';
-
-    const percentageDisabledAttr = percentageInitiallyDisabled ? ' disabled' : '';
-    const absoluteDisabledAttr = absoluteInitiallyDisabled ? ' disabled' : '';
+    const {
+        resizeFieldsetClass,
+        percentageRowClass,
+        absoluteGroupClass,
+        htmlCheckedAttr,
+        markdownCheckedAttr,
+        percentageModeCheckedAttr,
+        absoluteModeCheckedAttr,
+        percentageDisabledAttr,
+        absoluteDisabledAttr,
+    } = getInitialDialogState(defaultSyntax, defaultResizeMode);
 
     // Always update the HTML and scripts before opening
     await joplin.views.dialogs.setHtml(
