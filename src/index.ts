@@ -1,12 +1,10 @@
 import joplin from 'api';
 import { ToastType, SettingItemType, MenuItemLocation } from 'api/types';
 import { buildNewSyntax } from './imageSyntaxBuilder';
-import { detectImageSyntax } from './imageDetection';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
-import { hasMultipleImages, selectionHasOnlySingleImage, containsAnyImage } from './selectionValidation';
 import { detectImageAtCursor, isOnImageInMarkdownEditor } from './cursorDetection';
-import { ImageContext, EditorRange } from './types';
+import { ImageContext } from './types';
 import { CONSTANTS } from './constants';
 import { logger } from './logger';
 
@@ -41,60 +39,19 @@ joplin.plugins.register({
             iconName: 'fas fa-expand-alt',
             execute: async () => {
                 try {
-                    let partialContext: Omit<ImageContext, 'originalDimensions'> | null = null;
-                    let replacementRange: EditorRange | null = null;
-                    let useSelection = false;
+                    // Detect image at cursor position
+                    const cursorDetection = await detectImageAtCursor();
 
-                    // Strategy 1: Check if user has selected a single valid image
-                    try {
-                        const selectedText = (await joplin.commands.execute('editor.execCommand', {
-                            name: 'getSelection',
-                        })) as string;
-
-                        if (selectedText && selectedText.trim()) {
-                            if (hasMultipleImages(selectedText)) {
-                                await joplin.views.dialogs.showToast({
-                                    message:
-                                        'Multiple images found in selection. Please select a single image or place cursor inside one.',
-                                    type: ToastType.Info,
-                                });
-                                return;
-                            }
-
-                            if (selectionHasOnlySingleImage(selectedText)) {
-                                partialContext = detectImageSyntax(selectedText);
-                                if (partialContext) {
-                                    useSelection = true;
-                                }
-                            } else if (containsAnyImage(selectedText)) {
-                                await joplin.views.dialogs.showToast({
-                                    message: 'Please select only the image syntax, or place cursor inside the image.',
-                                    type: ToastType.Info,
-                                });
-                                return;
-                            }
-                        }
-                    } catch {
-                        // Selection failed, fall back to cursor detection
-                    }
-
-                    // Strategy 2: No valid selection, try cursor detection
-                    if (!partialContext) {
-                        const cursorDetection = await detectImageAtCursor();
-                        if (cursorDetection) {
-                            partialContext = cursorDetection.context;
-                            replacementRange = cursorDetection.range;
-                        }
-                    }
-
-                    // Strategy 3: No valid image found
-                    if (!partialContext) {
+                    if (!cursorDetection) {
                         await joplin.views.dialogs.showToast({
-                            message: 'No valid image found. Place cursor inside an image or select an image syntax.',
+                            message: 'No valid image found. Place cursor inside an image embed.',
                             type: ToastType.Info,
                         });
                         return;
                     }
+
+                    const partialContext = cursorDetection.context;
+                    const replacementRange = cursorDetection.range;
 
                     // Get original dimensions
                     logger.info(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
@@ -132,18 +89,11 @@ joplin.plugins.register({
                     if (result) {
                         const newSyntax = buildNewSyntax(fullContext, result);
 
-                        // Automatic replacement instead of clipboard
-                        if (useSelection) {
-                            await joplin.commands.execute('editor.execCommand', {
-                                name: 'replaceSelection',
-                                args: [newSyntax],
-                            });
-                        } else if (replacementRange) {
-                            await joplin.commands.execute('editor.execCommand', {
-                                name: 'replaceRange',
-                                args: [newSyntax, replacementRange.from, replacementRange.to],
-                            });
-                        }
+                        // Replace the detected image at the specified range
+                        await joplin.commands.execute('editor.execCommand', {
+                            name: 'replaceRange',
+                            args: [newSyntax, replacementRange.from, replacementRange.to],
+                        });
 
                         await joplin.views.dialogs.showToast({
                             message: 'Image resized successfully!',

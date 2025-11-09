@@ -4,25 +4,25 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 
 ## Flow Overview
 
-1. Acquire input: prefer validated selection; else detect image at cursor (same line scan) and compute replace range.
+1. Acquire input: detect image at cursor (same line scan) and compute replace range.
 2. Detect syntax: parse Markdown or HTML image (resource or external); extract alt/title; build `ImageContext`.
 3. Determine dimensions: query Joplin Imaging API; fall back to DOM `Image` probes when needed (resource base64 / external with CORS safeguards). Apply timeouts and defaults.
 4. Show dialog: Inline JS-powered modal (compiled from `dialog/resizeDialog.ts`) toggles syntax/mode availability; syntax defaults to HTML while resize mode respects settings. User chooses target syntax + resize mode + values + alt/title.
-5. Emit + replace: build new syntax (escape/encode consistently) and replace selection or range; toast on success.
+5. Emit + replace: build new syntax (escape/encode consistently) and replace at detected range; toast on success.
 
 ## Core Modules (src/)
 
 - `index.ts` - Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
 - `dialogHandler.ts` - Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults via `getInitialDialogState` helper.
 - `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
-- `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url, computes editor range; cursor-based detection.
+- `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url.
+- `cursorDetection.ts` - Scans current line for image syntax at cursor position; returns partial context + editor range.
 - `imageSizeCalculator.ts` - Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
 - `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
-- `selectionValidation.ts` - Ensures exactly one image; friendly messages for empty/multiple/invalid selections.
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
 - `logger.ts` - Wrapper around console to keep `[Image Resize]` prefix consistent.
-- `constants.ts` - Regex patterns, timeouts, setting keys, syntax/mode type constants (`SYNTAX_TYPES`, `RESIZE_MODES`).
+- `constants.ts` - Regex patterns, timeouts, setting keys.
 - `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 
 ## Detection Rules (essentials)
@@ -48,11 +48,11 @@ Notes:
 - Markdown URL supports escaped `)` via `%29` or backslash.
 - Titles are optional; preserved across conversions.
 
-## Cursor/Selection Logic
+## Cursor Detection Logic
 
 - `detectImageAtCursor` scans the current line; if cursor lies within a detected embed, returns partial context + `{ from, to }` range.
 - `isOnImageInMarkdownEditor` gates the context menu: a safe `editor.execCommand` probe (e.g., `getCursor`) determines Markdown editor scope.
-- Command prefers validated selection; otherwise uses cursor detection to avoid requiring preselection.
+- Command uses cursor detection exclusively - user simply places cursor anywhere within the image line and invokes the command.
 
 ## Resizing & Emission
 
@@ -78,15 +78,11 @@ Notes:
 ## Editor Integration
 
 - Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` + safe probe; avoids showing in rich text editor.
-- Replacement uses `editor.execCommand`:
-    - `replaceSelection(newSyntax)` when selection is valid.
-    - `replaceRange(newSyntax, from, to)` when using cursor-based detection.
+- Replacement uses `editor.execCommand('replaceRange', [newSyntax, from, to])` with the range detected by cursor detection.
 
 ## Errors & UX
 
-- Validation messages (for legacy path where user manually highlights image syntax):
-    - Empty selection or Invalid syntax: "No valid image found. Place cursor inside an image or select an image syntax."
-    - Multiple images: "Multiple images found in selection. Please select a single image or place cursor inside one."
+- Error message when cursor is not on an image: "No valid image found. Place cursor inside an image embed."
 - Try/catch around command execution with error logs and user toasts (success/error).
 
 ## Performance & Privacy
@@ -99,7 +95,7 @@ Notes:
 
 - `imageDetection` - Markdown/HTML detection, resource vs external, titles, escaped `)`.
 - `imageSyntaxBuilder` - Markdown/HTML conversion, alt/title escaping/decoding, width/height emission.
-- `selectionValidation` - single-image enforcement and messages.
+- `dialogHandler` - Initial state calculation for dialog based on syntax and resize mode.
 
 ## Non-Goals / Exclusions
 
@@ -118,4 +114,4 @@ Notes:
 
 ## Summary
 
-A focused command + dialog plugin: detect a single image (Markdown or HTML, resource or external), gather dimensions with reliable fallbacks, offer simple resize choices, and emit clean, escaped syntax with direct in-editor replacement and clear user feedback.
+A focused command + dialog plugin: detect a single image at cursor position (Markdown or HTML, resource or external), gather dimensions with reliable fallbacks, offer simple resize choices, and emit clean, escaped syntax with direct in-editor replacement and clear user feedback.
