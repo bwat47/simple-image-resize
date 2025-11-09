@@ -6,7 +6,7 @@
  *
  * To make changes: Edit this .ts file and run `npm run dist` or `npm run compile:dialog`
  *
- * Constants are inlined (not imported) to avoid webpack module bundling issues,
+ * Constants are inlined (not imported from src\constants.ts) to avoid webpack bundling issues,
  * since dialog scripts run in a plain browser context without module support.
  */
 
