@@ -28,6 +28,13 @@ function getInitialDialogState(defaultSyntax: 'html' | 'markdown', defaultResize
     };
 }
 
+/**
+ * Shows the image resize dialog and returns the user's selections.
+ *
+ * @param context - Image metadata including dimensions, source, and alt text
+ * @param defaultResizeMode - Default resize mode to preselect in the dialog
+ * @returns User's dialog selections, or null if canceled
+ */
 export async function showResizeDialog(
     context: ImageContext,
     defaultResizeMode: 'percentage' | 'absolute' = 'percentage'

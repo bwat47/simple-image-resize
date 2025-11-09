@@ -7,14 +7,14 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 1. Acquire input: prefer validated selection; else detect image at cursor (same line scan) and compute replace range.
 2. Detect syntax: parse Markdown or HTML image (resource or external); extract alt/title; build `ImageContext`.
 3. Determine dimensions: query Joplin Imaging API; fall back to DOM `Image` probes when needed (resource base64 / external with CORS safeguards). Apply timeouts and defaults.
-4. Show dialog: Inline JS-powered modal (see `dialog/resizeDialog.js`) toggles syntax/mode availability; syntax defaults to HTML while resize mode respects settings. User chooses target syntax + resize mode + values + alt/title.
+4. Show dialog: Inline JS-powered modal (compiled from `dialog/resizeDialog.ts`) toggles syntax/mode availability; syntax defaults to HTML while resize mode respects settings. User chooses target syntax + resize mode + values + alt/title.
 5. Emit + replace: build new syntax (escape/encode consistently) and replace selection or range; toast on success.
 
 ## Core Modules (src/)
 
 - `index.ts` - Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
-- `dialogHandler.ts` - Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults.
-- `dialog/resizeDialog.js` - Browser-side controller: syncs syntax + resize radios, disables fields, restores defaults.
+- `dialogHandler.ts` - Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults via `getInitialDialogState` helper.
+- `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
 - `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url, computes editor range; cursor-based detection.
 - `imageSizeCalculator.ts` - Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
 - `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
@@ -22,7 +22,7 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
 - `logger.ts` - Wrapper around console to keep `[Image Resize]` prefix consistent.
-- `constants.ts` - Regex patterns, timeouts, setting keys, small helpers.
+- `constants.ts` - Regex patterns, timeouts, setting keys, syntax/mode type constants (`SYNTAX_TYPES`, `RESIZE_MODES`).
 - `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 
 ## Detection Rules (essentials)

@@ -8,6 +8,17 @@ export interface ImageDimensions {
     height: number;
 }
 
+/**
+ * Retrieves image dimensions from either a Joplin resource or external URL.
+ *
+ * Uses Joplin Imaging API with fallback to DOM Image probes if needed.
+ * For resources: falls back to base64 conversion. For external: uses CORS-friendly DOM Image.
+ *
+ * @param source - Resource ID (32-char hex) or external URL
+ * @param sourceType - Whether source is a Joplin resource or external URL
+ * @returns Image width and height in pixels
+ * @throws Error if dimensions cannot be determined
+ */
 export async function getOriginalImageDimensions(
     source: string,
     sourceType: 'resource' | 'external'

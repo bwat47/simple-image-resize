@@ -2,9 +2,15 @@ import { REGEX_PATTERNS } from './constants';
 import { decodeHtmlEntities } from './stringUtils';
 import { ImageContext } from './types';
 
-// This function returns a partial context, without the dimensions.
-// The dimensions are added later in the main command logic.
-// It now includes the original user selection to preserve whitespace.
+/**
+ * Parses image syntax (Markdown or HTML) from text and extracts metadata.
+ *
+ * Supports both Markdown format `![alt](url "title")` and HTML `<img>` tags.
+ * Returns partial context without dimensions (added later by caller).
+ *
+ * @param text - Text containing an image embed
+ * @returns Parsed image metadata, or null if no valid image syntax found
+ */
 export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDimensions'> | null {
     let match;
 

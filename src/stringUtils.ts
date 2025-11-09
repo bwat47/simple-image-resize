@@ -1,6 +1,9 @@
-// String escaping helpers for HTML and Markdown
-
-// Escapes a string for safe inclusion inside a double-quoted HTML attribute value
+/**
+ * Escapes a string for safe inclusion inside a double-quoted HTML attribute value.
+ *
+ * @param value - Raw string to escape
+ * @returns HTML-escaped string safe for use in attribute values
+ */
 export function escapeHtmlAttribute(value: string): string {
     if (value == null) return '';
     return String(value)
@@ -11,14 +14,27 @@ export function escapeHtmlAttribute(value: string): string {
         .replace(/>/g, '&gt;');
 }
 
-// Escapes a Markdown title that will be emitted inside double quotes: "title"
-// Strategy: HTML-escape &, ", <, > so that literal quotes don't terminate the title.
+/**
+ * Escapes a Markdown title for use inside double quotes.
+ *
+ * Escapes characters that would terminate the title string or cause parsing issues.
+ *
+ * @param value - Raw title text
+ * @returns Escaped title safe for use in Markdown `![alt](url "title")` syntax
+ */
 export function escapeMarkdownTitle(value: string): string {
     if (!value) return '';
     return String(value).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// Decodes a subset of HTML entities commonly used in attributes, including numeric refs
+/**
+ * Decodes HTML entities commonly found in attributes.
+ *
+ * Supports named entities (`&quot;`, `&amp;`, etc.) and numeric character references.
+ *
+ * @param value - HTML-encoded string
+ * @returns Decoded plain text
+ */
 export function decodeHtmlEntities(value: string): string {
     if (!value) return '';
     let str = String(value);
