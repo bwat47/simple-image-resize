@@ -9,5 +9,6 @@ publish/
 *:Zone.Identifier
 *.patch
 *.diff
+src\dialog\resizeDialog.js
 gemini/
 prompts/
