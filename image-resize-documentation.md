@@ -22,7 +22,7 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
 - `logger.ts` - Wrapper around console to keep `[Image Resize]` prefix consistent.
-- `constants.ts` - Regex patterns, timeouts, setting keys.
+- `constants.ts` - Regex patterns, timeout constants, and default fallback dimensions.
 - `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 
 ## Detection Rules (essentials)
