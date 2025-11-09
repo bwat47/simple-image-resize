@@ -29,11 +29,6 @@ export const REGEX_PATTERNS = {
         /(?:!\[[^\]]*\]\(\s*(?::\/[a-f0-9]{32}|https?:\/\/(?:\\\)|[^)\s])+)?\s*(?:"[^"]*"|'[^']*')?\s*\))|(?:<img\s+[^>]*src=["'](?::\/[a-f0-9]{32}|https?:\/\/[^"']+)["'][^>]*>)/gi,
 };
 
-export const SETTINGS = {
-    DEFAULT_RESIZE_MODE: 'defaultResizeMode',
-    DEFAULT_SYNTAX: 'defaultSyntax',
-};
-
 export const CONSTANTS = {
     BASE64_TIMEOUT_MS: 5000,
     EXTERNAL_IMAGE_TIMEOUT_MS: 10000, // Longer timeout for external images
