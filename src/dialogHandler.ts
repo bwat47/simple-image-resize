@@ -116,6 +116,7 @@ export async function showResizeDialog(
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
         transition: background-color 0.2s ease, opacity 0.2s ease;
+        outline: none;
       }
       input[type=text] {
         width: 100%;
@@ -126,6 +127,7 @@ export async function showResizeDialog(
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
         transition: background-color 0.2s ease;
+        outline: none;
       }
       input[type=radio] { cursor: pointer; }
       .hint {
