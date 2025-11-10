@@ -148,12 +148,8 @@ type ResizeMode = 'percentage' | 'absolute';
         const percentageDisabled = !htmlActive || !isPercentage;
         const absoluteDisabled = !htmlActive || isPercentage;
 
-        percentageInput.disabled = percentageDisabled;
-        percentageRow.classList.toggle('is-disabled', percentageDisabled);
-
-        absoluteWidthInput.disabled = absoluteDisabled;
-        absoluteHeightInput.disabled = absoluteDisabled;
-        absoluteGroup.classList.toggle('is-disabled', absoluteDisabled);
+        setRowDisabled(percentageRow, percentageDisabled);
+        setRowDisabled(absoluteGroup, absoluteDisabled);
 
         if (htmlActive && isPercentage && !percentageInput.value) {
             percentageInput.value = '50';
