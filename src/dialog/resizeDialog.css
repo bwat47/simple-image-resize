@@ -84,6 +84,23 @@ input[type=radio] { cursor: pointer; }
   cursor: not-allowed;
 }
 
+/* Utility classes for repeated patterns */
+.label-nowrap {
+  white-space: nowrap;
+}
+.syntax-option {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.code-example {
+  font-size: 11px;
+  opacity: 0.7;
+}
+.label-fixed {
+  width: 55px;
+}
+
 /* Code examples styling */
 code {
   background-color: var(--joplin-code-background-color, rgb(243, 243, 243));

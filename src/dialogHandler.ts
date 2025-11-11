@@ -82,24 +82,24 @@ export async function showResizeDialog(
           <fieldset>
             <legend>Output</legend>
             <div class="grid narrow">
-              <label for="altText" style="white-space:nowrap;">Alt text</label>
+              <label for="altText" class="label-nowrap">Alt text</label>
               <div class="row" style="padding:0;min-width:0;">
                 <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
               </div>
-              <label style="white-space:nowrap;">Syntax</label>
+              <label class="label-nowrap">Syntax</label>
               <div class="stack">
                 <label class="row">
                   <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
-                  <span style="display:flex;flex-direction:column;gap:2px;">
+                  <span class="syntax-option">
                     <span>HTML (supports resizing)</span>
-                    <code style="font-size:11px;opacity:0.7;">&lt;img src=":/resourceId" alt="alt" width="300" height="200" /&gt;</code>
+                    <code class="code-example">&lt;img src=":/resourceId" alt="alt" width="300" height="200" /&gt;</code>
                   </span>
                 </label>
                 <label class="row">
                   <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
-                  <span style="display:flex;flex-direction:column;gap:2px;">
+                  <span class="syntax-option">
                     <span>Markdown (original size only)</span>
-                    <code style="font-size:11px;opacity:0.7;">![alt](:/resourceId)</code>
+                    <code class="code-example">![alt](:/resourceId)</code>
                   </span>
                 </label>
                 <div class="hint" style="margin-top:8px;">Note: Resize settings are only available when HTML syntax is selected. Choose Markdown to revert to the original markdown embed.</div>
@@ -124,12 +124,12 @@ export async function showResizeDialog(
               </div>
               <div class="${absoluteGroupClass}" data-absolute-group>
                 <div class="row">
-                  <label for="absoluteWidth" style="width:55px;">Width</label>
+                  <label for="absoluteWidth" class="label-fixed">Width</label>
                   <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
                   <span>px</span>
                 </div>
                 <div class="row">
-                  <label for="absoluteHeight" style="width:55px;">Height</label>
+                  <label for="absoluteHeight" class="label-fixed">Height</label>
                   <input type="number" name="absoluteHeight" id="absoluteHeight" placeholder="${originalHeight}"${absoluteDisabledAttr}>
                   <span>px</span>
                 </div>
