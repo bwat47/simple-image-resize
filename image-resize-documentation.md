@@ -13,7 +13,8 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 ## Core Modules (src/)
 
 - `index.ts` - Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
-- `dialogHandler.ts` - Modal dialog HTML/CSS with inline script injection; collects result; controls state defaults via `getInitialDialogState` helper.
+- `dialogHandler.ts` - Modal dialog HTML generation and script/CSS loading; collects result; controls state defaults via `getInitialDialogState` helper.
+- `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes, and responsive breakpoints.
 - `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
 - `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url.
 - `cursorDetection.ts` - Scans current line for image syntax at cursor position; returns partial context + editor range.
