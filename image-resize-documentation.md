@@ -22,7 +22,7 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 - `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
-- `logger.ts` - Wrapper around console to keep `[Image Resize]` prefix consistent.
+- `logger.ts` - Centralized logging utility. Provides debug(), info(), warn(), and error() methods with configurable log levels (DEBUG, INFO, WARN, ERROR, NONE). Log level can be adjusted at runtime via browser console using joplinLogger.setLevel(level) and joplinLogger.getLevel(). Defaults to WARN level.
 - `constants.ts` - Regex patterns, timeout constants, and default fallback dimensions.
 - `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 
