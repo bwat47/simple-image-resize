@@ -34,7 +34,7 @@ describe('buildNewSyntax', () => {
         const syntax = buildNewSyntax(baseContext, result);
         // 25% of 800x600 => 200x150
         expect(syntax).toContain('width="200"');
-        expect(syntax).toContain('height="150"');
+        expect(syntax).not.toContain('height=');
     });
 
     test('absolute dimensions both provided', () => {
@@ -47,7 +47,7 @@ describe('buildNewSyntax', () => {
         };
         const syntax = buildNewSyntax(baseContext, result);
         expect(syntax).toContain('width="320"');
-        expect(syntax).toContain('height="240"');
+        expect(syntax).not.toContain('height=');
     });
 
     test('absolute width only keeps aspect ratio', () => {
@@ -58,9 +58,9 @@ describe('buildNewSyntax', () => {
             absoluteWidth: 400,
         };
         const syntax = buildNewSyntax(baseContext, result);
-        // Aspect ratio 800x600 => height scales to 300
+        // Aspect ratio 800x600 => height scales to 300 (but not included in output)
         expect(syntax).toContain('width="400"');
-        expect(syntax).toContain('height="300"');
+        expect(syntax).not.toContain('height=');
     });
 
     test('absolute height only keeps aspect ratio', () => {
@@ -73,7 +73,7 @@ describe('buildNewSyntax', () => {
         const syntax = buildNewSyntax(baseContext, result);
         // Width should scale: 800/600 * 300 = 400
         expect(syntax).toContain('width="400"');
-        expect(syntax).toContain('height="300"');
+        expect(syntax).not.toContain('height=');
     });
 
     test('preserves title when generating HTML', () => {
@@ -162,6 +162,6 @@ describe('buildNewSyntax', () => {
         const syntax = buildNewSyntax(externalCtx, result);
         expect(syntax).toContain('<img src="https://example.com/logo.png"');
         expect(syntax).toContain('width="512"');
-        expect(syntax).toContain('height="256"');
+        expect(syntax).not.toContain('height=');
     });
 });

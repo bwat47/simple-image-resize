@@ -49,7 +49,7 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
         }
         const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
         const safeAlt = escapeHtmlAttribute(result.altText);
-        newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}" height="${newHeight}"${titleAttr} />`;
+        newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}"${titleAttr} />`;
     }
 
     return newSyntax;
