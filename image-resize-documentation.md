@@ -12,7 +12,10 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 
 ## Core Modules (src/)
 
-- `index.ts` - Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
+- `index.ts` - Plugin bootstrap: orchestrates initialization by calling `registerSettings()`, `registerCommands()`, `registerMenus()`, and `registerContextMenu()`.
+- `settings.ts` - Settings registration for default resize mode and context menu behavior; exports setting key constants for type-safe access.
+- `commands.ts` - Command registration for all resize operations (resizeImage dialog + quick resize commands: 100%, 75%, 50%, 25%); includes shared helpers for image detection, dimension fetching, and editor replacement.
+- `menus.ts` - Menu registration: creates Tools submenu with keyboard shortcuts (CmdOrCtrl+Shift+R/1/2/3/4) and dynamic context menu based on cursor position and settings.
 - `dialogHandler.ts` - Modal dialog HTML generation and script/CSS loading; collects result; controls state defaults via `getInitialDialogState` helper.
 - `dialogLock.ts` - Lightweight lock guard so the resize dialog can only open once at a time, avoiding overlapping modal instances.
 - `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes, and responsive breakpoints.
@@ -20,7 +23,7 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 - `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url.
 - `cursorDetection.ts` - Scans current line for image syntax at cursor position; returns partial context + editor range.
 - `imageSizeCalculator.ts` - Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
-- `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width/height for HTML.
+- `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width attribute for HTML (height auto-calculated by Joplin).
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
 - `logger.ts` - Centralized logging utility. Provides debug(), info(), warn(), and error() methods with configurable log levels (DEBUG, INFO, WARN, ERROR, NONE). Log level can be adjusted at runtime via browser console using joplinLogger.setLevel(level) and joplinLogger.getLevel(). Defaults to WARN level.
@@ -64,7 +67,11 @@ Notes:
     - Absolute: width/height; auto-calc the missing dimension and keep both fields synced to preserve aspect ratio.
     - When targeting HTML with percentage mode, the dialog previews the computed width/height so users can see resulting dimensions while the absolute inputs remain disabled.
 - Markdown output: original size only (resize controls disabled when targeting Markdown).
-- HTML output: include `width` and `height` attributes when resizing.
+- HTML output: include `width` attribute only (Joplin auto-calculates height based on aspect ratio).
+- Quick resize commands (100%, 75%, 50%, 25%):
+    - 100%: Converts image to Markdown syntax (removes custom sizing).
+    - 75%/50%/25%: Converts to HTML with specified percentage of original dimensions.
+    - Available via Tools menu with default keyboard shortcuts or optionally in context menu.
 
 ## Alt/Title Handling (Round-trip)
 
@@ -76,11 +83,19 @@ Notes:
 ## Settings
 
 - `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` - used to preselect dialog mode.
+- `imageResize.showQuickResizeInContextMenu`: `boolean` - when enabled, shows quick resize options (100%, 75%, 50%, 25%) in the right-click context menu alongside the main "Resize Image" option.
 - **Note**: Syntax always defaults to HTML in the dialog (not user-configurable).
 
 ## Editor Integration
 
+- Tools menu submenu "Simple Image Resize" contains all resize commands with keyboard shortcuts:
+    - Resize Image (CmdOrCtrl+Shift+R) - opens dialog
+    - Resize 100% (CmdOrCtrl+Shift+1) - convert to Markdown
+    - Resize 75% (CmdOrCtrl+Shift+2)
+    - Resize 50% (CmdOrCtrl+Shift+3)
+    - Resize 25% (CmdOrCtrl+Shift+4)
 - Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` + safe probe; avoids showing in rich text editor.
+- Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled.
 - Replacement uses `editor.execCommand('replaceRange', [newSyntax, from, to])` with the range detected by cursor detection.
 
 ## Errors & UX
@@ -111,8 +126,7 @@ Notes:
 
 - Batch processing across a selection.
 - Inline thumbnail preview.
-- Presets (e.g., 25/50/75/100%).
-- Keyboard shortcuts for quick resize.
+- Additional quick resize presets (e.g., 10%, 33%, 150%, 200%).
 - Additional output formats (e.g., Pandoc-style Markdown width hints).
 
 ## Summary
