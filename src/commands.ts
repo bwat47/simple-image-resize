@@ -75,6 +75,61 @@ async function replaceImageInEditor(newSyntax: string, replacementRange: EditorR
     });
 }
 
+/**
+ * Execute quick resize for a given percentage
+ */
+async function executeQuickResize(percentage: number): Promise<void> {
+    try {
+        const prepared = await detectAndPrepareImage();
+        if (!prepared) return;
+
+        const { fullContext, replacementRange } = prepared;
+
+        // 100% converts to Markdown (removes custom sizing), others use HTML
+        const targetSyntax = percentage === 100 ? 'markdown' : 'html';
+
+        const newSyntax = buildNewSyntax(fullContext, {
+            targetSyntax,
+            altText: fullContext.altText,
+            resizeMode: 'percentage',
+            percentage,
+        });
+
+        await replaceImageInEditor(newSyntax, replacementRange);
+
+        // Different message for 100% (conversion) vs others (resize)
+        const message =
+            percentage === 100
+                ? 'Custom size removed - converted to Markdown syntax.'
+                : `Image resized to ${percentage}%.`;
+
+        await joplin.views.dialogs.showToast({
+            message,
+            type: ToastType.Success,
+        });
+    } catch (err) {
+        logger.error('Error:', err);
+        const message = err instanceof Error ? err.message : 'Unknown error occurred';
+        await joplin.views.dialogs.showToast({
+            message: `Operation failed: ${message}`,
+            type: ToastType.Error,
+        });
+    }
+}
+
+/**
+ * Register a quick resize command for a specific percentage
+ */
+async function registerQuickResizeCommand(percentage: number): Promise<void> {
+    await joplin.commands.register({
+        name: `resize${percentage}`,
+        label: `Resize ${percentage}%`,
+        execute: async () => {
+            await executeQuickResize(percentage);
+        },
+    });
+}
+
 export async function registerCommands(): Promise<void> {
     // Enhanced resize command with intelligent detection
     await joplin.commands.register({
@@ -119,7 +174,7 @@ export async function registerCommands(): Promise<void> {
                 }
             } catch (err) {
                 logger.error('Error:', err);
-                const message = err?.message || 'Unknown error occurred';
+                const message = err instanceof Error ? err.message : 'Unknown error occurred';
                 await joplin.views.dialogs.showToast({
                     message: `Operation failed: ${message}`,
                     type: ToastType.Error,
@@ -132,144 +187,9 @@ export async function registerCommands(): Promise<void> {
         },
     });
 
-    // Quick resize command: 100% (Removes custom size by converting back to markdown)
-    await joplin.commands.register({
-        name: 'resize100',
-        label: 'Resize 100%',
-        execute: async () => {
-            try {
-                const prepared = await detectAndPrepareImage();
-                if (!prepared) return;
-
-                const { fullContext, replacementRange } = prepared;
-
-                // Convert to markdown (original size)
-                const newSyntax = buildNewSyntax(fullContext, {
-                    targetSyntax: 'markdown',
-                    altText: fullContext.altText,
-                    resizeMode: 'percentage',
-                    percentage: 100,
-                });
-
-                await replaceImageInEditor(newSyntax, replacementRange);
-
-                await joplin.views.dialogs.showToast({
-                    message: 'Custom size removed - converted to Markdown syntax.',
-                    type: ToastType.Success,
-                });
-            } catch (err) {
-                logger.error('Error:', err);
-                const message = err?.message || 'Unknown error occurred';
-                await joplin.views.dialogs.showToast({
-                    message: `Operation failed: ${message}`,
-                    type: ToastType.Error,
-                });
-            }
-        },
-    });
-
-    // Quick resize command: 75%
-    await joplin.commands.register({
-        name: 'resize75',
-        label: 'Resize 75%',
-        execute: async () => {
-            try {
-                const prepared = await detectAndPrepareImage();
-                if (!prepared) return;
-
-                const { fullContext, replacementRange } = prepared;
-
-                const newSyntax = buildNewSyntax(fullContext, {
-                    targetSyntax: 'html',
-                    altText: fullContext.altText,
-                    resizeMode: 'percentage',
-                    percentage: 75,
-                });
-
-                await replaceImageInEditor(newSyntax, replacementRange);
-
-                await joplin.views.dialogs.showToast({
-                    message: 'Image resized to 75%.',
-                    type: ToastType.Success,
-                });
-            } catch (err) {
-                logger.error('Error:', err);
-                const message = err?.message || 'Unknown error occurred';
-                await joplin.views.dialogs.showToast({
-                    message: `Operation failed: ${message}`,
-                    type: ToastType.Error,
-                });
-            }
-        },
-    });
-
-    // Quick resize command: 50%
-    await joplin.commands.register({
-        name: 'resize50',
-        label: 'Resize 50%',
-        execute: async () => {
-            try {
-                const prepared = await detectAndPrepareImage();
-                if (!prepared) return;
-
-                const { fullContext, replacementRange } = prepared;
-
-                const newSyntax = buildNewSyntax(fullContext, {
-                    targetSyntax: 'html',
-                    altText: fullContext.altText,
-                    resizeMode: 'percentage',
-                    percentage: 50,
-                });
-
-                await replaceImageInEditor(newSyntax, replacementRange);
-
-                await joplin.views.dialogs.showToast({
-                    message: 'Image resized to 50%.',
-                    type: ToastType.Success,
-                });
-            } catch (err) {
-                logger.error('Error:', err);
-                const message = err?.message || 'Unknown error occurred';
-                await joplin.views.dialogs.showToast({
-                    message: `Operation failed: ${message}`,
-                    type: ToastType.Error,
-                });
-            }
-        },
-    });
-
-    // Quick resize command: 25%
-    await joplin.commands.register({
-        name: 'resize25',
-        label: 'Resize 25%',
-        execute: async () => {
-            try {
-                const prepared = await detectAndPrepareImage();
-                if (!prepared) return;
-
-                const { fullContext, replacementRange } = prepared;
-
-                const newSyntax = buildNewSyntax(fullContext, {
-                    targetSyntax: 'html',
-                    altText: fullContext.altText,
-                    resizeMode: 'percentage',
-                    percentage: 25,
-                });
-
-                await replaceImageInEditor(newSyntax, replacementRange);
-
-                await joplin.views.dialogs.showToast({
-                    message: 'Image resized to 25%.',
-                    type: ToastType.Success,
-                });
-            } catch (err) {
-                logger.error('Error:', err);
-                const message = err?.message || 'Unknown error occurred';
-                await joplin.views.dialogs.showToast({
-                    message: `Operation failed: ${message}`,
-                    type: ToastType.Error,
-                });
-            }
-        },
-    });
+    // Register quick resize commands (100%, 75%, 50%, 25%)
+    await registerQuickResizeCommand(100);
+    await registerQuickResizeCommand(75);
+    await registerQuickResizeCommand(50);
+    await registerQuickResizeCommand(25);
 }
