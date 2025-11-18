@@ -37,6 +37,12 @@
                 "absolute": "Absolute size"
             },
             "value": "percentage"
+        },
+        "showQuickResizeInContextMenu": {
+            "type": "bool",
+            "label": "Display quick resize options in context menu",
+            "description": "Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu",
+            "value": false
         }
     }
 }

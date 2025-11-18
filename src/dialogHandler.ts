@@ -141,6 +141,10 @@ export async function showResizeDialog(
     </div>
         `
     );
+    await joplin.views.dialogs.setButtons(dialogHandle, [
+        { id: 'ok', title: 'Resize image' },
+        { id: 'cancel', title: 'Cancel' },
+    ]);
     const result = await joplin.views.dialogs.open(dialogHandle);
 
     if (result.id === 'ok' && result.formData) {

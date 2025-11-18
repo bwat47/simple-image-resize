@@ -9,7 +9,7 @@ A Joplin plugin that provides a simple dialogue to switch image syntax between m
 
 ## How to use
 
-In the markdown editor, right click anywhere inside a markdown or HTML image embed and select "Resize Image" (or put your cursor inside the image embed and use the keyboard shortcut if bound).
+In the markdown editor, right-click anywhere inside a markdown or HTML image embed and select "Resize Image" (or put your cursor inside the image embed and use the keyboard shortcut).
 
 This will open a simple image resize dialogue, the following options are provided.
 
@@ -28,8 +28,22 @@ With image syntax set to HTML, you can resize the image by Percentage (default) 
 Enter the desired image size (in percentage or pixels) and click OK, and the plugin will automatically update the image embed with the new image syntax.
 
 > [!note]
-> When using absolute size, the plugin will always update the other dimension to maintain aspect ratio.
+> The resized image will only include the width attribute (Joplin's markdown viewer, Rich text editor, and Rich markdown plugin ignore the height and always use auto-calculated height).
+
+### Quick Resize
+
+You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using keyboard shortcuts or the right-click context menu.
 
 ### Settings
 
-You can choose if the default resize mode is Percentage or Absolute in the plugin settings (default is Percentage).
+**Default resize mode** - You can choose if the default resize mode is Percentage or Absolute in the plugin settings (default is Percentage).
+
+**Display quick resize options in context menu** - Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu
+
+### Default keyboard shortcuts:
+
+- Resize Image dialog (CmdOrCtrl+Shift+R)
+- Resize 100% (CmdOrCtrl+Shift+1)
+- Resize 75% (CmdOrCtrl+Shift+2)
+- Resize 50% (CmdOrCtrl+Shift+3)
+- Resize 25% (CmdOrCtrl+Shift+4)
