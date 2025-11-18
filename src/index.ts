@@ -293,13 +293,13 @@ joplin.plugins.register({
             'simpleImageResizeMenu',
             'Simple Image Resize',
             [
-                { label: 'Resize Image', commandName: 'resizeImage' },
-                { label: 'Resize 100%', commandName: 'resize100' },
-                { label: 'Resize 75%', commandName: 'resize75' },
-                { label: 'Resize 50%', commandName: 'resize50' },
-                { label: 'Resize 25%', commandName: 'resize25' },
+                { label: 'Resize Image', commandName: 'resizeImage', accelerator: 'CmdOrCtrl+Shift+R' },
+                { label: 'Resize 100%', commandName: 'resize100', accelerator: 'CmdOrCtrl+Shift+1' },
+                { label: 'Resize 75%', commandName: 'resize75', accelerator: 'CmdOrCtrl+Shift+2' },
+                { label: 'Resize 50%', commandName: 'resize50', accelerator: 'CmdOrCtrl+Shift+3' },
+                { label: 'Resize 25%', commandName: 'resize25', accelerator: 'CmdOrCtrl+Shift+4' },
             ],
-            MenuItemLocation.Edit
+            MenuItemLocation.Tools
         );
 
         // Enhanced context menu with intelligent showing
