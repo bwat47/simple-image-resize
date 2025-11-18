@@ -6,12 +6,9 @@ export class DialogLock {
     }
 
     tryAcquire(): boolean {
-        if (this.locked) {
-            return false;
-        }
-
+        const wasLocked = this.locked;
         this.locked = true;
-        return true;
+        return !wasLocked;
     }
 
     release(): void {
