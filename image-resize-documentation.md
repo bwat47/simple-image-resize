@@ -14,6 +14,7 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 
 - `index.ts` - Plugin bootstrap: settings, command registration, context menu filter, command execution and replacement.
 - `dialogHandler.ts` - Modal dialog HTML generation and script/CSS loading; collects result; controls state defaults via `getInitialDialogState` helper.
+- `dialogLock.ts` - Lightweight lock guard so the resize dialog can only open once at a time, avoiding overlapping modal instances.
 - `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes, and responsive breakpoints.
 - `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
 - `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url.
@@ -54,6 +55,7 @@ Notes:
 - `detectImageAtCursor` scans the current line; if cursor lies within a detected embed, returns partial context + `{ from, to }` range.
 - `isOnImageInMarkdownEditor` gates the context menu: a safe `editor.execCommand` probe (e.g., `getCursor`) determines Markdown editor scope.
 - Command uses cursor detection exclusively - user simply places cursor anywhere within the image line and invokes the command.
+- `DialogLock` ensures only one resize dialog instance can be opened per editor session; additional invocations are ignored until the active dialog resolves or is cancelled.
 
 ## Resizing & Emission
 
