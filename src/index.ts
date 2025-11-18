@@ -7,6 +7,7 @@ import { detectImageAtCursor, isOnImageInMarkdownEditor } from './cursorDetectio
 import { ImageContext } from './types';
 import { CONSTANTS } from './constants';
 import { logger } from './logger';
+import { resizeDialogLock } from './dialogLock';
 
 joplin.plugins.register({
     onStart: async function () {
@@ -38,6 +39,8 @@ joplin.plugins.register({
             label: 'Resize Image',
             iconName: 'fas fa-expand-alt',
             execute: async () => {
+                let dialogLockAcquired = false;
+
                 try {
                     // Detect image at cursor position
                     const cursorDetection = await detectImageAtCursor();
@@ -84,6 +87,18 @@ joplin.plugins.register({
                         | 'percentage'
                         | 'absolute';
                     const fullContext: ImageContext = { ...partialContext, originalDimensions };
+
+                    if (!resizeDialogLock.tryAcquire()) {
+                        await joplin.views.dialogs.showToast({
+                            message: 'Resize dialog is already open.',
+                            type: ToastType.Info,
+                        });
+                        logger.info('Resize dialog invocation skipped because another instance is open.');
+                        return;
+                    }
+
+                    dialogLockAcquired = true;
+
                     const result = await showResizeDialog(fullContext, defaultResizeMode);
 
                     if (result) {
@@ -107,6 +122,10 @@ joplin.plugins.register({
                         message: `Operation failed: ${message}`,
                         type: ToastType.Error,
                     });
+                } finally {
+                    if (dialogLockAcquired) {
+                        resizeDialogLock.release();
+                    }
                 }
             },
         });
