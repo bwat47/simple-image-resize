@@ -88,7 +88,7 @@ async function executeQuickResize(percentage: number): Promise<void> {
         // 100% converts to Markdown (removes custom sizing), others use HTML
         const targetSyntax = percentage === 100 ? 'markdown' : 'html';
 
-        const newSyntax = buildNewSyntax(fullContext, {
+        const newSyntax = await buildNewSyntax(fullContext, {
             targetSyntax,
             altText: fullContext.altText,
             resizeMode: 'percentage',
@@ -164,7 +164,7 @@ export async function registerCommands(): Promise<void> {
                 const result = await showResizeDialog(fullContext, defaultResizeMode);
 
                 if (result) {
-                    const newSyntax = buildNewSyntax(fullContext, result);
+                    const newSyntax = await buildNewSyntax(fullContext, result);
                     await replaceImageInEditor(newSyntax, replacementRange);
 
                     await joplin.views.dialogs.showToast({

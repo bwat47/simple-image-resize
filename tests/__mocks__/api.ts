@@ -1,2 +1,6 @@
 // Mock for Joplin API
-export default {};
+export default {
+    settings: {
+        value: jest.fn().mockResolvedValue('widthAndHeight'),
+    },
+};

@@ -1,5 +1,7 @@
+import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle } from './stringUtils';
+import { SETTING_HTML_SYNTAX_STYLE } from './settings';
 
 /**
  * Generates new image syntax based on user selections.
@@ -11,7 +13,7 @@ import { escapeHtmlAttribute, escapeMarkdownTitle } from './stringUtils';
  * @param result - User's selections from the resize dialog
  * @returns New image syntax
  */
-export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
+export async function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): Promise<string> {
     // Determine the correct source path format
     const srcPath = context.sourceType === 'resource' ? `:/${context.source}` : context.source;
 
@@ -21,14 +23,14 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
         const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
         newSyntax = `![${result.altText}](${srcPath}${titlePart})`;
     } else {
+        const origW = context.originalDimensions.width;
+        const origH = context.originalDimensions.height;
         let newWidth: number;
 
         if (result.resizeMode === 'percentage') {
             const percent = result.percentage || 100;
-            newWidth = Math.round(context.originalDimensions.width * (percent / 100));
+            newWidth = Math.round(origW * (percent / 100));
         } else {
-            const origW = context.originalDimensions.width;
-            const origH = context.originalDimensions.height;
             const providedW = result.absoluteWidth;
             const providedH = result.absoluteHeight;
             if (providedW && providedH) {
@@ -41,9 +43,18 @@ export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult
                 newWidth = origW;
             }
         }
+
+        // Calculate height to preserve aspect ratio
+        const newHeight = Math.round(newWidth * (origH / origW));
+
+        // Check setting for whether to include height attribute
+        const htmlSyntaxStyle = await joplin.settings.value(SETTING_HTML_SYNTAX_STYLE);
+        const includeHeight = htmlSyntaxStyle === 'widthAndHeight';
+
         const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
         const safeAlt = escapeHtmlAttribute(result.altText);
-        newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}"${titleAttr} />`;
+        const heightAttr = includeHeight ? ` height="${newHeight}"` : '';
+        newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}"${heightAttr}${titleAttr} />`;
     }
 
     return newSyntax;

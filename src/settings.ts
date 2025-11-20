@@ -16,6 +16,7 @@ import { SettingItemType } from 'api/types';
 const SECTION_ID = 'imageResize';
 export const SETTING_DEFAULT_RESIZE_MODE = 'imageResize.defaultResizeMode';
 export const SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU = 'imageResize.showQuickResizeInContextMenu';
+export const SETTING_HTML_SYNTAX_STYLE = 'imageResize.htmlSyntaxStyle';
 
 export async function registerSettings(): Promise<void> {
     await joplin.settings.registerSection(SECTION_ID, {
@@ -44,6 +45,19 @@ export async function registerSettings(): Promise<void> {
             public: true,
             label: 'Display quick resize options in context menu',
             description: 'Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
+        },
+        [SETTING_HTML_SYNTAX_STYLE]: {
+            value: 'widthAndHeight',
+            type: SettingItemType.String,
+            section: SECTION_ID,
+            public: true,
+            label: 'HTML syntax style',
+            description: 'Controls whether HTML image tags include both width and height attributes or just width',
+            isEnum: true,
+            options: {
+                widthAndHeight: 'Width and height',
+                widthOnly: 'Width only',
+            },
         },
     });
 }
