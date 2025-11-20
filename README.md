@@ -38,6 +38,8 @@ You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using ke
 
 **Default resize mode** - You can choose if the default resize mode is Percentage or Absolute in the plugin settings (default is Percentage).
 
+**HTML syntax style** - Include both width/height in HTML syntax (default, best compatibility when pasting images outside of Joplin) or width-only.
+
 **Display quick resize options in context menu** - Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu
 
 ### Default keyboard shortcuts:

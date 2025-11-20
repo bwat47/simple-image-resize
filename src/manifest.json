@@ -38,6 +38,16 @@
             },
             "value": "percentage"
         },
+        "htmlSyntaxStyle": {
+            "type": "enum",
+            "label": "HTML syntax style",
+            "description": "Controls whether HTML image tags include both width and height attributes or just width",
+            "options": {
+                "widthAndHeight": "Width and height",
+                "widthOnly": "Width only"
+            },
+            "value": "widthAndHeight"
+        },
         "showQuickResizeInContextMenu": {
             "type": "bool",
             "label": "Display quick resize options in context menu",

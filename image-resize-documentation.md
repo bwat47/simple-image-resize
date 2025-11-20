@@ -23,7 +23,7 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 - `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url.
 - `cursorDetection.ts` - Scans current line for image syntax at cursor position; returns partial context + editor range.
 - `imageSizeCalculator.ts` - Dimensions via Imaging API; fallbacks (base64 DOM Image for resources; external Image with `crossOrigin='anonymous'` + `referrerPolicy='no-referrer'`); timeouts; aspect ratio math.
-- `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width attribute for HTML (height auto-calculated by Joplin).
+- `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width attribute for HTML with optional height attribute based on settings (preserves aspect ratio).
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Joplin helpers (resource base64, command wrappers, toasts).
 - `logger.ts` - Centralized logging utility. Provides debug(), info(), warn(), and error() methods with configurable log levels (DEBUG, INFO, WARN, ERROR, NONE). Log level can be adjusted at runtime via browser console using joplinLogger.setLevel(level) and joplinLogger.getLevel(). Defaults to WARN level.
@@ -67,7 +67,7 @@ Notes:
     - Absolute: width/height; auto-calc the missing dimension and keep both fields synced to preserve aspect ratio.
     - When targeting HTML with percentage mode, the dialog previews the computed width/height so users can see resulting dimensions while the absolute inputs remain disabled.
 - Markdown output: original size only (resize controls disabled when targeting Markdown).
-- HTML output: include `width` attribute only (Joplin auto-calculates height based on aspect ratio).
+- HTML output: always includes `width` attribute; `height` attribute is conditionally included based on the `htmlSyntaxStyle` setting (both attributes preserve aspect ratio; width-only provides cleaner syntax for Joplin which auto-calculates height, while width-and-height improves compatibility when pasting to external sources).
 - Quick resize commands (100%, 75%, 50%, 25%):
     - 100%: Converts image to Markdown syntax (removes custom sizing).
     - 75%/50%/25%: Converts to HTML with specified percentage of original dimensions.
@@ -84,6 +84,7 @@ Notes:
 
 - `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` - used to preselect dialog mode.
 - `imageResize.showQuickResizeInContextMenu`: `boolean` - when enabled, shows quick resize options (100%, 75%, 50%, 25%) in the right-click context menu alongside the main "Resize Image" option.
+- `imageResize.htmlSyntaxStyle`: `'widthAndHeight' | 'widthOnly'` - controls whether HTML image tags include both width and height attributes (default; better compatibility for pasting outside Joplin) or just width (cleaner; Joplin auto-calculates height).
 - **Note**: Syntax always defaults to HTML in the dialog (not user-configurable).
 
 ## Editor Integration
@@ -112,7 +113,7 @@ Notes:
 ## Testing Focus (Jest)
 
 - `imageDetection` - Markdown/HTML detection, resource vs external, titles, escaped `)`.
-- `imageSyntaxBuilder` - Markdown/HTML conversion, alt/title escaping/decoding, width/height emission.
+- `imageSyntaxBuilder` - Markdown/HTML conversion, alt/title escaping/decoding, width/height emission (both widthAndHeight and widthOnly modes).
 - `dialogHandler` - Initial state calculation for dialog based on syntax and resize mode.
 
 ## Non-Goals / Exclusions

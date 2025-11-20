@@ -8,6 +8,7 @@ module.exports = {
   moduleFileExtensions: ['ts', 'js', 'json'],
   moduleNameMapper: {
     '^api$': '<rootDir>/tests/__mocks__/api.ts',
+    '^api/types$': '<rootDir>/tests/__mocks__/api/types.ts',
   },
   collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/manifest.json', '!src/index.ts'],
   coverageDirectory: 'coverage',
