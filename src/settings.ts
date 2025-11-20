@@ -38,14 +38,6 @@ export async function registerSettings(): Promise<void> {
                 absolute: 'Absolute size',
             },
         },
-        [SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU]: {
-            value: false,
-            type: SettingItemType.Bool,
-            section: SECTION_ID,
-            public: true,
-            label: 'Display quick resize options in context menu',
-            description: 'Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
-        },
         [SETTING_HTML_SYNTAX_STYLE]: {
             value: 'widthAndHeight',
             type: SettingItemType.String,
@@ -58,6 +50,14 @@ export async function registerSettings(): Promise<void> {
                 widthAndHeight: 'Width and height',
                 widthOnly: 'Width only',
             },
+        },
+        [SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU]: {
+            value: false,
+            type: SettingItemType.Bool,
+            section: SECTION_ID,
+            public: true,
+            label: 'Display quick resize options in context menu',
+            description: 'Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
         },
     });
 }
