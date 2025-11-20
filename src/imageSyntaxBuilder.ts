@@ -45,7 +45,8 @@ export async function buildNewSyntax(context: ImageContext, result: ResizeDialog
         }
 
         // Calculate height to preserve aspect ratio
-        const newHeight = Math.round(newWidth * (origH / origW));
+        // Guard against division by zero (edge case with malformed image dimensions)
+        const newHeight = origW > 0 ? Math.round(newWidth * (origH / origW)) : origH;
 
         // Check setting for whether to include height attribute
         const htmlSyntaxStyle = await joplin.settings.value(SETTING_HTML_SYNTAX_STYLE);
