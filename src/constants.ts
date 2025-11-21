@@ -8,7 +8,7 @@ export const REGEX_PATTERNS = {
     // <img src=":/resourceid" ... > OR <img src="https://..." ... >
     HTML_IMAGE_FULL: /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i, // single (non-global) for detection with groups
 
-    // Extract alt/title HTML img
+    // Extract alt/title attributes from HTML img
     IMG_ALT: /\balt\s*=\s*(["'])(.*?)\1/i,
     IMG_TITLE: /\btitle\s*=\s*(["'])(.*?)\1/i,
 
