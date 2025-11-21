@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { registerSettings } from './settings';
 import { registerCommands } from './commands';
-import { registerMenus, registerContextMenu } from './menus';
+import { registerMenus, registerContextMenu, registerToolbarButton } from './menus';
 
 joplin.plugins.register({
     onStart: async function () {
@@ -13,6 +13,9 @@ joplin.plugins.register({
 
         // Register menus
         await registerMenus();
+
+        // Register toolbar button
+        await registerToolbarButton();
 
         // Register context menu
         registerContextMenu();
