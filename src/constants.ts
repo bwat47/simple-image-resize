@@ -9,8 +9,6 @@ export const REGEX_PATTERNS = {
     HTML_IMAGE_FULL: /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i, // single (non-global) for detection with groups
 
     // Extract existing width/height from HTML img
-    IMG_WIDTH: /\bwidth\s*=\s*["']?(\d+)["']?/i,
-    IMG_HEIGHT: /\bheight\s*=\s*["']?(\d+)["']?/i,
     IMG_ALT: /\balt\s*=\s*(["'])(.*?)\1/i,
     IMG_TITLE: /\btitle\s*=\s*(["'])(.*?)\1/i,
 
