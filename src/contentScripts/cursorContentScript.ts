@@ -1,12 +1,16 @@
 /**
- * CodeMirror 6 content script for cursor detection.
+ * CodeMirror 6 content script for editor operations.
  *
- * Registers a custom command that returns cursor position and line text,
- * enabling image detection on both desktop and mobile platforms.
+ * Registers custom commands for:
+ * - Cursor position and line text retrieval
+ * - Text replacement at specified ranges
+ *
+ * Enables image detection and editing on both desktop and mobile platforms.
  */
 
-// Command name for getting cursor info - used by cursorDetection.ts
+// Command names - exported for use by other modules
 export const CURSOR_INFO_COMMAND = 'simpleImageResize-getCursorInfo';
+export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 
 interface CursorInfo {
     line: number; // 0-indexed line number
@@ -14,18 +18,56 @@ interface CursorInfo {
     lineText: string; // full text of the line
 }
 
+interface EditorPosition {
+    line: number; // 0-indexed line number
+    ch: number; // character position within line
+}
+
+interface ReplaceRangeArgs {
+    text: string;
+    from: EditorPosition;
+    to: EditorPosition;
+}
+
+// CodeMirror types (minimal definitions for what we use)
+interface CMDoc {
+    line(n: number): { from: number; to: number; text: string };
+    lineAt(pos: number): { number: number; from: number; text: string };
+    lines: number;
+}
+
+interface CMState {
+    doc: CMDoc;
+    selection: { main: { head: number } };
+}
+
+interface CMView {
+    state: CMState;
+    dispatch(changes: { changes: { from: number; to: number; insert: string } }): void;
+}
+
+interface CodeMirrorWrapper {
+    editor: CMView;
+    registerCommand(name: string, callback: (...args: unknown[]) => unknown): void;
+}
+
+/**
+ * Convert line/ch position to absolute document position.
+ * Line numbers are 0-indexed in our interface, but CM6 uses 1-indexed internally.
+ */
+function posToOffset(doc: CMDoc, pos: EditorPosition): number {
+    // CM6 line() uses 1-indexed line numbers
+    const lineNum = Math.max(1, Math.min(pos.line + 1, doc.lines));
+    const lineInfo = doc.line(lineNum);
+    const ch = Math.max(0, Math.min(pos.ch, lineInfo.to - lineInfo.from));
+    return lineInfo.from + ch;
+}
+
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function (_context: { contentScriptId: string }) {
     return {
-        plugin: function (codeMirrorWrapper: {
-            editor: {
-                state: {
-                    doc: { lineAt(pos: number): { number: number; from: number; text: string } };
-                    selection: { main: { head: number } };
-                };
-            };
-            registerCommand(name: string, callback: () => CursorInfo | null): void;
-        }) {
+        plugin: function (codeMirrorWrapper: CodeMirrorWrapper) {
+            // Command: Get cursor position and current line text
             codeMirrorWrapper.registerCommand(CURSOR_INFO_COMMAND, (): CursorInfo | null => {
                 try {
                     const view = codeMirrorWrapper.editor;
@@ -40,6 +82,43 @@ export default function (_context: { contentScriptId: string }) {
                     };
                 } catch {
                     return null;
+                }
+            });
+
+            // Command: Replace text in a range
+            codeMirrorWrapper.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
+                try {
+                    // Args can come as [text, from, to] or as a single object
+                    let replaceArgs: ReplaceRangeArgs;
+
+                    if (args.length >= 3) {
+                        // Called as (text, from, to)
+                        replaceArgs = {
+                            text: args[0] as string,
+                            from: args[1] as EditorPosition,
+                            to: args[2] as EditorPosition,
+                        };
+                    } else if (args.length === 1 && typeof args[0] === 'object') {
+                        // Called as ({ text, from, to })
+                        replaceArgs = args[0] as ReplaceRangeArgs;
+                    } else {
+                        return false;
+                    }
+
+                    const { text, from, to } = replaceArgs;
+                    const view = codeMirrorWrapper.editor;
+                    const doc = view.state.doc;
+
+                    const fromOffset = posToOffset(doc, from);
+                    const toOffset = posToOffset(doc, to);
+
+                    view.dispatch({
+                        changes: { from: fromOffset, to: toOffset, insert: text },
+                    });
+
+                    return true;
+                } catch {
+                    return false;
                 }
             });
         },
