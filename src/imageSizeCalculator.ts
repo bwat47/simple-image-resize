@@ -1,4 +1,3 @@
-import joplin from 'api';
 import { CONSTANTS } from './constants';
 import { convertResourceToBase64, validateResourceId } from './utils';
 import { logger } from './logger';
@@ -7,8 +6,9 @@ import { ImageDimensions } from './types';
 /**
  * Retrieves image dimensions from either a Joplin resource or external URL.
  *
- * Uses Joplin Imaging API with fallback to DOM Image probes if needed.
- * For resources: falls back to base64 conversion. For external: uses CORS-friendly DOM Image.
+ * Uses DOM Image probes for dimension detection:
+ * - Resources: converted to base64 data URL, then loaded via DOM Image
+ * - External: loaded directly via DOM Image with CORS/privacy safeguards
  *
  * @param source - Resource ID (32-char hex) or external URL
  * @param sourceType - Whether source is a Joplin resource or external URL
@@ -26,71 +26,41 @@ export async function getOriginalImageDimensions(
     }
 }
 
+/**
+ * Get dimensions for a Joplin resource by converting to base64 and probing with DOM Image.
+ */
 async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDimensions> {
     if (!validateResourceId(resourceId)) {
         throw new Error('Invalid resource ID');
     }
-    let handle: string | undefined;
+
     try {
-        // Primary path: Imaging API
-        handle = await joplin.imaging.createFromResource(resourceId);
-        const size = (await joplin.imaging.getSize(handle)) as { width: number; height: number };
-        const { width, height } = size;
-        if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-            return { width, height };
+        const dataUrl = await convertResourceToBase64(resourceId);
+        if (!dataUrl.startsWith('data:image')) {
+            throw new Error('Resource is not a valid image');
         }
-        // Fall through to base64 fallback
-        throw new Error('Invalid image dimensions returned by imaging API.');
+        return await measureImageFromDataUrl(dataUrl, CONSTANTS.BASE64_TIMEOUT_MS);
     } catch (err: unknown) {
-        logger.warn(`Imaging API failed to get resource dimensions for ${resourceId}, trying base64 fallback:`, err);
-        // Fallback: convert to base64 and probe with DOM Image
-        try {
-            const dataUrl = await convertResourceToBase64(resourceId);
-            if (!dataUrl.startsWith('data:image')) {
-                throw new Error('Resource is not a valid image');
-            }
-            const dims = await measureImageFromDataUrl(dataUrl, CONSTANTS.BASE64_TIMEOUT_MS);
-            return dims;
-        } catch (err2: unknown) {
-            logger.error(`Base64 fallback failed to get dimensions for resource ${resourceId}:`, err2);
-            const e = err2 as { message?: unknown } | string;
-            const msg = typeof e === 'object' && e && 'message' in e ? String(e.message) : String(err2);
-            throw new Error(`Could not determine image dimensions: ${msg}`);
-        }
-    } finally {
-        if (handle) await joplin.imaging.free(handle);
+        logger.error(`Failed to get dimensions for resource ${resourceId}:`, err);
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Could not determine image dimensions: ${message}`);
     }
 }
 
+/**
+ * Get dimensions for an external image URL using DOM Image with privacy safeguards.
+ */
 async function getExternalImageDimensions(url: string): Promise<ImageDimensions> {
-    // Validate URL format
     if (!isValidHttpUrl(url)) {
         throw new Error('Invalid external image URL');
     }
-    let handle: string | undefined;
+
     try {
-        // Imaging API downloads the file, then we can query its size
-        handle = await joplin.imaging.createFromPath(url);
-        const size = (await joplin.imaging.getSize(handle)) as { width: number; height: number };
-        const { width, height } = size;
-        if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-            return { width, height };
-        }
-        // Fall through to DOM-based measurement as a secondary fallback
-        throw new Error('Invalid external image dimensions returned by imaging API.');
+        return await measureExternalImageFromUrl(url, CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS);
     } catch (err: unknown) {
-        logger.warn(`Imaging API failed to get external dimensions for ${url}, trying DOM Image fallback:`, err);
-        try {
-            const dims = await measureExternalImageFromUrl(url, CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS);
-            return dims;
-        } catch (err2: unknown) {
-            logger.error(`Failed to get dimensions for external URL ${url}:`, err2);
-            const e = err2 as { message?: unknown } | string;
-            const msg = typeof e === 'object' && e && 'message' in e ? String(e.message) : String(err2);
-            throw new Error(`Could not determine external image dimensions: ${msg}`);
-        }
-    } finally {
-        if (handle) await joplin.imaging.free(handle);
+        logger.error(`Failed to get dimensions for external URL ${url}:`, err);
+        const message = err instanceof Error ? err.message : String(err);
+        throw new Error(`Could not determine external image dimensions: ${message}`);
     }
 }
 
@@ -103,7 +73,9 @@ function isValidHttpUrl(string: string): boolean {
     }
 }
 
-// Helper: measure image dimensions using a DOM Image from a data URL
+/**
+ * Measure image dimensions using a DOM Image from a data URL.
+ */
 async function measureImageFromDataUrl(dataUrl: string, timeoutMs: number): Promise<ImageDimensions> {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -132,7 +104,10 @@ async function measureImageFromDataUrl(dataUrl: string, timeoutMs: number): Prom
     });
 }
 
-// Helper: measure external image using DOM Image directly from URL
+/**
+ * Measure external image dimensions using DOM Image directly from URL.
+ * Uses privacy-friendly defaults to minimize tracking.
+ */
 async function measureExternalImageFromUrl(url: string, timeoutMs: number): Promise<ImageDimensions> {
     return new Promise((resolve, reject) => {
         const img = new Image();
