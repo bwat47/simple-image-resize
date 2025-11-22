@@ -61,7 +61,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
         logger.debug(`Trying base64 conversion for: ${resourceId}`);
         const dataUrl = await convertResourceToBase64(resourceId);
         if (dataUrl.startsWith('data:image')) {
-            const base64Result = await measureImageFromPath(dataUrl, CONSTANTS.BASE64_TIMEOUT_MS);
+            const base64Result = await measureImage(dataUrl, { timeoutMs: CONSTANTS.BASE64_TIMEOUT_MS });
             logger.debug(`Base64 returned dimensions: ${base64Result.width}x${base64Result.height}`);
             return base64Result;
         }
@@ -107,7 +107,10 @@ async function getExternalImageDimensions(url: string): Promise<ImageDimensions>
     }
 
     try {
-        return await measureExternalImageFromUrl(url, CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS);
+        return await measureImage(url, {
+            timeoutMs: CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS,
+            usePrivacySettings: true,
+        });
     } catch (err: unknown) {
         logger.error(`Failed to get dimensions for external URL ${url}:`, err);
         const message = err instanceof Error ? err.message : String(err);
@@ -124,11 +127,18 @@ function isValidHttpUrl(string: string): boolean {
     }
 }
 
+interface MeasureImageOptions {
+    timeoutMs: number;
+    usePrivacySettings?: boolean; // For external URLs: sets crossOrigin and referrerPolicy
+}
+
 /**
- * Measure image dimensions using a DOM Image from a file path or URL.
- * Works with local file paths, file:// URLs, and data URLs.
+ * Measure image dimensions using a DOM Image.
+ * Works with local file paths, file:// URLs, data URLs, and external URLs.
  */
-async function measureImageFromPath(path: string, timeoutMs: number): Promise<ImageDimensions> {
+async function measureImage(src: string, options: MeasureImageOptions): Promise<ImageDimensions> {
+    const { timeoutMs, usePrivacySettings = false } = options;
+
     return new Promise((resolve, reject) => {
         const img = new Image();
         const timeoutId = setTimeout(() => {
@@ -152,41 +162,12 @@ async function measureImageFromPath(path: string, timeoutMs: number): Promise<Im
             reject(new Error('Failed to load image for dimension measurement.'));
         };
 
-        img.src = path;
-    });
-}
+        // Privacy-friendly defaults for external URLs to minimize tracking
+        if (usePrivacySettings) {
+            img.crossOrigin = 'anonymous';
+            (img as unknown as { referrerPolicy?: string }).referrerPolicy = 'no-referrer';
+        }
 
-/**
- * Measure external image dimensions using DOM Image directly from URL.
- * Uses privacy-friendly defaults to minimize tracking.
- */
-async function measureExternalImageFromUrl(url: string, timeoutMs: number): Promise<ImageDimensions> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        const timeoutId = setTimeout(() => {
-            img.src = '';
-            reject(new Error('Timeout: Could not load external image to determine dimensions.'));
-        }, timeoutMs);
-
-        img.onload = () => {
-            clearTimeout(timeoutId);
-            const width = img.naturalWidth;
-            const height = img.naturalHeight;
-            if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-                resolve({ width, height });
-            } else {
-                reject(new Error('Invalid external image dimensions after load.'));
-            }
-        };
-
-        img.onerror = () => {
-            clearTimeout(timeoutId);
-            reject(new Error('Failed to load external image. Check URL and network connection.'));
-        };
-
-        // Privacy-friendly defaults; some hosts may block based on Referer
-        img.crossOrigin = 'anonymous';
-        (img as unknown as { referrerPolicy?: string }).referrerPolicy = 'no-referrer';
-        img.src = url;
+        img.src = src;
     });
 }
