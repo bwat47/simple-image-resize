@@ -33,9 +33,6 @@ With image syntax set to HTML, you can resize the image by Percentage (default) 
 
 Enter the desired image size (in percentage or pixels) and click OK, and the plugin will automatically update the image embed with the new image syntax.
 
-> [!note]
-> The resized image will only include the width attribute (Joplin's markdown viewer, Rich text editor, and Rich markdown plugin ignore the height and always use auto-calculated height).
-
 ### Quick Resize
 
 You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using keyboard shortcuts or the right-click context menu.
