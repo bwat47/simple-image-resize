@@ -4,8 +4,11 @@
  * Registers custom commands for:
  * - Cursor position and line text retrieval
  * - Text replacement at specified ranges
+ * - Image dimension measurement (loads images in editor context)
  *
  * Enables image detection and editing on both desktop and mobile platforms.
+ * The editor context has file access on mobile, allowing dimension fetching
+ * for local resources that the main plugin context cannot access directly.
  */
 
 // Command names - exported for use by other modules
