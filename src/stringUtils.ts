@@ -51,3 +51,15 @@ export function decodeHtmlEntities(value: string): string {
         .replace(/&gt;/g, '>');
     return str;
 }
+
+/**
+ * Sanitizes a Markdown alt text string.
+ *
+ * Removes brackets to prevent breaking Markdown syntax.
+ *
+ * @param value - Raw alt text
+ * @returns Sanitized alt text safe for use in Markdown `![alt](url)` syntax
+ */
+export function sanitizeMarkdownAlt(value: string): string {
+    return String(value || '').replace(/[\[\]]/g, '');
+}

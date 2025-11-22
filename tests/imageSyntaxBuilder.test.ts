@@ -137,6 +137,17 @@ describe('buildNewSyntax', () => {
         expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
     });
 
+    test('removes brackets and preserves backslashes in alt text for markdown output', async () => {
+        const res: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: 'Alt [with] brackets and \\ backslash',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const syntax = await buildNewSyntax(baseContext, res);
+        expect(syntax).toBe('![Alt with brackets and \\ backslash](:/0123456789abcdef0123456789abcdef)');
+    });
+
     test('escapes quotes in title for markdown and html output', async () => {
         const ctx: ImageContext = { ...baseContext, title: 'He said "hi" & <ok>' };
         // HTML

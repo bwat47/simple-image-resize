@@ -1,6 +1,6 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
-import { escapeHtmlAttribute, escapeMarkdownTitle } from './stringUtils';
+import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './stringUtils';
 import { SETTING_HTML_SYNTAX_STYLE } from './settings';
 
 /**
@@ -21,7 +21,7 @@ export async function buildNewSyntax(context: ImageContext, result: ResizeDialog
 
     if (result.targetSyntax === 'markdown') {
         const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
-        newSyntax = `![${result.altText}](${srcPath}${titlePart})`;
+        newSyntax = `![${sanitizeMarkdownAlt(result.altText)}](${srcPath}${titlePart})`;
     } else {
         const origW = context.originalDimensions.width;
         const origH = context.originalDimensions.height;
