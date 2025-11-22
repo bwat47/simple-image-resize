@@ -92,17 +92,14 @@ export async function showResizeDialog(
                   <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
                   <span class="syntax-option">
                     <span>HTML (supports resizing)</span>
-                    <code class="code-example">&lt;img src=":/resourceId" alt="alt" width="300" height="200" /&gt;</code>
                   </span>
                 </label>
                 <label class="row">
                   <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
                   <span class="syntax-option">
                     <span>Markdown (original size only)</span>
-                    <code class="code-example">![alt](:/resourceId)</code>
                   </span>
                 </label>
-                <div class="hint" style="margin-top:8px;">Note: Resize settings are only available when HTML syntax is selected. Choose Markdown to revert to the original markdown embed.</div>
               </div>
             </div>
           </fieldset>
