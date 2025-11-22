@@ -14,13 +14,14 @@ Goal: Markdown + HTML image syntax conversion and lossless image resizing in Jop
 
 The plugin supports Desktop, Android, and Web app through platform-specific strategies:
 
-| Platform | Cursor Detection | Text Replacement | Dimension Fetching |
-|----------|------------------|------------------|-------------------|
-| Desktop  | Content script   | Content script   | Content script or Base64 |
+| Platform | Cursor Detection | Text Replacement | Dimension Fetching                |
+| -------- | ---------------- | ---------------- | --------------------------------- |
+| Desktop  | Content script   | Content script   | Content script or Base64          |
 | Android  | Content script   | Content script   | Content script (via resourcePath) |
-| Web App  | Content script   | Content script   | Base64 conversion |
+| Web App  | Content script   | Content script   | Base64 conversion                 |
 
 **Dimension fetching strategy order:**
+
 1. Content script with `joplin.data.resourcePath()` - works on Android + Desktop
 2. Base64 conversion via `joplin.data.get(['resources', id, 'file'])` - works on Web app + Desktop
 3. Default dimensions (400x300) - fallback when all strategies fail
@@ -33,7 +34,7 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 - `menus.ts` - Menu registration: creates Tools submenu with keyboard shortcuts (CmdOrCtrl+Shift+R/1/2/3/4), toolbar button for mobile access, and dynamic context menu based on cursor position and settings.
 - `dialogHandler.ts` - Modal dialog HTML generation and script/CSS loading; collects result; controls state defaults via `getInitialDialogState` helper.
 - `dialogLock.ts` - Lightweight lock guard so the resize dialog can only open once at a time, avoiding overlapping modal instances.
-- `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes, and responsive breakpoints.
+- `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes.
 - `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
 - `contentScripts/cursorContentScript.ts` - CodeMirror 6 content script running in editor context. Registers commands for cursor info retrieval, text replacement, and image dimension measurement. The editor context has file access on mobile platforms.
 - `imageDetection.ts` - Detects Markdown/HTML image, extracts alt/title, resourceId/url.
