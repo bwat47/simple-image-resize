@@ -144,7 +144,7 @@ export async function showResizeDialog(
     ]);
     const result = await joplin.views.dialogs.open(dialogHandle);
 
-    if (result.id === 'ok' && result.formData) {
+    if (result?.id === 'ok' && result.formData) {
         const form = result.formData.resizeForm;
         if (!form) {
             return null;
