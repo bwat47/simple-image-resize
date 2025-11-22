@@ -62,7 +62,8 @@ interface CodeMirrorWrapper {
 
 /**
  * Convert line/ch position to absolute document position.
- * Line numbers are 0-indexed in our interface, but CM6 uses 1-indexed internally.
+ * CM6 doc.line() expects 1-indexed line numbers, so we convert
+ * from our 0-indexed EditorPosition before calling it.
  */
 function posToOffset(doc: CMDoc, pos: EditorPosition): number {
     // CM6 line() uses 1-indexed line numbers
