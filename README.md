@@ -1,6 +1,9 @@
 > [!important]
 > My coding knowledge is currently very limited. This plugin was created entirely with AI tools, and I may be limited in my ability to fix any issues.
 
+> [!important]
+> As of version 1.5.1, the legacy editor is no longer supported.
+
 # Simple Image Resize
 
 A Joplin plugin that provides a simple dialogue to switch image syntax between markdown/html and losslessly resize images by adjusting the width/height attributes.
@@ -12,6 +15,9 @@ A Joplin plugin that provides a simple dialogue to switch image syntax between m
 In the markdown editor, right-click anywhere inside a markdown or HTML image embed and select "Resize Image" (or put your cursor inside the image embed and use the keyboard shortcut).
 
 This will open a simple image resize dialogue, the following options are provided.
+
+> [!note]
+> On mobile/web you can open the dialog using the toolbar icon
 
 ### Switch image syntax
 
