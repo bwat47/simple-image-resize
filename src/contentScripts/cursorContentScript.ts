@@ -11,6 +11,7 @@
 // Command names - exported for use by other modules
 export const CURSOR_INFO_COMMAND = 'simpleImageResize-getCursorInfo';
 export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
+export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
 
 interface CursorInfo {
     line: number; // 0-indexed line number
@@ -27,6 +28,11 @@ interface ReplaceRangeArgs {
     text: string;
     from: EditorPosition;
     to: EditorPosition;
+}
+
+interface ImageDimensions {
+    width: number;
+    height: number;
 }
 
 // CodeMirror types (minimal definitions for what we use)
@@ -121,6 +127,49 @@ export default function (_context: { contentScriptId: string }) {
                     return false;
                 }
             });
+
+            // Command: Get image dimensions by loading it in the editor context
+            // This runs inside the editor webview which has access to local files
+            codeMirrorWrapper.registerCommand(
+                GET_IMAGE_DIMENSIONS_COMMAND,
+                (...args: unknown[]): Promise<ImageDimensions | null> => {
+                    return new Promise((resolve) => {
+                        try {
+                            const imagePath = args[0] as string;
+                            if (!imagePath || typeof imagePath !== 'string') {
+                                resolve(null);
+                                return;
+                            }
+
+                            const img = new Image();
+                            const timeoutId = setTimeout(() => {
+                                img.src = '';
+                                resolve(null);
+                            }, 5000);
+
+                            img.onload = () => {
+                                clearTimeout(timeoutId);
+                                const width = img.naturalWidth;
+                                const height = img.naturalHeight;
+                                if (width > 0 && height > 0) {
+                                    resolve({ width, height });
+                                } else {
+                                    resolve(null);
+                                }
+                            };
+
+                            img.onerror = () => {
+                                clearTimeout(timeoutId);
+                                resolve(null);
+                            };
+
+                            img.src = imagePath;
+                        } catch {
+                            resolve(null);
+                        }
+                    });
+                }
+            );
         },
     };
 }

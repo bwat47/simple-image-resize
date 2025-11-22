@@ -1,7 +1,9 @@
+import joplin from 'api';
 import { CONSTANTS } from './constants';
-import { convertResourceToBase64, validateResourceId } from './utils';
+import { validateResourceId } from './utils';
 import { logger } from './logger';
 import { ImageDimensions } from './types';
+import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
 
 /**
  * Retrieves image dimensions from either a Joplin resource or external URL.
@@ -27,7 +29,8 @@ export async function getOriginalImageDimensions(
 }
 
 /**
- * Get dimensions for a Joplin resource by converting to base64 and probing with DOM Image.
+ * Get dimensions for a Joplin resource using the resource file path.
+ * Uses content script to load the image in the editor context (which has file access on mobile).
  */
 async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDimensions> {
     if (!validateResourceId(resourceId)) {
@@ -35,15 +38,50 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
     }
 
     try {
-        const dataUrl = await convertResourceToBase64(resourceId);
-        if (!dataUrl.startsWith('data:image')) {
-            throw new Error('Resource is not a valid image');
+        logger.warn(`Attempting to get resource path for: ${resourceId}`);
+        const resourcePath = await joplin.data.resourcePath(resourceId);
+        logger.warn(`Resource path result: ${resourcePath} (type: ${typeof resourcePath})`);
+        if (!resourcePath) {
+            throw new Error('Could not get resource path');
         }
-        return await measureImageFromDataUrl(dataUrl, CONSTANTS.BASE64_TIMEOUT_MS);
+
+        // Try loading via content script (works on mobile where editor has file access)
+        const contentScriptResult = await getImageDimensionsViaContentScript(resourcePath);
+        if (contentScriptResult) {
+            logger.warn(
+                `Content script returned dimensions: ${contentScriptResult.width}x${contentScriptResult.height}`
+            );
+            return contentScriptResult;
+        }
+
+        // Fallback: try direct loading (works on desktop)
+        logger.warn(`Content script failed, trying direct load for: ${resourcePath}`);
+        return await measureImageFromPath(resourcePath, CONSTANTS.BASE64_TIMEOUT_MS);
     } catch (err: unknown) {
         logger.error(`Failed to get dimensions for resource ${resourceId}:`, err);
         const message = err instanceof Error ? err.message : String(err);
         throw new Error(`Could not determine image dimensions: ${message}`);
+    }
+}
+
+/**
+ * Get image dimensions via the content script running in the editor context.
+ * This has access to local files on mobile platforms.
+ */
+async function getImageDimensionsViaContentScript(imagePath: string): Promise<ImageDimensions | null> {
+    try {
+        const result = (await joplin.commands.execute('editor.execCommand', {
+            name: GET_IMAGE_DIMENSIONS_COMMAND,
+            args: [imagePath],
+        })) as ImageDimensions | null;
+
+        if (result && typeof result.width === 'number' && typeof result.height === 'number') {
+            return result;
+        }
+        return null;
+    } catch (error) {
+        logger.warn('Content script dimension fetch failed:', error);
+        return null;
     }
 }
 
@@ -74,9 +112,10 @@ function isValidHttpUrl(string: string): boolean {
 }
 
 /**
- * Measure image dimensions using a DOM Image from a data URL.
+ * Measure image dimensions using a DOM Image from a file path or URL.
+ * Works with local file paths, file:// URLs, and data URLs.
  */
-async function measureImageFromDataUrl(dataUrl: string, timeoutMs: number): Promise<ImageDimensions> {
+async function measureImageFromPath(path: string, timeoutMs: number): Promise<ImageDimensions> {
     return new Promise((resolve, reject) => {
         const img = new Image();
         const timeoutId = setTimeout(() => {
@@ -100,7 +139,7 @@ async function measureImageFromDataUrl(dataUrl: string, timeoutMs: number): Prom
             reject(new Error('Failed to load image for dimension measurement.'));
         };
 
-        img.src = dataUrl;
+        img.src = path;
     });
 }
 
