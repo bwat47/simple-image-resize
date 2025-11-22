@@ -3,11 +3,12 @@
  *
  * Handles:
  * - Submenu creation in Tools menu with keyboard shortcuts
+ * - Toolbar button in editor toolbar
  * - Dynamic context menu items based on cursor position and settings
  */
 
 import joplin from 'api';
-import { MenuItemLocation } from 'api/types';
+import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
 import { SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU } from './settings';
@@ -25,6 +26,14 @@ export async function registerMenus(): Promise<void> {
             { label: 'Resize 25%', commandName: 'resize25', accelerator: 'CmdOrCtrl+Shift+4' },
         ],
         MenuItemLocation.Tools
+    );
+}
+
+export async function registerToolbarButton(): Promise<void> {
+    await joplin.views.toolbarButtons.create(
+        'resizeImageToolbarButton',
+        'resizeImage',
+        ToolbarButtonLocation.EditorToolbar
     );
 }
 

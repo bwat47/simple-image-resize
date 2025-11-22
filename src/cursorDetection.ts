@@ -1,32 +1,62 @@
 import joplin from 'api';
 import { REGEX_PATTERNS } from './constants';
 import { detectImageSyntax } from './imageDetection';
-import { ImageContext, EditorPosition, EditorRange } from './types';
+import { ImageContext, EditorRange } from './types';
 import { logger } from './logger';
+import { CURSOR_INFO_COMMAND } from './contentScripts/cursorContentScript';
 
 interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions'>;
     range: EditorRange;
 }
 
+interface CursorInfo {
+    line: number;
+    ch: number;
+    lineText: string;
+}
+
+/**
+ * Gets cursor info using the content script command.
+ * This approach works on both desktop and mobile platforms.
+ */
+async function getCursorInfoViaContentScript(): Promise<CursorInfo | null> {
+    try {
+        const result = (await joplin.commands.execute('editor.execCommand', {
+            name: CURSOR_INFO_COMMAND,
+        })) as CursorInfo | null;
+
+        if (
+            result &&
+            typeof result.line === 'number' &&
+            typeof result.ch === 'number' &&
+            typeof result.lineText === 'string'
+        ) {
+            return result;
+        }
+        return null;
+    } catch (error) {
+        logger.debug('Content script cursor detection not available:', error);
+        return null;
+    }
+}
+
 /**
  * Detects if the cursor is currently inside a valid image embed.
  * Returns the image context and range for replacement.
+ *
+ * Uses content script for cursor detection which works on both desktop and mobile.
  */
 export async function detectImageAtCursor(): Promise<CursorDetectionResult | null> {
     try {
-        const cursor = (await joplin.commands.execute('editor.execCommand', {
-            name: 'getCursor',
-        })) as EditorPosition | null;
+        const cursorInfo = await getCursorInfoViaContentScript();
 
-        if (!cursor || typeof cursor.line !== 'number' || typeof cursor.ch !== 'number') {
+        if (!cursorInfo) {
+            logger.warn('Could not get cursor info');
             return null;
         }
 
-        const lineText = (await joplin.commands.execute('editor.execCommand', {
-            name: 'getLine',
-            args: [cursor.line],
-        })) as string;
+        const { line, ch, lineText } = cursorInfo;
 
         if (!lineText) return null;
 
@@ -44,15 +74,15 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
             const endCh = match.index + match[0].length;
 
             // Check if cursor is within this image's bounds
-            if (cursor.ch >= startCh && cursor.ch <= endCh) {
+            if (ch >= startCh && ch <= endCh) {
                 const partialContext = detectImageSyntax(match[0]);
 
                 if (partialContext) {
                     return {
                         context: partialContext,
                         range: {
-                            from: { line: cursor.line, ch: startCh },
-                            to: { line: cursor.line, ch: endCh },
+                            from: { line, ch: startCh },
+                            to: { line, ch: endCh },
                         },
                     };
                 }
@@ -72,10 +102,7 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
  */
 export async function isOnImageInMarkdownEditor(): Promise<boolean> {
     try {
-        // First check if we're in markdown editor
-        await joplin.commands.execute('editor.execCommand', { name: 'getCursor' });
-
-        // Then check if cursor is on an image
+        // Check if cursor is on an image using the content script
         const detection = await detectImageAtCursor();
         return detection !== null;
     } catch {

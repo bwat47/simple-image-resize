@@ -20,6 +20,7 @@ import { CONSTANTS } from './constants';
 import { logger } from './logger';
 import { resizeDialogLock } from './dialogLock';
 import { SETTING_DEFAULT_RESIZE_MODE } from './settings';
+import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 
 /**
  * Shared function to handle image detection and dimension fetching
@@ -66,11 +67,12 @@ async function detectAndPrepareImage() {
 }
 
 /**
- * Shared function to replace image in editor
+ * Shared function to replace image in editor.
+ * Uses custom content script command for cross-platform support (desktop + mobile).
  */
 async function replaceImageInEditor(newSyntax: string, replacementRange: EditorRange) {
     await joplin.commands.execute('editor.execCommand', {
-        name: 'replaceRange',
+        name: REPLACE_RANGE_COMMAND,
         args: [newSyntax, replacementRange.from, replacementRange.to],
     });
 }
