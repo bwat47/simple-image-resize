@@ -9,7 +9,7 @@ import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScri
  * Retrieves image dimensions from either a Joplin resource or external URL.
  *
  * Uses DOM Image probes for dimension detection:
- * - Resources: converted to base64 data URL, then loaded via DOM Image
+ * - Resources: loaded via content script in editor context (works on mobile)
  * - External: loaded directly via DOM Image with CORS/privacy safeguards
  *
  * @param source - Resource ID (32-char hex) or external URL
@@ -38,9 +38,9 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
     }
 
     try {
-        logger.warn(`Attempting to get resource path for: ${resourceId}`);
+        logger.debug(`Attempting to get resource path for: ${resourceId}`);
         const resourcePath = await joplin.data.resourcePath(resourceId);
-        logger.warn(`Resource path result: ${resourcePath} (type: ${typeof resourcePath})`);
+        logger.debug(`Resource path result: ${resourcePath}`);
         if (!resourcePath) {
             throw new Error('Could not get resource path');
         }
@@ -48,14 +48,14 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
         // Try loading via content script (works on mobile where editor has file access)
         const contentScriptResult = await getImageDimensionsViaContentScript(resourcePath);
         if (contentScriptResult) {
-            logger.warn(
+            logger.debug(
                 `Content script returned dimensions: ${contentScriptResult.width}x${contentScriptResult.height}`
             );
             return contentScriptResult;
         }
 
         // Fallback: try direct loading (works on desktop)
-        logger.warn(`Content script failed, trying direct load for: ${resourcePath}`);
+        logger.debug(`Content script failed, trying direct load for: ${resourcePath}`);
         return await measureImageFromPath(resourcePath, CONSTANTS.BASE64_TIMEOUT_MS);
     } catch (err: unknown) {
         logger.error(`Failed to get dimensions for resource ${resourceId}:`, err);
@@ -80,7 +80,7 @@ async function getImageDimensionsViaContentScript(imagePath: string): Promise<Im
         }
         return null;
     } catch (error) {
-        logger.warn('Content script dimension fetch failed:', error);
+        logger.debug('Content script dimension fetch failed:', error);
         return null;
     }
 }
