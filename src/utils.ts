@@ -9,15 +9,19 @@ export function validateResourceId(id: string): boolean {
 }
 
 /**
- * Converts binary data to base64 string using browser-compatible APIs.
+ * Converts binary data to base64 string using the FileReader API.
  */
-function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
-    const bytes = buffer instanceof Uint8Array ? buffer : new Uint8Array(buffer);
-    let binary = '';
-    for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
-    }
-    return btoa(binary);
+async function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): Promise<string> {
+    const blob = new Blob([buffer as BlobPart]);
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+            const dataUrl = reader.result as string;
+            resolve(dataUrl.split(',')[1]);
+        };
+        reader.onerror = () => reject(new Error('FileReader error'));
+        reader.readAsDataURL(blob);
+    });
 }
 
 /**
@@ -25,10 +29,10 @@ function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): string {
  * - Desktop: ArrayBuffer/Uint8Array
  * - Web app: Object with numeric keys (e.g., {0: 137, 1: 80, ...})
  */
-function toBase64(data: unknown): string {
+async function toBase64(data: unknown): Promise<string> {
     // ArrayBuffer or Uint8Array (desktop)
     if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
-        return arrayBufferToBase64(data);
+        return await arrayBufferToBase64(data);
     }
 
     // Object with numeric keys (web app) - check for array-like structure
@@ -41,7 +45,7 @@ function toBase64(data: unknown): string {
             for (let i = 0; i < length; i++) {
                 bytes[i] = obj[i] ?? 0;
             }
-            return arrayBufferToBase64(bytes);
+            return await arrayBufferToBase64(bytes);
         }
     }
 
@@ -66,7 +70,7 @@ export async function convertResourceToBase64(resourceId: string): Promise<strin
             throw new Error('Could not find file data.');
         }
 
-        const base64 = toBase64(body);
+        const base64 = await toBase64(body);
         return `data:${resource.mime};base64,${base64}`;
     } catch (err) {
         logger.debug(`Error converting resource ${resourceId} to base64:`, err);
