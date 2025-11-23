@@ -43,7 +43,7 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 - `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width attribute for HTML with optional height attribute based on settings (preserves aspect ratio).
 - `stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title.
 - `utils.ts` - Resource ID validation and base64 conversion for web app compatibility.
-- `logger.ts` - Centralized logging utility. Provides debug(), info(), warn(), and error() methods with configurable log levels (DEBUG, INFO, WARN, ERROR, NONE). Log level can be adjusted at runtime via browser console using joplinLogger.setLevel(level) and joplinLogger.getLevel(). Defaults to WARN level.
+- `logger.ts` - Centralized logging utility. Provides debug(), info(), warn(), and error() methods with configurable log levels (DEBUG, INFO, WARN, ERROR, NONE). Log level can be adjusted at runtime via browser console using `console.simpleImageResize.setLogLevel(level)` and `console.simpleImageResize.getLogLevel()`. Defaults to WARN level.
 - `constants.ts` - Regex patterns, timeout constants, and default fallback dimensions.
 - `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 

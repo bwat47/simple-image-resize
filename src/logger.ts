@@ -11,8 +11,12 @@
  * logger.error('Error occurred', error);
  *
  * // Runtime control via dev console:
- * joplinLogger.setLevel(0) // set log level
- * joplinLogger.getLevel() // get current log level
+ * console.simpleImageResize.setLogLevel(0) // DEBUG
+ * console.simpleImageResize.setLogLevel(1) // INFO
+ * console.simpleImageResize.setLogLevel(2) // WARN
+ * console.simpleImageResize.setLogLevel(3) // ERROR
+ * console.simpleImageResize.setLogLevel(4) // NONE
+ * console.simpleImageResize.getLogLevel()  // get current log level
  *
  * modified from: https://github.com/cipherswami/joplin-plugin-quick-note/blob/main/src/logger.ts
  */
@@ -31,17 +35,17 @@ export enum LogLevel {
     NONE = 4,
 }
 
-class Logger {
+export class Logger {
     private level: LogLevel;
 
     constructor(
         private prefix: string,
-        initialLevel: LogLevel = LogLevel.INFO
+        initialLevel: LogLevel
     ) {
         this.level = initialLevel;
     }
 
-    private getLevelName(level: number): string {
+    getLevelName(level: number): string {
         return LogLevel[level] ?? 'UNKNOWN';
     }
 
@@ -59,8 +63,6 @@ class Logger {
     }
 
     getLevel(): LogLevel {
-        const levelName = this.getLevelName(this.level);
-        console.info(`${this.prefix} Current log level: ${levelName} (${this.level})`);
         return this.level;
     }
 
@@ -89,15 +91,33 @@ class Logger {
     }
 }
 
+declare global {
+    interface Console {
+        simpleImageResize?: {
+            setLogLevel: (level: LogLevel) => void;
+            getLogLevel: () => LogLevel;
+        };
+    }
+}
+
 function createLogger(prefix: string, initialLevel?: LogLevel): Logger {
     const loggerInstance = new Logger(prefix, initialLevel);
 
-    // Expose logger controls to browser console for runtime debugging
-    if (typeof window !== 'undefined') {
-        (window as unknown as { joplinLogger: unknown }).joplinLogger = {
-            setLevel: (level: LogLevel) => loggerInstance.setLevel(level),
-            getLevel: () => loggerInstance.getLevel(),
-            LogLevel, // Export enum for convenience
+    // Attach logger controls to console for runtime debugging
+    // Uses console namespace pattern to avoid global pollution
+    if (typeof globalThis !== 'undefined') {
+        const con = globalThis.console;
+
+        // Always overwrite to ensure we control the *active* logger instance
+        // (Fixes issue where reloading plugin leaves stale logger control)
+        con.simpleImageResize = {
+            setLogLevel: (level: LogLevel) => loggerInstance.setLevel(level),
+            getLogLevel: () => {
+                const level = loggerInstance.getLevel();
+                const name = loggerInstance.getLevelName(level);
+                console.info(`${prefix} Current log level: ${name} (${level})`);
+                return level;
+            },
         };
     }
 
@@ -105,5 +125,3 @@ function createLogger(prefix: string, initialLevel?: LogLevel): Logger {
 }
 
 export const logger = createLogger(PREFIX, LogLevel.WARN);
-
-export default logger;
