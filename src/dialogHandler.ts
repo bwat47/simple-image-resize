@@ -1,6 +1,6 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
-import { escapeHtmlAttribute } from './stringUtils';
+import { escapeHtmlAttribute } from './utils/stringUtils';
 
 /**
  * Calculates the initial state for the dialog based on default syntax and resize mode.

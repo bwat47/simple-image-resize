@@ -1,5 +1,5 @@
 import { REGEX_PATTERNS } from './constants';
-import { decodeHtmlEntities } from './stringUtils';
+import { decodeHtmlEntities } from './utils/stringUtils';
 import { ImageContext } from './types';
 
 /**
