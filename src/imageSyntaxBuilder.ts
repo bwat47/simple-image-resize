@@ -1,6 +1,6 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
-import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './stringUtils';
+import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './utils/stringUtils';
 import { SETTING_HTML_SYNTAX_STYLE } from './settings';
 
 /**

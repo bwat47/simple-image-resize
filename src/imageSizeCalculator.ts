@@ -1,6 +1,6 @@
 import joplin from 'api';
 import { CONSTANTS } from './constants';
-import { validateResourceId, convertResourceToBase64 } from './utils';
+import { validateResourceId, convertResourceToBase64 } from './utils/resourceUtils';
 import { logger } from './logger';
 import { ImageDimensions } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';

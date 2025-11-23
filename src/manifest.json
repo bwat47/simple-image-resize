@@ -54,6 +54,12 @@
             "label": "Display quick resize options in context menu",
             "description": "Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu",
             "value": false
+        },
+        "showToastMessages": {
+            "type": "bool",
+            "label": "Show toast notifications",
+            "description": "Display brief notification messages for plugin actions",
+            "value": true
         }
     }
 }

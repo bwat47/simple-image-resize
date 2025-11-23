@@ -17,6 +17,7 @@ const SECTION_ID = 'imageResize';
 export const SETTING_DEFAULT_RESIZE_MODE = 'imageResize.defaultResizeMode';
 export const SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU = 'imageResize.showQuickResizeInContextMenu';
 export const SETTING_HTML_SYNTAX_STYLE = 'imageResize.htmlSyntaxStyle';
+export const SETTING_SHOW_TOAST_MESSAGES = 'imageResize.showToastMessages';
 
 export async function registerSettings(): Promise<void> {
     await joplin.settings.registerSection(SECTION_ID, {
@@ -58,6 +59,14 @@ export async function registerSettings(): Promise<void> {
             public: true,
             label: 'Display quick resize options in context menu',
             description: 'Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
+        },
+        [SETTING_SHOW_TOAST_MESSAGES]: {
+            value: true,
+            type: SettingItemType.Bool,
+            section: SECTION_ID,
+            public: true,
+            label: 'Show toast notifications',
+            description: 'Display brief notification messages for plugin actions',
         },
     });
 }
