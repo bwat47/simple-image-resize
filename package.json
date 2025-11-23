@@ -1,6 +1,6 @@
 {
     "name": "joplin-plugin-simple-image-resize",
-    "version": "1.5.1",
+    "version": "1.5.2",
     "scripts": {
         "compile:dialog": "tsc --project tsconfig.dialog.json",
         "dist": "npm run compile:dialog && webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
