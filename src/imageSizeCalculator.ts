@@ -5,6 +5,8 @@ import { logger } from './logger';
 import { ImageDimensions } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
 
+//TODO: Look into simplifying image dimension retrieval if https://github.com/laurent22/joplin/issues/12099 is addressed
+
 /**
  * Retrieves image dimensions from either a Joplin resource or external URL.
  *
