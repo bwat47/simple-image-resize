@@ -23,9 +23,18 @@ const RESIZE_MODES = {
 type SyntaxType = 'html' | 'markdown';
 type ResizeMode = 'percentage' | 'absolute';
 
+interface DialogConfig {
+    defaultResizeMode: ResizeMode;
+    originalWidth: number;
+    originalHeight: number;
+}
+
 (() => {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root) return;
+
+    // Parse configuration from single JSON attribute
+    const config: DialogConfig = JSON.parse(root.dataset.config || '{}');
 
     const form = document.forms.namedItem('resizeForm');
     if (!form) return;
@@ -50,10 +59,10 @@ type ResizeMode = 'percentage' | 'absolute';
         return;
     }
 
-    const defaultResizeMode = (root.dataset.defaultResizeMode as ResizeMode) || RESIZE_MODES.PERCENTAGE;
+    const defaultResizeMode = config.defaultResizeMode || RESIZE_MODES.PERCENTAGE;
     const initialSyntax: SyntaxType = SYNTAX_TYPES.HTML;
-    const defaultWidth = root.dataset.originalWidth || '';
-    const defaultHeight = root.dataset.originalHeight || '';
+    const defaultWidth = config.originalWidth ? String(config.originalWidth) : '';
+    const defaultHeight = config.originalHeight ? String(config.originalHeight) : '';
     const originalWidthValue = Number.parseFloat(defaultWidth);
     const originalHeightValue = Number.parseFloat(defaultHeight);
     const hasOriginalDimensions =

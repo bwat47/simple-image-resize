@@ -64,15 +64,18 @@ export async function showResizeDialog(
         absoluteDisabledAttr,
     } = getInitialDialogState(defaultSyntax, defaultResizeMode);
 
+    // Dialog configuration passed as single JSON attribute for cleaner extensibility
+    const dialogConfig = {
+        defaultResizeMode,
+        originalWidth,
+        originalHeight,
+    };
+
     // Always update the HTML and scripts before opening
     await joplin.views.dialogs.setHtml(
         dialogHandle,
         `
-    <div id="dialog-root"
-         data-default-resize-mode="${escapeHtmlAttribute(defaultResizeMode)}"
-         data-initial-syntax="${escapeHtmlAttribute(defaultSyntax)}"
-         data-original-width="${escapeHtmlAttribute(String(originalWidth))}"
-         data-original-height="${escapeHtmlAttribute(String(originalHeight))}">
+    <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
       <div class="container">
         <div>
           <h4>Resize Image</h4>
