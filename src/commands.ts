@@ -21,6 +21,7 @@ import { logger } from './logger';
 import { resizeDialogLock } from './dialogLock';
 import { SETTING_DEFAULT_RESIZE_MODE } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
+import { showToast } from './utils/toastUtils';
 
 /**
  * Shared function to handle image detection and dimension fetching
@@ -29,10 +30,7 @@ async function detectAndPrepareImage() {
     const cursorDetection = await detectImageAtCursor();
 
     if (!cursorDetection) {
-        await joplin.views.dialogs.showToast({
-            message: 'No valid image found. Place cursor inside an image embed.',
-            type: ToastType.Info,
-        });
+        await showToast('No valid image found. Place cursor inside an image embed.');
         return null;
     }
 
@@ -53,10 +51,9 @@ async function detectAndPrepareImage() {
                 width: CONSTANTS.DEFAULT_EXTERNAL_WIDTH,
                 height: CONSTANTS.DEFAULT_EXTERNAL_HEIGHT,
             };
-            await joplin.views.dialogs.showToast({
-                message: `Using default dimensions for external image (${CONSTANTS.DEFAULT_EXTERNAL_WIDTH}×${CONSTANTS.DEFAULT_EXTERNAL_HEIGHT}).`,
-                type: ToastType.Info,
-            });
+            await showToast(
+                `Using default dimensions for external image (${CONSTANTS.DEFAULT_EXTERNAL_WIDTH}×${CONSTANTS.DEFAULT_EXTERNAL_HEIGHT}).`
+            );
         } else {
             throw error;
         }
@@ -105,17 +102,11 @@ async function executeQuickResize(percentage: number): Promise<void> {
                 ? 'Custom size removed - converted to Markdown syntax.'
                 : `Image resized to ${percentage}%.`;
 
-        await joplin.views.dialogs.showToast({
-            message,
-            type: ToastType.Success,
-        });
+        await showToast(message, ToastType.Success);
     } catch (err) {
         logger.error('Error:', err);
         const message = err instanceof Error ? err.message : 'Unknown error occurred';
-        await joplin.views.dialogs.showToast({
-            message: `Operation failed: ${message}`,
-            type: ToastType.Error,
-        });
+        await showToast(`Operation failed: ${message}`, ToastType.Error);
     }
 }
 
@@ -153,10 +144,7 @@ export async function registerCommands(): Promise<void> {
                     | 'absolute';
 
                 if (!resizeDialogLock.tryAcquire()) {
-                    await joplin.views.dialogs.showToast({
-                        message: 'Resize dialog is already open.',
-                        type: ToastType.Info,
-                    });
+                    await showToast('Resize dialog is already open.');
                     logger.info('Resize dialog invocation skipped because another instance is open.');
                     return;
                 }
@@ -169,18 +157,12 @@ export async function registerCommands(): Promise<void> {
                     const newSyntax = await buildNewSyntax(fullContext, result);
                     await replaceImageInEditor(newSyntax, replacementRange);
 
-                    await joplin.views.dialogs.showToast({
-                        message: 'Image resized successfully!',
-                        type: ToastType.Success,
-                    });
+                    await showToast('Image resized successfully!', ToastType.Success);
                 }
             } catch (err) {
                 logger.error('Error:', err);
                 const message = err instanceof Error ? err.message : 'Unknown error occurred';
-                await joplin.views.dialogs.showToast({
-                    message: `Operation failed: ${message}`,
-                    type: ToastType.Error,
-                });
+                await showToast(`Operation failed: ${message}`, ToastType.Error);
             } finally {
                 if (dialogLockAcquired) {
                     resizeDialogLock.release();
