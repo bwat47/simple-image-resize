@@ -23,6 +23,6 @@ export async function showToast(
 
         await joplin.views.dialogs.showToast({ message, type, duration });
     } catch (err) {
-        logger.warn('Failed to show toast:', err);
+        logger.warn(`Failed to show toast message "${message}":`, err);
     }
 }
