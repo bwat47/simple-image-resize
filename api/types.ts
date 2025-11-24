@@ -1,5 +1,4 @@
 /* eslint-disable multiline-comment-style */
-/* eslint-disable @typescript-eslint/no-empty-object-type */
 
 // =================================================================
 // Command API types
@@ -58,7 +57,6 @@ export interface Command {
 	 * Note: Commands are enabled by default unless you use this property.
 	 */
 	enabledCondition?: string;
-    when?: string;
 }
 
 // =================================================================
@@ -542,6 +540,30 @@ export interface SettingSection {
  * - **[2]**: (Optional) Resource link.
  */
 export type Path = string[];
+
+// =================================================================
+// Clipboard API types
+// =================================================================
+
+/**
+ * Represents content that can be written to the clipboard in multiple formats.
+ */
+export interface ClipboardContent {
+    /**
+     * Plain text representation of the content
+     */
+    text?: string;
+
+    /**
+     * HTML representation of the content
+     */
+    html?: string;
+
+    /**
+     * Image in [data URL](https://developer.mozilla.org/en-US/docs/Web/HTTP/Basics_of_HTTP/Data_URIs) format
+     */
+    image?: string;
+}
 
 // =================================================================
 // Content Script types
