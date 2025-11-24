@@ -35,11 +35,10 @@ export async function copyImageToClipboard(source: string, sourceType: 'resource
     try {
         const dataUrl = await getImageDataUrl(source, sourceType);
         await joplin.clipboard.writeImage(dataUrl);
-        await showToast('Image copied to clipboard.', ToastType.Success);
+        await showToast('Image copied to clipboard', ToastType.Success);
     } catch (err) {
         logger.error('Error copying image to clipboard:', err);
         const message = err instanceof Error ? err.message : 'Unknown error occurred';
         await showToast(`Failed to copy image: ${message}`, ToastType.Error);
-        throw err;
     }
 }
