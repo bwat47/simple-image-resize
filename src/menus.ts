@@ -11,7 +11,7 @@ import joplin from 'api';
 import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
-import { SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU } from './settings';
+import { SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU, SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU } from './settings';
 
 export async function registerMenus(): Promise<void> {
     // Create submenu in Tools menu
@@ -73,6 +73,15 @@ export function registerContextMenu(): void {
                             label: 'Resize 25%',
                         }
                     );
+                }
+
+                // Add copy image option if enabled
+                const showCopyImage = await joplin.settings.value(SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU);
+                if (showCopyImage) {
+                    contextMenu.items.push({
+                        commandName: 'copyImageToClipboard',
+                        label: 'Copy Image',
+                    });
                 }
 
                 logger.info('Added context menu item - cursor on image');
