@@ -43,7 +43,9 @@ You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using ke
 
 **HTML syntax style** - Include both width/height in HTML syntax (default, best compatibility when pasting images outside of Joplin) or width-only.
 
-**Display quick resize options in context menu** - Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu
+**Display quick resize options in context menu** - Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu.
+
+**Display copy image option in context menu** - Display copy image option in context menu.
 
 ### Default keyboard shortcuts:
 
