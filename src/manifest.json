@@ -57,6 +57,12 @@
             "description": "Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu",
             "value": false
         },
+        "showCopyImageInContextMenu": {
+            "type": "bool",
+            "label": "Display copy image option in context menu",
+            "description": "Show \"Copy Image\" option in the right-click context menu to copy images to clipboard",
+            "value": false
+        },
         "showToastMessages": {
             "type": "bool",
             "label": "Show toast notifications",

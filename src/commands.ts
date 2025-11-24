@@ -22,6 +22,7 @@ import { resizeDialogLock } from './dialogLock';
 import { SETTING_DEFAULT_RESIZE_MODE } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast } from './utils/toastUtils';
+import { copyImageToClipboard } from './utils/clipboardUtils';
 
 /**
  * Shared function to handle image detection and dimension fetching
@@ -123,7 +124,32 @@ async function registerQuickResizeCommand(percentage: number): Promise<void> {
     });
 }
 
+/**
+ * Copy image at cursor to clipboard
+ */
+async function executeCopyImageToClipboard(): Promise<void> {
+    const cursorDetection = await detectImageAtCursor();
+
+    if (!cursorDetection) {
+        await showToast('No valid image found. Place cursor inside an image embed.');
+        return;
+    }
+
+    const { source, sourceType } = cursorDetection.context;
+    await copyImageToClipboard(source, sourceType);
+}
+
 export async function registerCommands(): Promise<void> {
+    // Copy image to clipboard command
+    await joplin.commands.register({
+        name: 'copyImageToClipboard',
+        label: 'Copy Image',
+        iconName: 'fas fa-copy',
+        execute: async () => {
+            await executeCopyImageToClipboard();
+        },
+    });
+
     // Enhanced resize command with intelligent detection
     await joplin.commands.register({
         name: 'resizeImage',
