@@ -3,6 +3,7 @@ import { ToastType } from 'api/types';
 import { convertResourceToBase64 } from './resourceUtils';
 import { showToast } from './toastUtils';
 import { logger } from '../logger';
+import { CONSTANTS } from '../constants';
 
 /**
  * Converts an image source to a data URL.
@@ -13,18 +14,24 @@ async function getImageDataUrl(source: string, sourceType: 'resource' | 'externa
         return await convertResourceToBase64(source);
     }
 
-    // External image - fetch and convert to data URL
-    const response = await fetch(source);
-    if (!response.ok) {
-        throw new Error(`Failed to fetch external image: ${response.status}`);
+    // External image - fetch and convert to data URL with timeout
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS);
+    try {
+        const response = await fetch(source, { signal: controller.signal });
+        if (!response.ok) {
+            throw new Error(`Failed to fetch external image: ${response.status}`);
+        }
+        const blob = await response.blob();
+        return new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = () => reject(new Error('Failed to read image data'));
+            reader.readAsDataURL(blob);
+        });
+    } finally {
+        clearTimeout(timeout);
     }
-    const blob = await response.blob();
-    return new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result as string);
-        reader.onerror = () => reject(new Error('Failed to read image data'));
-        reader.readAsDataURL(blob);
-    });
 }
 
 /**
@@ -49,8 +56,16 @@ async function convertToPNG(imageDataUrl: string, sourceFormat: string): Promise
                 }
 
                 ctx.drawImage(image, 0, 0);
-                const pngDataUrl = canvas.toDataURL('image/png');
-                resolve(pngDataUrl);
+                try {
+                    const pngDataUrl = canvas.toDataURL('image/png');
+                    resolve(pngDataUrl);
+                } catch (err) {
+                    if (err instanceof DOMException && err.name === 'SecurityError') {
+                        reject(new Error('Canvas is tainted (CORS). Cannot convert to PNG.'));
+                    } else {
+                        reject(err);
+                    }
+                }
             } catch (err) {
                 reject(err);
             }
