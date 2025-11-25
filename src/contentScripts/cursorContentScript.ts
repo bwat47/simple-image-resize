@@ -14,6 +14,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { REGEX_PATTERNS } from '../constants';
 import { decodeHtmlEntities } from '../utils/stringUtils';
+import { logger } from '../logger';
 
 // Command names - exported for use by other modules
 export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
@@ -203,9 +204,7 @@ function getImageAtCursor(state: CMState): ImageAtCursorResult | null {
         if (cursor >= imageNode.from && cursor <= imageNode.to) {
             const imageText = state.doc.sliceString(imageNode.from, imageNode.to);
             const details =
-                imageNode.type === 'markdown'
-                    ? extractMarkdownDetails(imageText)
-                    : extractHtmlDetails(imageText);
+                imageNode.type === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);
 
             if (details) {
                 // Convert absolute positions to line/ch format
@@ -250,18 +249,15 @@ export default function (_context: { contentScriptId: string }) {
     return {
         plugin: function (codeMirrorWrapper: CodeMirrorWrapper) {
             // Command: Get image at cursor using syntax tree (primary method)
-            codeMirrorWrapper.registerCommand(
-                GET_IMAGE_AT_CURSOR_COMMAND,
-                (): ImageAtCursorResult | null => {
-                    try {
-                        const view = codeMirrorWrapper.editor;
-                        return getImageAtCursor(view.state);
-                    } catch (error) {
-                        console.error('getImageAtCursor failed:', error);
-                        return null;
-                    }
+            codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): ImageAtCursorResult | null => {
+                try {
+                    const view = codeMirrorWrapper.editor;
+                    return getImageAtCursor(view.state);
+                } catch (error) {
+                    logger.error('getImageAtCursor failed:', error);
+                    return null;
                 }
-            );
+            });
 
             // Command: Replace text in a range
             codeMirrorWrapper.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
