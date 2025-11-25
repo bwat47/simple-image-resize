@@ -149,13 +149,6 @@ input::-webkit-inner-spin-button {
     -webkit-appearance: none;
     margin: 0;
 }
-.hint {
-    font-size: 11px;
-    opacity: 0.7;
-    margin-top: 4px;
-    color: var(--joplin-color-faded, #7c8b9e);
-    transition: opacity 0.2s ease;
-}
 .row.is-disabled,
 .stack.is-disabled {
     opacity: 0.6;
