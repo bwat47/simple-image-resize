@@ -93,6 +93,9 @@ input[type='text'] {
     border-radius: 3px;
     transition: background-color 0.2s ease;
     outline: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 input[type='radio'] {
     appearance: none;
