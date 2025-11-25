@@ -29,7 +29,7 @@ async function getImageDataUrl(source: string, sourceType: 'resource' | 'externa
 
 /**
  * Converts a modern image format (WebP, AVIF) to PNG using canvas.
- * Workaround for Joplin clipboard API bugs with modern image formats.
+ * Workaround for Joplin clipboard API limitations with modern image formats.
  */
 // TODO: Remove this if https://github.com/laurent22/joplin/issues/12859 is addressed
 async function convertToPNG(imageDataUrl: string, sourceFormat: string): Promise<string> {
