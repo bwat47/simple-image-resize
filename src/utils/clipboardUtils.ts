@@ -32,7 +32,6 @@ async function getImageDataUrl(source: string, sourceType: 'resource' | 'externa
  * Workaround for Joplin clipboard API bug with WebP images.
  */
 // TODO: Remove this if https://github.com/laurent22/joplin/issues/12859 is addressed
-
 async function convertWebPToPNG(webpDataUrl: string): Promise<string> {
     return new Promise((resolve, reject) => {
         const image = new Image();
