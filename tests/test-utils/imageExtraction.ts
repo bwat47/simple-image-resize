@@ -1,20 +1,27 @@
-import { REGEX_PATTERNS } from './constants';
-import { decodeHtmlEntities } from './utils/stringUtils';
-import { ImageContext } from './types';
+import { REGEX_PATTERNS } from '../../src/constants';
+import { decodeHtmlEntities } from '../../src/utils/stringUtils';
+import { ImageContext } from '../../src/types';
 
 /**
- * Parses image syntax (Markdown or HTML) from text and extracts metadata.
+ * Test utility for validating image extraction regex patterns.
  *
- * This function uses simplified extraction patterns and is primarily used for testing.
- * In production, image detection is handled by the content script using syntax tree analysis.
+ * This module tests the same REGEX_PATTERNS used by the content script's
+ * extraction functions in production. Testing here validates the regex logic
+ * without the complexity of mocking CodeMirror's environment.
  *
- * Supports both Markdown format `![alt](url "title")` and HTML `<img>` tags.
- * Returns partial context without dimensions (added later by caller).
+ * Why this exists:
+ * - The content script uses REGEX_PATTERNS from constants.ts for extraction
+ * - Testing the content script directly would require complex CodeMirror mocks
+ * - This provides a simple test harness for the regex patterns
+ * - Validates extraction logic: alt text, src, title, resource vs external URLs
+ *
+ * Note: In production, image DETECTION uses the syntax tree (in content script),
+ * but EXTRACTION uses these same regex patterns tested here.
  *
  * @param text - Text containing an image embed
  * @returns Parsed image metadata, or null if no valid image syntax found
  */
-export function detectImageSyntax(text: string): Omit<ImageContext, 'originalDimensions'> | null {
+export function extractImageDetails(text: string): Omit<ImageContext, 'originalDimensions'> | null {
     // Try Markdown extraction first
     const markdownMatch = text.match(REGEX_PATTERNS.MARKDOWN_EXTRACT);
     if (markdownMatch?.groups) {

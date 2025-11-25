@@ -15,17 +15,6 @@ export const REGEX_PATTERNS = {
     HTML_SRC: /src=(["'])([^"']+)\1/i,
     HTML_ALT: /alt=(["'])(.*?)\1/i,
     HTML_TITLE: /title=(["'])(.*?)\1/i,
-
-    // Legacy patterns (kept for backwards compatibility during migration)
-    // TODO: Remove these once syntax tree approach is fully tested
-    MARKDOWN_IMAGE_FULL:
-        /!\[(?<altText>[^\]]*)\]\(\s*(?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/(?:\\\)|[^)\s])+))\s*(?:"(?<titleDouble>[^"]*)"|'(?<titleSingle>[^']*)')?\s*\)/i,
-    HTML_IMAGE_FULL: /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i,
-    IMG_ALT: /\balt\s*=\s*(["'])(.*?)\1/i,
-    IMG_TITLE: /\btitle\s*=\s*(["'])(.*?)\1/i,
-    MARKDOWN_IMAGE_GLOBAL:
-        /!\[[^\]]*\]\(\s*(?::\/[a-f0-9]{32}|https?:\/\/(?:\\\)|[^)\s])+)?\s*(?:"[^"]*"|'[^']*')?\s*\)/gi,
-    HTML_IMAGE_GLOBAL: /<img\s+[^>]*src=["'](?::\/[a-f0-9]{32}|https?:\/\/[^"']+)["'][^>]*>/gi,
 };
 
 export const CONSTANTS = {

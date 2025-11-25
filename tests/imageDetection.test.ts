@@ -1,9 +1,9 @@
-import { detectImageSyntax } from '../src/imageDetection';
+import { extractImageDetails } from './test-utils/imageExtraction';
 
-describe('detectImageSyntax', () => {
-    test('detects markdown image', () => {
+describe('Image Extraction Patterns', () => {
+    test('extracts markdown image details', () => {
         const sel = '![Alt text](:/0123456789abcdef0123456789abcdef)';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('markdown');
         expect(ctx!.sourceType).toBe('resource');
@@ -11,9 +11,9 @@ describe('detectImageSyntax', () => {
         expect(ctx!.altText).toBe('Alt text');
     });
 
-    test('detects html image and extracts alt', () => {
+    test('extracts html image details with alt text', () => {
         const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="Sample" width="800" />';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('html');
         expect(ctx!.sourceType).toBe('resource');
@@ -21,9 +21,9 @@ describe('detectImageSyntax', () => {
         expect(ctx!.altText).toBe('Sample');
     });
 
-    test('detects external URL in markdown image', () => {
+    test('extracts external URL from markdown image', () => {
         const sel = '![Logo](https://example.com/logo.png)';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('markdown');
         expect(ctx!.sourceType).toBe('external');
@@ -31,9 +31,9 @@ describe('detectImageSyntax', () => {
         expect(ctx!.altText).toBe('Logo');
     });
 
-    test('detects external URL in html image', () => {
+    test('extracts external URL from html image', () => {
         const sel = '<img src="https://example.com/img.png" alt="X" title="Nice" />';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('html');
         expect(ctx!.sourceType).toBe('external');
@@ -42,17 +42,17 @@ describe('detectImageSyntax', () => {
         expect(ctx!.title).toBe('Nice');
     });
 
-    test('detects markdown image with escaped ) in URL', () => {
+    test('extracts markdown image with escaped ) in URL', () => {
         const sel = '![Alt](https://example.com/img_%29_final.png)';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('markdown');
         expect(ctx!.source).toBe('https://example.com/img_%29_final.png');
     });
 
-    test('detects markdown image with optional title', () => {
+    test('extracts markdown image with optional title', () => {
         const sel = '![Alt](https://example.com/picture.png "Title here")';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('markdown');
         expect(ctx!.source).toBe('https://example.com/picture.png');
@@ -62,7 +62,7 @@ describe('detectImageSyntax', () => {
 
     test('decodes HTML-escaped quotes in alt text', () => {
         const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="&quot;test&quot;" />';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.type).toBe('html');
         expect(ctx!.sourceType).toBe('resource');
@@ -71,19 +71,19 @@ describe('detectImageSyntax', () => {
 
     test('preserves apostrophe in alt text', () => {
         const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="honor\'s-magic" />';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.altText).toBe("honor's-magic");
     });
 
     test('decodes &apos; to apostrophe in alt text', () => {
         const sel = '<img src=":/0123456789abcdef0123456789abcdef" alt="honor&amp;apos;s-magic" />';
-        const ctx = detectImageSyntax(sel);
+        const ctx = extractImageDetails(sel);
         expect(ctx).not.toBeNull();
         expect(ctx!.altText).toBe("honor's-magic");
     });
 
     test('returns null for non-image text', () => {
-        expect(detectImageSyntax('Some text without image')).toBeNull();
+        expect(extractImageDetails('Some text without image')).toBeNull();
     });
 });
