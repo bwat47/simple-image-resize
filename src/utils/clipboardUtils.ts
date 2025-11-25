@@ -28,11 +28,11 @@ async function getImageDataUrl(source: string, sourceType: 'resource' | 'externa
 }
 
 /**
- * Converts a WebP data URL to PNG using canvas.
- * Workaround for Joplin clipboard API bug with WebP images.
+ * Converts a modern image format (WebP, AVIF) to PNG using canvas.
+ * Workaround for Joplin clipboard API bugs with modern image formats.
  */
 // TODO: Remove this if https://github.com/laurent22/joplin/issues/12859 is addressed
-async function convertWebPToPNG(webpDataUrl: string): Promise<string> {
+async function convertToPNG(imageDataUrl: string, sourceFormat: string): Promise<string> {
     return new Promise((resolve, reject) => {
         const image = new Image();
 
@@ -57,21 +57,25 @@ async function convertWebPToPNG(webpDataUrl: string): Promise<string> {
         };
 
         image.onerror = () => {
-            reject(new Error('Failed to load image for WebP conversion'));
+            reject(new Error(`Failed to load image for ${sourceFormat} conversion`));
         };
 
-        image.src = webpDataUrl;
+        image.src = imageDataUrl;
     });
 }
 
 /**
  * Ensures the data URL is in a clipboard-compatible format.
- * Converts WebP to PNG if needed due to Joplin clipboard API limitations.
+ * Converts WebP and AVIF to PNG if needed due to Joplin clipboard API limitations.
  */
 async function ensureClipboardCompatibleFormat(dataUrl: string): Promise<string> {
     if (dataUrl.startsWith('data:image/webp')) {
         logger.debug('Converting WebP image to PNG for clipboard compatibility');
-        return await convertWebPToPNG(dataUrl);
+        return await convertToPNG(dataUrl, 'WebP');
+    }
+    if (dataUrl.startsWith('data:image/avif')) {
+        logger.debug('Converting AVIF image to PNG for clipboard compatibility');
+        return await convertToPNG(dataUrl, 'AVIF');
     }
     return dataUrl;
 }
@@ -79,7 +83,7 @@ async function ensureClipboardCompatibleFormat(dataUrl: string): Promise<string>
 /**
  * Copies an image to the clipboard.
  * Handles both Joplin resources and external URLs, with toast notifications.
- * Automatically converts WebP images to PNG due to Joplin clipboard API limitations.
+ * Automatically converts WebP and AVIF images to PNG due to Joplin clipboard API limitations.
  */
 export async function copyImageToClipboard(source: string, sourceType: 'resource' | 'external'): Promise<void> {
     try {
