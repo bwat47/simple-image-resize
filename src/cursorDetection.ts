@@ -1,20 +1,10 @@
 import joplin from 'api';
-import { ImageContext, EditorRange } from './types';
+import { EditorImageAtCursorResult, ImageContext, EditorRange } from './types';
 import { logger } from './logger';
 import { GET_IMAGE_AT_CURSOR_COMMAND } from './contentScripts/cursorContentScript';
 
 interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions'>;
-    range: EditorRange;
-}
-
-interface ImageAtCursorResult {
-    type: 'markdown' | 'html';
-    syntax: string;
-    source: string;
-    sourceType: 'resource' | 'external';
-    altText: string;
-    title: string;
     range: EditorRange;
 }
 
@@ -28,7 +18,7 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
     try {
         const result = (await joplin.commands.execute('editor.execCommand', {
             name: GET_IMAGE_AT_CURSOR_COMMAND,
-        })) as ImageAtCursorResult | null;
+        })) as EditorImageAtCursorResult | null;
 
         if (!result) {
             return null;

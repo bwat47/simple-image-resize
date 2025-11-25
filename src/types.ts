@@ -34,3 +34,13 @@ export interface EditorRange {
     from: EditorPosition;
     to: EditorPosition;
 }
+
+export interface EditorImageAtCursorResult {
+    type: 'markdown' | 'html';
+    syntax: string;
+    source: string;
+    sourceType: 'resource' | 'external';
+    altText: string;
+    title: string;
+    range: EditorRange;
+}

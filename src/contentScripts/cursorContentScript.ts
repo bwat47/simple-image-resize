@@ -15,16 +15,12 @@ import { syntaxTree } from '@codemirror/language';
 import { REGEX_PATTERNS } from '../constants';
 import { decodeHtmlEntities } from '../utils/stringUtils';
 import { logger } from '../logger';
+import { EditorImageAtCursorResult, EditorPosition } from '../types';
 
 // Command names - exported for use by other modules
 export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
 export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
-
-interface EditorPosition {
-    line: number; // 0-indexed line number
-    ch: number; // character position within line
-}
 
 interface ReplaceRangeArgs {
     text: string;
@@ -35,19 +31,6 @@ interface ReplaceRangeArgs {
 interface ImageDimensions {
     width: number;
     height: number;
-}
-
-interface ImageAtCursorResult {
-    type: 'markdown' | 'html';
-    syntax: string;
-    source: string;
-    sourceType: 'resource' | 'external';
-    altText: string;
-    title: string;
-    range: {
-        from: EditorPosition;
-        to: EditorPosition;
-    };
 }
 
 // CodeMirror types (minimal definitions for what we use)
@@ -76,7 +59,7 @@ interface CodeMirrorWrapper {
 /**
  * Extract details from a Markdown image using simplified regex.
  */
-function extractMarkdownDetails(imageText: string): Omit<ImageAtCursorResult, 'range'> | null {
+function extractMarkdownDetails(imageText: string): Omit<EditorImageAtCursorResult, 'range'> | null {
     const match = imageText.match(REGEX_PATTERNS.MARKDOWN_EXTRACT);
     if (!match?.groups) return null;
 
@@ -99,7 +82,7 @@ function extractMarkdownDetails(imageText: string): Omit<ImageAtCursorResult, 'r
 /**
  * Extract details from HTML <img> tag using simplified regex.
  */
-function extractHtmlDetails(imageText: string): Omit<ImageAtCursorResult, 'range'> | null {
+function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 'range'> | null {
     const srcMatch = imageText.match(REGEX_PATTERNS.HTML_SRC);
     if (!srcMatch) return null;
 
@@ -195,7 +178,7 @@ function findImagesOnLine(state: CMState): Array<{ type: 'markdown' | 'html'; fr
  * Get the image at cursor position using syntax tree.
  * This is the main detection function that replaces regex-based detection.
  */
-function getImageAtCursor(state: CMState): ImageAtCursorResult | null {
+function getImageAtCursor(state: CMState): EditorImageAtCursorResult | null {
     const cursor = state.selection.main.head;
     const images = findImagesOnLine(state);
 
@@ -249,7 +232,7 @@ export default function (_context: { contentScriptId: string }) {
     return {
         plugin: function (codeMirrorWrapper: CodeMirrorWrapper) {
             // Command: Get image at cursor using syntax tree (primary method)
-            codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): ImageAtCursorResult | null => {
+            codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
                     const view = codeMirrorWrapper.editor;
                     return getImageAtCursor(view.state);
