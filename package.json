@@ -21,6 +21,7 @@
         "publish"
     ],
     "devDependencies": {
+        "@codemirror/language": "^6.11.3",
         "@eslint/eslintrc": "^3.3.1",
         "@eslint/js": "^9.39.1",
         "@types/jest": "^30.0.0",
@@ -31,8 +32,8 @@
         "copy-webpack-plugin": "^13.0.1",
         "eslint": "^9.39.1",
         "eslint-config-prettier": "^10.1.8",
-        "eslint-plugin-prettier": "^5.5.4",
         "eslint-plugin-import": "^2.32.0",
+        "eslint-plugin-prettier": "^5.5.4",
         "fs-extra": "^10.1.0",
         "glob": "^8.0.3",
         "jest": "^30.2.0",

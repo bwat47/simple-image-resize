@@ -150,7 +150,7 @@ describe('buildNewSyntax', () => {
 
     test('escapes quotes in title for markdown and html output', async () => {
         const ctx: ImageContext = { ...baseContext, title: 'He said "hi" & <ok>' };
-        // HTML
+        // HTML: HTML entities are escaped
         const htmlRes: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
@@ -159,7 +159,7 @@ describe('buildNewSyntax', () => {
         };
         const html = await buildNewSyntax(ctx, htmlRes);
         expect(html).toContain('title="He said &quot;hi&quot; &amp; &lt;ok&gt;"');
-        // Markdown
+        // Markdown: Only quotes are escaped (extraction regex works with raw text)
         const mdRes: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt',
@@ -167,7 +167,7 @@ describe('buildNewSyntax', () => {
             percentage: 100,
         };
         const md = await buildNewSyntax(ctx, mdRes);
-        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said &quot;hi&quot; &amp; &lt;ok&gt;")');
+        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said \\"hi\\" & <ok>")');
     });
 
     test('escapes quotes in alt text for html output', async () => {
@@ -190,6 +190,29 @@ describe('buildNewSyntax', () => {
         };
         const html = await buildNewSyntax(baseContext, res);
         expect(html).toContain('alt="It&#39;s fine"');
+    });
+
+    test('preserves backslashes in title without accumulation', async () => {
+        const ctx: ImageContext = { ...baseContext, title: 'mern & test\\ABC' };
+        // Convert to HTML
+        const htmlRes: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: 'Alt',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const html = await buildNewSyntax(ctx, htmlRes);
+        expect(html).toContain('title="mern &amp; test\\ABC"');
+
+        // Convert back to Markdown - backslash should not be doubled
+        const mdRes: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: 'Alt',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const md = await buildNewSyntax(ctx, mdRes);
+        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "mern & test\\ABC")');
     });
 
     test('builds syntax for external URL source', async () => {

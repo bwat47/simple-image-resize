@@ -1,21 +1,20 @@
 export const REGEX_PATTERNS = {
-    // ![alt text](:/32charresourceid ["title"]) OR ![alt text](https://... ["title"]) with escaped ) allowed in URL
-    // URL part allows escaped right-paren: ")" via (?:\\\)|[^)])+
-    // Optional title (single or double quotes) after URL
-    MARKDOWN_IMAGE_FULL:
-        /!\[(?<altText>[^\]]*)\]\(\s*(?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/(?:\\\)|[^)\s])+))\s*(?:"(?<titleDouble>[^"]*)"|'(?<titleSingle>[^']*)')?\s*\)/i, // single (non-global) for detection with groups
+    // Simplified extraction patterns (used with syntax tree detection)
+    // These patterns assume the text is already validated as a valid image by the syntax tree
 
-    // <img src=":/resourceid" ... > OR <img src="https://..." ... >
-    HTML_IMAGE_FULL: /<img\s+[^>]*src=["'](?::\/(?<resourceId>[a-f0-9]{32})|(?<url>https?:\/\/[^"']+))["'][^>]*>/i, // single (non-global) for detection with groups
+    // Extract parts from Markdown image: ![alt](src "title")
+    MARKDOWN_EXTRACT: /!\[(?<altText>[^\]]*)\]\(\s*(?<src>[^)\s]+)(?:\s+["'](?<title>[^"']+)["'])?\s*\)/,
 
-    // Extract alt/title attributes from HTML img
-    IMG_ALT: /\balt\s*=\s*(["'])(.*?)\1/i,
-    IMG_TITLE: /\btitle\s*=\s*(["'])(.*?)\1/i,
+    // Extract resource ID from source (:/32charhexid)
+    RESOURCE_ID: /:\/([a-f0-9]{32})/,
 
-    // Global variants for counting occurrences (case-insensitive) - support both formats
-    MARKDOWN_IMAGE_GLOBAL:
-        /!\[[^\]]*\]\(\s*(?::\/[a-f0-9]{32}|https?:\/\/(?:\\\)|[^)\s])+)?\s*(?:"[^"]*"|'[^']*')?\s*\)/gi,
-    HTML_IMAGE_GLOBAL: /<img\s+[^>]*src=["'](?::\/[a-f0-9]{32}|https?:\/\/[^"']+)["'][^>]*>/gi,
+    // Extract external URL from source
+    EXTERNAL_URL: /(https?:\/\/[^\s"']+)/,
+
+    // Extract HTML img attributes (using backreferences to match quote pairs)
+    HTML_SRC: /src=(["'])([^"']+)\1/i,
+    HTML_ALT: /alt=(["'])(.*?)\1/i,
+    HTML_TITLE: /title=(["'])(.*?)\1/i,
 };
 
 export const CONSTANTS = {

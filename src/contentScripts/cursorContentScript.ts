@@ -2,7 +2,7 @@
  * CodeMirror 6 content script for editor operations.
  *
  * Registers custom commands for:
- * - Cursor position and line text retrieval
+ * - Image detection at cursor using syntax tree
  * - Text replacement at specified ranges
  * - Image dimension measurement (loads images in editor context)
  *
@@ -11,21 +11,16 @@
  * for local resources that the main plugin context cannot access directly.
  */
 
+import { syntaxTree } from '@codemirror/language';
+import { REGEX_PATTERNS } from '../constants';
+import { decodeHtmlEntities } from '../utils/stringUtils';
+import { logger } from '../logger';
+import { EditorImageAtCursorResult, EditorPosition } from '../types';
+
 // Command names - exported for use by other modules
-export const CURSOR_INFO_COMMAND = 'simpleImageResize-getCursorInfo';
+export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
 export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
-
-interface CursorInfo {
-    line: number; // 0-indexed line number
-    ch: number; // character position within line
-    lineText: string; // full text of the line
-}
-
-interface EditorPosition {
-    line: number; // 0-indexed line number
-    ch: number; // character position within line
-}
 
 interface ReplaceRangeArgs {
     text: string;
@@ -41,8 +36,9 @@ interface ImageDimensions {
 // CodeMirror types (minimal definitions for what we use)
 interface CMDoc {
     line(n: number): { from: number; to: number; text: string };
-    lineAt(pos: number): { number: number; from: number; text: string };
+    lineAt(pos: number): { number: number; from: number; to: number; text: string };
     lines: number;
+    sliceString(from: number, to: number): string;
 }
 
 interface CMState {
@@ -58,6 +54,164 @@ interface CMView {
 interface CodeMirrorWrapper {
     editor: CMView;
     registerCommand(name: string, callback: (...args: unknown[]) => unknown): void;
+}
+
+/**
+ * Extract details from a Markdown image using simplified regex.
+ */
+function extractMarkdownDetails(imageText: string): Omit<EditorImageAtCursorResult, 'range'> | null {
+    const match = imageText.match(REGEX_PATTERNS.MARKDOWN_EXTRACT);
+    if (!match?.groups) return null;
+
+    const { altText, src, title } = match.groups;
+
+    // Determine if resource or external URL
+    const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
+    const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
+
+    return {
+        type: 'markdown',
+        syntax: imageText,
+        source: resourceMatch ? resourceMatch[1] : urlMatch ? urlMatch[1] : src,
+        sourceType: resourceMatch ? 'resource' : 'external',
+        altText: altText || '',
+        title: title || '',
+    };
+}
+
+/**
+ * Extract details from HTML <img> tag using simplified regex.
+ */
+function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 'range'> | null {
+    const srcMatch = imageText.match(REGEX_PATTERNS.HTML_SRC);
+    if (!srcMatch) return null;
+
+    const src = srcMatch[2]; // Group 2 contains the actual value (group 1 is the quote)
+    const altMatch = imageText.match(REGEX_PATTERNS.HTML_ALT);
+    const titleMatch = imageText.match(REGEX_PATTERNS.HTML_TITLE);
+
+    // Determine if resource or external URL
+    const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
+    const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
+
+    return {
+        type: 'html',
+        syntax: imageText,
+        source: resourceMatch ? resourceMatch[1] : urlMatch ? urlMatch[1] : src,
+        sourceType: resourceMatch ? 'resource' : 'external',
+        altText: altMatch ? decodeHtmlEntities(altMatch[2]) : '', // Group 2 contains the value
+        title: titleMatch ? decodeHtmlEntities(titleMatch[2]) : '', // Group 2 contains the value
+    };
+}
+
+/**
+ * Find all image nodes on the current line using syntax tree.
+ * Returns both Markdown Image nodes and HTML img tags.
+ *
+ * Handles three cases:
+ * 1. Markdown images: ![alt](url) - detected as Image nodes
+ * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
+ * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
+ */
+function findImagesOnLine(state: CMState): Array<{ type: 'markdown' | 'html'; from: number; to: number }> {
+    const cursor = state.selection.main.head;
+    const currentLine = state.doc.lineAt(cursor);
+    const images: Array<{ type: 'markdown' | 'html'; from: number; to: number }> = [];
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    syntaxTree(state as any).iterate({
+        from: currentLine.from,
+        to: currentLine.to,
+        enter: (node) => {
+            // Case 1: Markdown images (direct Image node)
+            if (node.name === 'Image') {
+                images.push({
+                    type: 'markdown',
+                    from: node.from,
+                    to: node.to,
+                });
+                return;
+            }
+
+            // Case 2: Simple HTML tags in Markdown (HTMLTag node)
+            if (node.name === 'HTMLTag') {
+                const tagText = state.doc.sliceString(node.from, node.to);
+                // Check if it's an img tag (self-closing or opening tag)
+                if (/^<img\s/i.test(tagText)) {
+                    images.push({
+                        type: 'html',
+                        from: node.from,
+                        to: node.to,
+                    });
+                }
+                return;
+            }
+
+            // Case 3: HTML blocks in Markdown (HTMLBlock node containing nested HTML)
+            // Example: <div><img src="..."></div>
+            if (node.name === 'HTMLBlock') {
+                const blockText = state.doc.sliceString(node.from, node.to);
+                // Find all <img> tags within the block
+                const imgRegex = /<img\s[^>]*>/gi;
+                let match: RegExpExecArray | null;
+                while ((match = imgRegex.exec(blockText)) !== null) {
+                    const imgStart = node.from + match.index;
+                    const imgEnd = imgStart + match[0].length;
+                    // Only include if the img tag intersects with current line
+                    if (imgStart <= currentLine.to && imgEnd >= currentLine.from) {
+                        images.push({
+                            type: 'html',
+                            from: imgStart,
+                            to: imgEnd,
+                        });
+                    }
+                }
+                return;
+            }
+        },
+    });
+
+    return images;
+}
+
+/**
+ * Get the image at cursor position using syntax tree.
+ * This is the main detection function that replaces regex-based detection.
+ */
+function getImageAtCursor(state: CMState): EditorImageAtCursorResult | null {
+    const cursor = state.selection.main.head;
+    const images = findImagesOnLine(state);
+
+    // Find the image that contains the cursor
+    for (const imageNode of images) {
+        if (cursor >= imageNode.from && cursor <= imageNode.to) {
+            const imageText = state.doc.sliceString(imageNode.from, imageNode.to);
+            const details =
+                imageNode.type === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);
+
+            if (details) {
+                // Convert absolute positions to line/ch format
+                const fromLine = state.doc.lineAt(imageNode.from);
+                const toLine = state.doc.lineAt(imageNode.to);
+
+                return {
+                    ...details,
+                    range: {
+                        from: {
+                            line: fromLine.number - 1, // Convert to 0-indexed
+                            ch: imageNode.from - fromLine.from,
+                        },
+                        to: {
+                            line: toLine.number - 1, // Convert to 0-indexed
+                            ch: imageNode.to - toLine.from,
+                        },
+                    },
+                };
+            }
+        }
+    }
+
+    return null;
 }
 
 /**
@@ -77,20 +231,13 @@ function posToOffset(doc: CMDoc, pos: EditorPosition): number {
 export default function (_context: { contentScriptId: string }) {
     return {
         plugin: function (codeMirrorWrapper: CodeMirrorWrapper) {
-            // Command: Get cursor position and current line text
-            codeMirrorWrapper.registerCommand(CURSOR_INFO_COMMAND, (): CursorInfo | null => {
+            // Command: Get image at cursor using syntax tree (primary method)
+            codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
                     const view = codeMirrorWrapper.editor;
-                    const state = view.state;
-                    const pos = state.selection.main.head;
-                    const line = state.doc.lineAt(pos);
-
-                    return {
-                        line: line.number - 1, // Convert to 0-indexed
-                        ch: pos - line.from,
-                        lineText: line.text,
-                    };
-                } catch {
+                    return getImageAtCursor(view.state);
+                } catch (error) {
+                    logger.error('getImageAtCursor failed:', error);
                     return null;
                 }
             });
