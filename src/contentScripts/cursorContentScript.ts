@@ -30,12 +30,20 @@ interface ReplaceRangeArgs {
 }
 
 /**
- * Validates that range positions are logically correct (from <= to).
- * TypeScript handles type safety; this only validates positional logic.
+ * Validates that range positions are logically correct (from <= to) and finite.
+ * Checks for NaN, Infinity, and -Infinity which TypeScript's type system permits
+ * but would break document operations.
  * @returns true if valid, false otherwise
  */
 function validateRangePositions(args: ReplaceRangeArgs): boolean {
     const { from, to } = args;
+
+    // Validate all position values are finite numbers (not NaN, Infinity, or -Infinity)
+    if (!Number.isFinite(from.line) || !Number.isFinite(from.ch) ||
+        !Number.isFinite(to.line) || !Number.isFinite(to.ch)) {
+        logger.error('REPLACE_RANGE_COMMAND: position values must be finite numbers', { from, to });
+        return false;
+    }
 
     // Validate from <= to
     if (from.line > to.line || (from.line === to.line && from.ch > to.ch)) {
