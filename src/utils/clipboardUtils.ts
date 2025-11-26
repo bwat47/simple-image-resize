@@ -22,6 +22,16 @@ async function getImageDataUrl(source: string, sourceType: 'resource' | 'externa
         if (!response.ok) {
             throw new Error(`Failed to fetch external image: ${response.status}`);
         }
+
+        // Validate content-type to ensure we're fetching an image
+        const contentType = response.headers.get('content-type');
+        if (contentType && !contentType.startsWith('image/')) {
+            throw new Error(`URL did not return an image (Content-Type: ${contentType})`);
+        }
+        if (!contentType) {
+            logger.warn('External image fetch succeeded but Content-Type header is missing', { source });
+        }
+
         const blob = await response.blob();
         return new Promise<string>((resolve, reject) => {
             const reader = new FileReader();
