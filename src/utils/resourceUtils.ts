@@ -38,12 +38,23 @@ async function toBase64(data: unknown): Promise<string> {
     // Object with numeric keys (web app) - check for array-like structure
     if (typeof data === 'object' && data !== null) {
         const obj = data as Record<string | number, number>;
-        if ('0' in obj || 'length' in obj) {
-            const length =
-                typeof obj.length === 'number' ? obj.length : Object.keys(obj).filter((k) => /^\d+$/.test(k)).length;
+
+        // Handle actual arrays
+        if (Array.isArray(obj)) {
+            return await arrayBufferToBase64(new Uint8Array(obj));
+        }
+
+        // Check if all keys are numeric (web app format: {0: 137, 1: 80, 2: 78, ...})
+        const keys = Object.keys(obj);
+        if (keys.length > 0 && keys.every((k) => /^\d+$/.test(k))) {
+            const length = typeof obj.length === 'number' ? obj.length : keys.length;
             const bytes = new Uint8Array(length);
             for (let i = 0; i < length; i++) {
-                bytes[i] = obj[i] ?? 0;
+                // Fail fast on sparse data instead of silently corrupting with zeros
+                if (!(i in obj)) {
+                    throw new Error(`Sparse resource data at index ${i} (unexpected)`);
+                }
+                bytes[i] = obj[i];
             }
             return await arrayBufferToBase64(bytes);
         }
