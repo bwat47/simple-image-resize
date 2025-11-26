@@ -12,7 +12,7 @@
  */
 
 import { syntaxTree } from '@codemirror/language';
-import { REGEX_PATTERNS } from '../constants';
+import { REGEX_PATTERNS, CONSTANTS } from '../constants';
 import { decodeHtmlEntities } from '../utils/stringUtils';
 import { logger } from '../logger';
 import { EditorImageAtCursorResult, EditorPosition } from '../types';
@@ -311,7 +311,7 @@ export default function (_context: { contentScriptId: string }) {
                         }
 
                         return await measureImageDimensions(imagePath, {
-                            timeoutMs: 5000,
+                            timeoutMs: CONSTANTS.BASE64_TIMEOUT_MS,
                             usePrivacySettings: false,
                         });
                     } catch {
