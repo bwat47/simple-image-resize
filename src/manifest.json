@@ -2,7 +2,7 @@
     "manifest_version": 1,
     "id": "com.bwat47.simple-image-resize",
     "app_min_version": "3.3",
-    "version": "1.5.8",
+    "version": "1.5.9",
     "platforms": ["desktop", "mobile"],
     "name": "Simple Image Resize",
     "description": "A simple dialogue to switch image syntax between markdown/html and losslessly resize images",
@@ -62,13 +62,13 @@
         "showQuickResizeInContextMenu": {
             "type": "bool",
             "label": "Display quick resize options in context menu",
-            "description": "Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu",
+            "description": "[Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu",
             "value": false
         },
         "showCopyImageInContextMenu": {
             "type": "bool",
             "label": "Display copy image option in context menu",
-            "description": "Show \"Copy Image\" option in the right-click context menu to copy images to clipboard",
+            "description": "[Desktop Only] Show \"Copy Image\" option in the right-click context menu to copy images to clipboard",
             "value": false
         },
         "showToastMessages": {

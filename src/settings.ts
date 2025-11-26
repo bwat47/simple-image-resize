@@ -71,7 +71,8 @@ export async function registerSettings(): Promise<void> {
             section: SECTION_ID,
             public: true,
             label: 'Display quick resize options in context menu',
-            description: 'Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
+            description:
+                '[Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
         },
         [SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU]: {
             value: false,
@@ -79,7 +80,8 @@ export async function registerSettings(): Promise<void> {
             section: SECTION_ID,
             public: true,
             label: 'Display copy image option in context menu',
-            description: 'Show "Copy Image" option in the right-click context menu to copy images to clipboard',
+            description:
+                '[Desktop Only] Show "Copy Image" option in the right-click context menu to copy images to clipboard',
         },
         [SETTING_SHOW_TOAST_MESSAGES]: {
             value: true,
