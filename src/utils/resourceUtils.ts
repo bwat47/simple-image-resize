@@ -51,16 +51,14 @@ async function toBase64(data: unknown): Promise<string> {
         const keys = allKeys.filter((k) => /^\d+$/.test(k));
         logger.debug(`toBase64: Object with ${allKeys.length} total keys, ${keys.length} numeric keys`);
         if (keys.length > 0) {
-            // Verify keys are contiguous starting from 0 (defensive check for corrupted data)
-            // Check first and last keys without sorting (assumes enumeration order is correct)
-            if (!('0' in obj) || !(String(keys.length - 1) in obj)) {
-                logger.debug(`toBase64: Keys not contiguous from 0 to ${keys.length - 1}`);
-                throw new Error(`Non-contiguous or non-zero-based resource data (unexpected)`);
-            }
-
             logger.debug(`toBase64: Converting ${keys.length} bytes from object with numeric keys`);
             const bytes = new Uint8Array(keys.length);
+            // Validate contiguity while copying (fail fast on sparse/corrupted data)
             for (let i = 0; i < keys.length; i++) {
+                if (!(i in obj)) {
+                    logger.debug(`toBase64: Key ${i} missing; keys not contiguous from 0 to ${keys.length - 1}`);
+                    throw new Error(`Sparse resource data at missing index ${i} (non-contiguous or non-zero-based)`);
+                }
                 bytes[i] = obj[i];
             }
             return await arrayBufferToBase64(bytes);
