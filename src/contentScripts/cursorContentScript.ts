@@ -39,8 +39,12 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
     const { from, to } = args;
 
     // Validate all position values are finite numbers (not NaN, Infinity, or -Infinity)
-    if (!Number.isFinite(from.line) || !Number.isFinite(from.ch) ||
-        !Number.isFinite(to.line) || !Number.isFinite(to.ch)) {
+    if (
+        !Number.isFinite(from.line) ||
+        !Number.isFinite(from.ch) ||
+        !Number.isFinite(to.line) ||
+        !Number.isFinite(to.ch)
+    ) {
         logger.error('REPLACE_RANGE_COMMAND: position values must be finite numbers', { from, to });
         return false;
     }
