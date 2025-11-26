@@ -27,7 +27,8 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
     return new Promise((resolve, reject) => {
         const img = new Image();
         const timeoutId = setTimeout(() => {
-            img.src = '';
+            img.onload = img.onerror = null; // Remove handlers to prevent race conditions
+            img.src = ''; // Attempt to abort loading
             reject(new Error('Timeout: Could not load image to determine dimensions.'));
         }, timeoutMs);
 
