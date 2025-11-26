@@ -79,6 +79,9 @@ export async function showResizeDialog(
         dialogHandle,
         `
     <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
+      <!-- Workaround for Joplin dialog focus issue (https://github.com/laurent22/joplin/issues/4474)
+           Uses style tag onload since autofocus and inline scripts don't work reliably -->
+      <style onload="document.getElementById('altText')?.focus()"></style>
       <div class="container">
         <div>
           <h4>Resize Image</h4>
