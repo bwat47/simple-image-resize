@@ -1,7 +1,6 @@
 import joplin from 'api';
-import { ToastType } from 'api/types';
 import { convertResourceToBase64 } from './resourceUtils';
-import { showToast } from './toastUtils';
+import { showToast, ToastType } from './toastUtils';
 import { logger } from '../logger';
 import { CONSTANTS } from '../constants';
 

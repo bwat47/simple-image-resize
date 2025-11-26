@@ -3,6 +3,9 @@ import { ToastType } from 'api/types';
 import { logger } from '../logger';
 import { SETTING_SHOW_TOAST_MESSAGES } from '../settings';
 
+// Re-export ToastType for convenience - callers can import everything toast-related from one place
+export { ToastType } from 'api/types';
+
 const DEFAULT_TOAST_DURATION = 3000;
 
 /**
