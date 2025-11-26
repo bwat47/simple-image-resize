@@ -10,7 +10,6 @@
  */
 
 import joplin from 'api';
-import { ToastType } from 'api/types';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import { showResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
@@ -21,7 +20,7 @@ import { logger } from './logger';
 import { resizeDialogLock } from './dialogLock';
 import { SETTING_DEFAULT_RESIZE_MODE } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
-import { showToast } from './utils/toastUtils';
+import { showToast, ToastType } from './utils/toastUtils';
 import { copyImageToClipboard } from './utils/clipboardUtils';
 
 /**
