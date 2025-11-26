@@ -144,6 +144,7 @@ HTML_TITLE: /title=(["'])(.*?)\1/i
 ## Settings
 
 - `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` - used to preselect dialog mode.
+- `imageResize.defaultPercentage`: `number` (1-100) - the default percentage value when using percentage resize mode. Defaults to 50. Controls the initial value shown in the percentage input field when the resize dialog opens.
 - `imageResize.showQuickResizeInContextMenu`: `boolean` - when enabled, shows quick resize options (100%, 75%, 50%, 25%) in the right-click context menu alongside the main "Resize Image" option.
 - `imageResize.showCopyImageInContextMenu`: `boolean` - when enabled, shows "Copy Image" option in the right-click context menu to copy images to clipboard.
 - `imageResize.htmlSyntaxStyle`: `'widthAndHeight' | 'widthOnly'` - controls whether HTML image tags include both width and height attributes (default; better compatibility for pasting outside Joplin) or just width (cleaner; Joplin auto-calculates height).
