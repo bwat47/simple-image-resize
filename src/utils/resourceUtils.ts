@@ -32,6 +32,7 @@ async function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): Promise<st
 async function toBase64(data: unknown): Promise<string> {
     // ArrayBuffer or Uint8Array (desktop)
     if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+        logger.debug('toBase64: Received ArrayBuffer/Uint8Array');
         return await arrayBufferToBase64(data);
     }
 
@@ -41,25 +42,32 @@ async function toBase64(data: unknown): Promise<string> {
 
         // Handle actual arrays
         if (Array.isArray(obj)) {
+            logger.debug('toBase64: Received Array');
             return await arrayBufferToBase64(new Uint8Array(obj));
         }
 
         // Check if all keys are numeric (web app format: {0: 137, 1: 80, 2: 78, ...})
-        const keys = Object.keys(obj);
-        if (keys.length > 0 && keys.every((k) => /^\d+$/.test(k))) {
-            const length = typeof obj.length === 'number' ? obj.length : keys.length;
-            const bytes = new Uint8Array(length);
-            for (let i = 0; i < length; i++) {
-                // Fail fast on sparse data instead of silently corrupting with zeros
-                if (!(i in obj)) {
-                    throw new Error(`Sparse resource data at index ${i} (unexpected)`);
-                }
+        const allKeys = Object.keys(obj);
+        const keys = allKeys.filter((k) => /^\d+$/.test(k));
+        logger.debug(`toBase64: Object with ${allKeys.length} total keys, ${keys.length} numeric keys`);
+        if (keys.length > 0) {
+            // Verify keys are contiguous starting from 0 (defensive check for corrupted data)
+            // Check first and last keys without sorting (assumes enumeration order is correct)
+            if (!('0' in obj) || !(String(keys.length - 1) in obj)) {
+                logger.debug(`toBase64: Keys not contiguous from 0 to ${keys.length - 1}`);
+                throw new Error(`Non-contiguous or non-zero-based resource data (unexpected)`);
+            }
+
+            logger.debug(`toBase64: Converting ${keys.length} bytes from object with numeric keys`);
+            const bytes = new Uint8Array(keys.length);
+            for (let i = 0; i < keys.length; i++) {
                 bytes[i] = obj[i];
             }
             return await arrayBufferToBase64(bytes);
         }
     }
 
+    logger.debug(`toBase64: Unknown data type: ${typeof data}`);
     throw new Error(`Unknown data format: ${typeof data}`);
 }
 
