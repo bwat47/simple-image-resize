@@ -8,7 +8,7 @@ body {
     font-size: 14px;
     margin: 0;
     padding: 0;
-    min-width: 620px;
+    min-width: 380px;
     background-color: var(--joplin-background-color, #ffffff);
     color: var(--joplin-color, #32373f);
 }
@@ -181,10 +181,6 @@ input::-webkit-inner-spin-button {
 }
 .label-fixed {
     width: 55px;
-}
-
-body {
-    min-width: 380px;
 }
 .grid {
     grid-template-columns: 120px 1fr;
