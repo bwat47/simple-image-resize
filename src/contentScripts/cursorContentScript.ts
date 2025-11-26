@@ -30,46 +30,12 @@ interface ReplaceRangeArgs {
 }
 
 /**
- * Validates arguments for REPLACE_RANGE_COMMAND to prevent document corruption.
+ * Validates range arguments for REPLACE_RANGE_COMMAND.
+ * TypeScript handles type safety; this only validates logic.
  * @returns true if valid, false otherwise
  */
 function validateReplaceRangeArgs(args: ReplaceRangeArgs): boolean {
-    const { text, from, to } = args;
-
-    // Validate text is a string
-    if (typeof text !== 'string') {
-        logger.error('REPLACE_RANGE_COMMAND: text must be a string', { text });
-        return false;
-    }
-
-    // Validate from and to are objects
-    if (!from || typeof from !== 'object' || !to || typeof to !== 'object') {
-        logger.error('REPLACE_RANGE_COMMAND: from and to must be objects', { from, to });
-        return false;
-    }
-
-    // Validate from has line and ch properties that are numbers
-    if (typeof from.line !== 'number' || typeof from.ch !== 'number') {
-        logger.error('REPLACE_RANGE_COMMAND: from must have numeric line and ch properties', { from });
-        return false;
-    }
-
-    // Validate to has line and ch properties that are numbers
-    if (typeof to.line !== 'number' || typeof to.ch !== 'number') {
-        logger.error('REPLACE_RANGE_COMMAND: to must have numeric line and ch properties', { to });
-        return false;
-    }
-
-    // Validate all numbers are finite
-    if (
-        !Number.isFinite(from.line) ||
-        !Number.isFinite(from.ch) ||
-        !Number.isFinite(to.line) ||
-        !Number.isFinite(to.ch)
-    ) {
-        logger.error('REPLACE_RANGE_COMMAND: line and ch must be finite numbers', { from, to });
-        return false;
-    }
+    const { from, to } = args;
 
     // Validate from <= to
     if (from.line > to.line || (from.line === to.line && from.ch > to.ch)) {
