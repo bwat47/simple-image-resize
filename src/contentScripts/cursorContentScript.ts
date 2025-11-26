@@ -30,11 +30,11 @@ interface ReplaceRangeArgs {
 }
 
 /**
- * Validates range arguments for REPLACE_RANGE_COMMAND.
- * TypeScript handles type safety; this only validates logic.
+ * Validates that range positions are logically correct (from <= to).
+ * TypeScript handles type safety; this only validates positional logic.
  * @returns true if valid, false otherwise
  */
-function validateReplaceRangeArgs(args: ReplaceRangeArgs): boolean {
+function validateRangePositions(args: ReplaceRangeArgs): boolean {
     const { from, to } = args;
 
     // Validate from <= to
@@ -277,7 +277,7 @@ export default function (_context: { contentScriptId: string }) {
                     }
 
                     // Validate arguments to prevent document corruption
-                    if (!validateReplaceRangeArgs(replaceArgs)) {
+                    if (!validateRangePositions(replaceArgs)) {
                         return false;
                     }
 
