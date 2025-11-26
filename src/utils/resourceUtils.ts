@@ -32,6 +32,7 @@ async function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): Promise<st
 async function toBase64(data: unknown): Promise<string> {
     // ArrayBuffer or Uint8Array (desktop)
     if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
+        logger.debug('toBase64: Received ArrayBuffer/Uint8Array');
         return await arrayBufferToBase64(data);
     }
 
@@ -41,18 +42,22 @@ async function toBase64(data: unknown): Promise<string> {
 
         // Handle actual arrays
         if (Array.isArray(obj)) {
+            logger.debug('toBase64: Received Array');
             return await arrayBufferToBase64(new Uint8Array(obj));
         }
 
         // Check if all keys are numeric (web app format: {0: 137, 1: 80, 2: 78, ...})
-        const keys = Object.keys(obj);
-        if (keys.length > 0 && keys.every((k) => /^\d+$/.test(k))) {
-            const length = typeof obj.length === 'number' ? obj.length : keys.length;
-            const bytes = new Uint8Array(length);
-            for (let i = 0; i < length; i++) {
-                // Fail fast on sparse data instead of silently corrupting with zeros
+        const allKeys = Object.keys(obj);
+        const keys = allKeys.filter((k) => /^\d+$/.test(k));
+        logger.debug(`toBase64: Object with ${allKeys.length} total keys, ${keys.length} numeric keys`);
+        if (keys.length > 0) {
+            logger.debug(`toBase64: Converting ${keys.length} bytes from object with numeric keys`);
+            const bytes = new Uint8Array(keys.length);
+            // Validate contiguity while copying (fail fast on sparse/corrupted data)
+            for (let i = 0; i < keys.length; i++) {
                 if (!(i in obj)) {
-                    throw new Error(`Sparse resource data at index ${i} (unexpected)`);
+                    logger.debug(`toBase64: Key ${i} missing; keys not contiguous from 0 to ${keys.length - 1}`);
+                    throw new Error(`Sparse resource data at missing index ${i} (non-contiguous or non-zero-based)`);
                 }
                 bytes[i] = obj[i];
             }
@@ -60,6 +65,7 @@ async function toBase64(data: unknown): Promise<string> {
         }
     }
 
+    logger.debug(`toBase64: Unknown data type: ${typeof data}`);
     throw new Error(`Unknown data format: ${typeof data}`);
 }
 
