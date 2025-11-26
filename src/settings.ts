@@ -15,6 +15,7 @@ import { SettingItemType } from 'api/types';
 
 const SECTION_ID = 'imageResize';
 export const SETTING_DEFAULT_RESIZE_MODE = 'imageResize.defaultResizeMode';
+export const SETTING_DEFAULT_PERCENTAGE = 'imageResize.defaultPercentage';
 export const SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU = 'imageResize.showQuickResizeInContextMenu';
 export const SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU = 'imageResize.showCopyImageInContextMenu';
 export const SETTING_HTML_SYNTAX_STYLE = 'imageResize.htmlSyntaxStyle';
@@ -39,6 +40,17 @@ export async function registerSettings(): Promise<void> {
                 percentage: 'Percentage',
                 absolute: 'Absolute size',
             },
+        },
+        [SETTING_DEFAULT_PERCENTAGE]: {
+            value: 50,
+            type: SettingItemType.Int,
+            section: SECTION_ID,
+            public: true,
+            label: 'Default percentage',
+            description: 'The default percentage value (1-100) when using percentage resize mode',
+            minimum: 1,
+            maximum: 100,
+            step: 1,
         },
         [SETTING_HTML_SYNTAX_STYLE]: {
             value: 'widthAndHeight',

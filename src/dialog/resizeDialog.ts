@@ -25,6 +25,7 @@ type ResizeMode = 'percentage' | 'absolute';
 
 interface DialogConfig {
     defaultResizeMode: ResizeMode;
+    defaultPercentage: number;
     originalWidth: number;
     originalHeight: number;
 }
@@ -161,7 +162,7 @@ interface DialogConfig {
         setRowDisabled(absoluteGroup, absoluteDisabled);
 
         if (htmlActive && isPercentage && !percentageInput.value) {
-            percentageInput.value = '50';
+            percentageInput.value = String(config.defaultPercentage);
         }
 
         if (htmlActive && !isPercentage) {

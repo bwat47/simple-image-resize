@@ -41,6 +41,14 @@
             },
             "value": "percentage"
         },
+        "defaultPercentage": {
+            "type": "int",
+            "label": "Default percentage",
+            "description": "The default percentage value (1-100) when using percentage resize mode",
+            "value": 50,
+            "minimum": 1,
+            "maximum": 100
+        },
         "htmlSyntaxStyle": {
             "type": "enum",
             "label": "HTML syntax style",
