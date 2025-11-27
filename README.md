@@ -8,7 +8,8 @@
 
 A Joplin plugin that provides a simple dialogue to switch image syntax between markdown/html and losslessly resize images by adjusting the width/height attributes.
 
-![simple-image-resize-example](https://github.com/user-attachments/assets/72540ff9-f8bc-4f6e-b332-32b7c0b6c3b5)
+![image-resize-demo](https://github.com/user-attachments/assets/8c527622-fe50-4c0e-b78a-34f5d7349b41)
+
 
 ## How to use
 
