@@ -44,7 +44,7 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 - `utils/imageDimensionUtils.ts` - Shared image dimension measurement utility. Provides `measureImageDimensions()` for loading images via DOM Image with configurable timeout and privacy settings. Used by both main plugin context and content script context to eliminate code duplication.
 - `utils/clipboardUtils.ts` - Clipboard operations for copying images. Handles both Joplin resources and external URLs with AbortController-based timeout for network requests. Includes canvas-based conversion for WebP/AVIF formats with CORS error handling.
 - `utils/toastUtils.ts` - Toast notification wrapper with setting-controlled display; respects `showToastMessages` setting.
-- `logger.ts` - Centralized logging utility. Provides debug(), info(), warn(), and error() methods with configurable log levels (DEBUG, INFO, WARN, ERROR, NONE). Log level can be adjusted at runtime via browser console using `console.simpleImageResize.setLogLevel(level)` and `console.simpleImageResize.getLogLevel()`. Defaults to WARN level.
+- `logger.ts` - Centralized logger with optional debug toggle. Provides consistent prefixing for all plugin logs and exposes a simple `setDebug` method to enable verbose output.
 - `constants.ts` - Simplified regex patterns for extraction (used with syntax tree detection), timeout constants, and default fallback dimensions.
 - `types.ts` - Strong types for contexts, options, dialog result, dimensions.
 - `tests/test-utils/imageExtraction.ts` - Test utility for validating extraction regex patterns without CodeMirror mocking. Tests same patterns used by content script.
@@ -54,11 +54,13 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 **Detection:** Uses CodeMirror's syntax tree (`@codemirror/language`) for reliable, context-aware detection.
 
 **Node types detected:**
+
 - `Image` - Markdown images: `![alt](url)`
 - `HTMLTag` - Simple HTML in Markdown: `<img src="...">`
 - `HTMLBlock` - Nested HTML in Markdown: `<div><img src="..."></div>`
 
 **Benefits:**
+
 - No false positives (won't match images in code blocks or inline code)
 - Accurate cursor position detection using node boundaries
 - Single content script call returns complete results
@@ -67,19 +69,20 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 
 ```ts
 // Extract parts from validated Markdown image: ![alt](src "title")
-MARKDOWN_EXTRACT: /!\[(?<altText>[^\]]*)\]\(\s*(?<src>[^)\s]+)(?:\s+["'](?<title>[^"']+)["'])?\s*\)/
+MARKDOWN_EXTRACT: /!\[(?<altText>[^\]]*)\]\(\s*(?<src>[^)\s]+)(?:\s+["'](?<title>[^"']+)["'])?\s*\)/;
 
 // Extract resource ID or external URL from source
-RESOURCE_ID: /:\/([a-f0-9]{32})/
-EXTERNAL_URL: /(https?:\/\/[^\s"']+)/
+RESOURCE_ID: /:\/([a-f0-9]{32})/;
+EXTERNAL_URL: /(https?:\/\/[^\s"']+)/;
 
 // Extract HTML img attributes (using backreferences for quote matching)
-HTML_SRC: /src=(["'])([^"']+)\1/i
-HTML_ALT: /alt=(["'])(.*?)\1/i
-HTML_TITLE: /title=(["'])(.*?)\1/i
+HTML_SRC: /src=(["'])([^"']+)\1/i;
+HTML_ALT: /alt=(["'])(.*?)\1/i;
+HTML_TITLE: /title=(["'])(.*?)\1/i;
 ```
 
 **Notes:**
+
 - Extraction patterns are simpler (~40% less complex) because detection is handled by syntax tree
 - Patterns only extract from validated image nodes, not detect images
 - Markdown title regex captures raw text without interpreting escape sequences
@@ -89,18 +92,21 @@ HTML_TITLE: /title=(["'])(.*?)\1/i
 ## Cursor Detection Logic
 
 **Content Script Architecture:**
+
 - `cursorContentScript.ts` uses CodeMirror's syntax tree API (`syntaxTree()`) for detection
 - `GET_IMAGE_AT_CURSOR_COMMAND` performs syntax tree traversal of current line
 - `findImagesOnLine()` searches for `Image`, `HTMLTag`, and `HTMLBlock` nodes
 - Returns complete image context + `{ from, to }` range in single call
 
 **Plugin Integration:**
+
 - `detectImageAtCursor()` thin wrapper around content script command
 - `isOnImageInMarkdownEditor()` gates context menu by checking cursor position
 - User places cursor anywhere within image syntax and invokes command
 - Works on Desktop, Android, and Web app through content script
 
 **Benefits:**
+
 - No regex matching in main plugin code
 - Reliable detection using CodeMirror's parser (no false positives)
 - Single content script call provides all details (was 2 calls + regex matching)
@@ -122,21 +128,25 @@ HTML_TITLE: /title=(["'])(.*?)\1/i
 ## Alt/Title Handling (Round-trip)
 
 **Input (HTML → Dialog):**
+
 - Decode HTML entities: `&quot;` → `"`, `&apos;` → `'`, `&amp;` → `&`, `&lt;` → `<`, `&gt;` → `>`
 - Dialog shows plain text for user editing
 
 **Output Escaping:**
 
-*HTML attributes* (`escapeHtmlAttribute`):
+_HTML attributes_ (`escapeHtmlAttribute`):
+
 - Escape: `&` → `&amp;`, `"` → `&quot;`, `'` → `&#39;`, `<` → `&lt;`, `>` → `&gt;`
 - Standard HTML entity encoding
 
-*Markdown title* (`escapeMarkdownTitle`):
+_Markdown title_ (`escapeMarkdownTitle`):
+
 - Only escape: `"` → `\"`
 - **Do NOT escape:** `&`, `\`, `<`, `>` (Markdown doesn't interpret HTML entities)
 - Regex captures raw text without escape sequences, so output raw text
 
 **Round-trip Stability:**
+
 - Markdown `"test & <ok>\ABC"` → HTML `title="test &amp; &lt;ok&gt;\ABC"` → Markdown `"test & <ok>\ABC"` ✓
 - No accumulation of escaped characters on repeated conversions
 - Fixed double-escaping issues with ampersands and backslashes
@@ -207,11 +217,13 @@ A focused command + dialog plugin: detect a single image at cursor position (Mar
 ## Architecture Evolution
 
 **Syntax Tree Refactoring (current):**
+
 - Detection: CodeMirror syntax tree API (`@codemirror/language`)
 - Extraction: Simplified regex patterns (~40% less complex)
 - Benefits: No false positives, reliable cursor detection, single content script call, supports nested HTML
 
 **Previous Architecture:**
+
 - Detection + Extraction: Complex regex patterns handled both
 - Multiple content script calls required
 - Potential for false positives in code blocks
