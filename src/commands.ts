@@ -18,7 +18,7 @@ import { ImageContext, EditorRange } from './types';
 import { CONSTANTS } from './constants';
 import { logger } from './logger';
 import { resizeDialogLock } from './dialogLock';
-import { SETTING_DEFAULT_RESIZE_MODE } from './settings';
+import { settingsCache } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast, ToastType } from './utils/toastUtils';
 import { copyImageToClipboard } from './utils/clipboardUtils';
@@ -164,9 +164,7 @@ export async function registerCommands(): Promise<void> {
                 const { fullContext, replacementRange } = prepared;
 
                 // Show dialog
-                const defaultResizeMode = (await joplin.settings.value(SETTING_DEFAULT_RESIZE_MODE)) as
-                    | 'percentage'
-                    | 'absolute';
+                const defaultResizeMode = settingsCache.defaultResizeMode;
 
                 if (!resizeDialogLock.tryAcquire()) {
                     await showToast('Resize dialog is already open.');

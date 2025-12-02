@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute } from './utils/stringUtils';
-import { SETTING_DEFAULT_PERCENTAGE } from './settings';
+import { settingsCache } from './settings';
 
 /**
  * Calculates the initial state for the dialog based on default syntax and resize mode.
@@ -52,7 +52,7 @@ export async function showResizeDialog(
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
     const defaultSyntax: 'html' | 'markdown' = 'html';
-    const defaultPercentage = await joplin.settings.value(SETTING_DEFAULT_PERCENTAGE);
+    const defaultPercentage = settingsCache.defaultPercentage;
 
     const {
         resizeFieldsetClass,

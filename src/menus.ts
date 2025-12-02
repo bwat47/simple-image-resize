@@ -11,7 +11,7 @@ import joplin from 'api';
 import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
-import { SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU, SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU } from './settings';
+import { settingsCache } from './settings';
 
 export async function registerMenus(): Promise<void> {
     // Create submenu in Tools menu
@@ -66,7 +66,7 @@ export function registerContextMenu(): void {
             });
 
             // Add quick resize options if enabled
-            const showQuickResize = await joplin.settings.value(SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU);
+            const showQuickResize = settingsCache.showQuickResizeInContextMenu;
             if (showQuickResize) {
                 contextMenu.items.push(
                     {
@@ -89,7 +89,7 @@ export function registerContextMenu(): void {
             }
 
             // Add copy image option if enabled
-            const showCopyImage = await joplin.settings.value(SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU);
+            const showCopyImage = settingsCache.showCopyImageInContextMenu;
             if (showCopyImage) {
                 contextMenu.items.push({
                     commandName: 'copyImageToClipboard',

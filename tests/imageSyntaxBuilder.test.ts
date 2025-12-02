@@ -1,15 +1,16 @@
 import { buildNewSyntax } from '../src/imageSyntaxBuilder';
 import { ImageContext, ResizeDialogResult } from '../src/types';
-import joplin from 'api';
+import { settingsCache } from '../src/settings';
 
 describe('buildNewSyntax', () => {
     beforeEach(() => {
         // Default to 'widthAndHeight' setting
-        (joplin.settings.value as jest.Mock).mockResolvedValue('widthAndHeight');
+        settingsCache.htmlSyntaxStyle = 'widthAndHeight';
     });
 
     afterEach(() => {
-        jest.clearAllMocks();
+        // Reset to default
+        settingsCache.htmlSyntaxStyle = 'widthAndHeight';
     });
     const baseContext: ImageContext = {
         type: 'markdown',
@@ -29,7 +30,7 @@ describe('buildNewSyntax', () => {
             percentage: 50,
         };
 
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         expect(syntax).toBe('![New Alt](:/0123456789abcdef0123456789abcdef)');
     });
 
@@ -40,21 +41,21 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 25,
         };
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         // 25% of 800x600 => 200x150
         expect(syntax).toContain('width="200"');
         expect(syntax).toContain('height="150"');
     });
 
     test('calculates percentage resize for HTML output with width only', async () => {
-        (joplin.settings.value as jest.Mock).mockResolvedValue('widthOnly');
+        settingsCache.htmlSyntaxStyle = 'widthOnly';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
             resizeMode: 'percentage',
             percentage: 25,
         };
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         // 25% of 800x600 => 200x150
         expect(syntax).toContain('width="200"');
         expect(syntax).not.toContain('height=');
@@ -68,13 +69,13 @@ describe('buildNewSyntax', () => {
             absoluteWidth: 320,
             absoluteHeight: 240,
         };
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         expect(syntax).toContain('width="320"');
         expect(syntax).toContain('height="240"');
     });
 
     test('absolute dimensions both provided with width only', async () => {
-        (joplin.settings.value as jest.Mock).mockResolvedValue('widthOnly');
+        settingsCache.htmlSyntaxStyle = 'widthOnly';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
@@ -82,7 +83,7 @@ describe('buildNewSyntax', () => {
             absoluteWidth: 320,
             absoluteHeight: 240,
         };
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         expect(syntax).toContain('width="320"');
         expect(syntax).not.toContain('height=');
     });
@@ -94,7 +95,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'absolute',
             absoluteWidth: 400,
         };
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         // Aspect ratio 800x600 => height scales to 300
         expect(syntax).toContain('width="400"');
         expect(syntax).toContain('height="300"');
@@ -107,7 +108,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'absolute',
             absoluteHeight: 300,
         };
-        const syntax = await buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result);
         // Width should scale: 800/600 * 300 = 400
         expect(syntax).toContain('width="400"');
         expect(syntax).toContain('height="300"');
@@ -121,7 +122,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 50,
         };
-        const syntax = await buildNewSyntax(ctx, result);
+        const syntax = buildNewSyntax(ctx, result);
         expect(syntax).toContain('title="My Title"');
     });
 
@@ -133,7 +134,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = await buildNewSyntax(ctx, result);
+        const syntax = buildNewSyntax(ctx, result);
         expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
     });
 
@@ -144,7 +145,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = await buildNewSyntax(baseContext, res);
+        const syntax = buildNewSyntax(baseContext, res);
         expect(syntax).toBe('![Alt with brackets and \\ backslash](:/0123456789abcdef0123456789abcdef)');
     });
 
@@ -157,7 +158,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = await buildNewSyntax(ctx, htmlRes);
+        const html = buildNewSyntax(ctx, htmlRes);
         expect(html).toContain('title="He said &quot;hi&quot; &amp; &lt;ok&gt;"');
         // Markdown: Only quotes are escaped (extraction regex works with raw text)
         const mdRes: ResizeDialogResult = {
@@ -166,7 +167,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const md = await buildNewSyntax(ctx, mdRes);
+        const md = buildNewSyntax(ctx, mdRes);
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said \\"hi\\" & <ok>")');
     });
 
@@ -177,7 +178,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = await buildNewSyntax(baseContext, res);
+        const html = buildNewSyntax(baseContext, res);
         expect(html).toContain('alt="Quote: &quot;double&quot; &amp; &lt;tag&gt;"');
     });
 
@@ -188,7 +189,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = await buildNewSyntax(baseContext, res);
+        const html = buildNewSyntax(baseContext, res);
         expect(html).toContain('alt="It&#39;s fine"');
     });
 
@@ -201,7 +202,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = await buildNewSyntax(ctx, htmlRes);
+        const html = buildNewSyntax(ctx, htmlRes);
         expect(html).toContain('title="mern &amp; test\\ABC"');
 
         // Convert back to Markdown - backslash should not be doubled
@@ -211,7 +212,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const md = await buildNewSyntax(ctx, mdRes);
+        const md = buildNewSyntax(ctx, mdRes);
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "mern & test\\ABC")');
     });
 
@@ -230,7 +231,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 50,
         };
-        const syntax = await buildNewSyntax(externalCtx, result);
+        const syntax = buildNewSyntax(externalCtx, result);
         expect(syntax).toContain('<img src="https://example.com/logo.png"');
         expect(syntax).toContain('width="512"');
         expect(syntax).toContain('height="256"');
