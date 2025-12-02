@@ -1,7 +1,6 @@
-import joplin from 'api';
 import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './utils/stringUtils';
-import { SETTING_HTML_SYNTAX_STYLE } from './settings';
+import { settingsCache } from './settings';
 
 /**
  * Generates new image syntax based on user selections.
@@ -13,7 +12,7 @@ import { SETTING_HTML_SYNTAX_STYLE } from './settings';
  * @param result - User's selections from the resize dialog
  * @returns New image syntax
  */
-export async function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): Promise<string> {
+export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
     // Determine the correct source path format
     const srcPath = context.sourceType === 'resource' ? `:/${context.source}` : context.source;
 
@@ -49,7 +48,7 @@ export async function buildNewSyntax(context: ImageContext, result: ResizeDialog
         const newHeight = origW > 0 ? Math.round(newWidth * (origH / origW)) : origH;
 
         // Check setting for whether to include height attribute
-        const htmlSyntaxStyle = await joplin.settings.value(SETTING_HTML_SYNTAX_STYLE);
+        const htmlSyntaxStyle = settingsCache.htmlSyntaxStyle;
         const includeHeight = htmlSyntaxStyle === 'widthAndHeight';
 
         const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
