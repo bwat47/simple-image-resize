@@ -10,6 +10,8 @@ A Joplin plugin that provides a simple dialogue to switch image syntax between m
 
 ![image-resize-demo](https://github.com/user-attachments/assets/8c527622-fe50-4c0e-b78a-34f5d7349b41)
 
+> [!note]
+> To render HTML image embeds in the markdown editor (as seen in the above example), you can either enable "Markdown editor: Render images" under Tools | Options | Note (note that HTML images are only supported in Joplin 3.5.7 or newer) or use the "Rich Markdown" plugin and enable its option to render images.
 
 ## How to use
 
@@ -18,7 +20,10 @@ In the markdown editor, right-click anywhere inside a markdown or HTML image emb
 This will open a simple image resize dialogue, the following options are provided.
 
 > [!note]
-> On mobile/web you can open the dialog using the toolbar icon
+> You need to put your cursor inside the image embed text (not on the rendered image itself)
+
+> [!note]
+> On mobile/web you can put your cursor inside the image embed text and then open the dialog using the toolbar icon
 
 ### Switch image syntax
 
