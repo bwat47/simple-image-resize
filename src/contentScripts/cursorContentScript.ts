@@ -27,6 +27,7 @@ interface ReplaceRangeArgs {
     text: string;
     from: EditorPosition;
     to: EditorPosition;
+    expectedText?: string;
 }
 
 /**
@@ -74,6 +75,7 @@ interface CMState {
 interface CMView {
     state: CMState;
     dispatch(changes: { changes: { from: number; to: number; insert: string } }): void;
+    requestMeasure(): void;
 }
 
 interface CodeMirrorWrapper {
@@ -260,6 +262,12 @@ export default function (_context: { contentScriptId: string }) {
             codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
                     const view = codeMirrorWrapper.editor;
+                    // Force view to sync/measure before reading cursor position
+                    // This works around a timing issue where the view might not
+                    // have synced with the cursor position update from the right-click event
+                    // See: https://codemirror.net/docs/ref/#view.EditorView.requestMeasure
+                    view.requestMeasure();
+
                     return getImageAtCursor(view.state);
                 } catch (error) {
                     logger.error('getImageAtCursor failed:', error);
@@ -270,18 +278,19 @@ export default function (_context: { contentScriptId: string }) {
             // Command: Replace text in a range
             codeMirrorWrapper.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
                 try {
-                    // Args can come as [text, from, to] or as a single object
+                    // Args can come as [text, from, to, expectedText] or as a single object
                     let replaceArgs: ReplaceRangeArgs;
 
                     if (args.length >= 3) {
-                        // Called as (text, from, to)
+                        // Called as (text, from, to, expectedText?)
                         replaceArgs = {
                             text: args[0] as string,
                             from: args[1] as EditorPosition,
                             to: args[2] as EditorPosition,
+                            expectedText: args[3] as string | undefined,
                         };
                     } else if (args.length === 1 && typeof args[0] === 'object') {
-                        // Called as ({ text, from, to })
+                        // Called as ({ text, from, to, expectedText? })
                         replaceArgs = args[0] as ReplaceRangeArgs;
                     } else {
                         logger.error('REPLACE_RANGE_COMMAND: invalid arguments format');
@@ -293,12 +302,27 @@ export default function (_context: { contentScriptId: string }) {
                         return false;
                     }
 
-                    const { text, from, to } = replaceArgs;
+                    const { text, from, to, expectedText } = replaceArgs;
                     const view = codeMirrorWrapper.editor;
                     const doc = view.state.doc;
 
                     const fromOffset = posToOffset(doc, from);
                     const toOffset = posToOffset(doc, to);
+
+                    // Optimistic concurrency control: Verify text hasn't changed
+                    if (expectedText !== undefined) {
+                        const currentText = doc.sliceString(fromOffset, toOffset);
+                        if (currentText !== expectedText) {
+                            logger.warn(
+                                'replaceRange: Content changed since detection; aborting replacement.',
+                                '\nExpected:',
+                                expectedText,
+                                '\nFound:',
+                                currentText
+                            );
+                            return false;
+                        }
+                    }
 
                     view.dispatch({
                         changes: { from: fromOffset, to: toOffset, insert: text },
