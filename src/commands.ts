@@ -67,10 +67,10 @@ async function detectAndPrepareImage() {
  * Shared function to replace image in editor.
  * Uses custom content script command for cross-platform support (desktop + mobile).
  */
-async function replaceImageInEditor(newSyntax: string, replacementRange: EditorRange) {
+async function replaceImageInEditor(newSyntax: string, replacementRange: EditorRange, originalSyntax: string) {
     await joplin.commands.execute('editor.execCommand', {
         name: REPLACE_RANGE_COMMAND,
-        args: [newSyntax, replacementRange.from, replacementRange.to],
+        args: [newSyntax, replacementRange.from, replacementRange.to, originalSyntax],
     });
 }
 
@@ -94,7 +94,7 @@ async function executeQuickResize(percentage: number): Promise<void> {
             percentage,
         });
 
-        await replaceImageInEditor(newSyntax, replacementRange);
+        await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
         // Different message for 100% (conversion) vs others (resize)
         const message =
@@ -180,7 +180,7 @@ export async function registerCommands(): Promise<void> {
 
                 if (result) {
                     const newSyntax = await buildNewSyntax(fullContext, result);
-                    await replaceImageInEditor(newSyntax, replacementRange);
+                    await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
                     await showToast('Image resized successfully!', ToastType.Success);
                 }
