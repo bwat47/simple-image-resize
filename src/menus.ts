@@ -38,56 +38,72 @@ export async function registerToolbarButton(): Promise<void> {
 }
 
 export function registerContextMenu(): void {
-    // Enhanced context menu with intelligent showing
     joplin.workspace.filterEditorContextMenu(async (contextMenu) => {
-        // Only show resize option when cursor is on an image in markdown editor
-        const shouldShowResize = await isOnImageInMarkdownEditor();
+        try {
+            // Small delay to work around timing issue where cursor position
+            // may not have updated yet when context menu filter is called
+            await new Promise((resolve) => setTimeout(resolve, 10));
 
-        if (shouldShowResize) {
-            const hasResizeCommand = contextMenu.items.some((item) => item.commandName === 'resizeImage');
+            // Get image context directly from editor (pull architecture)
+            // This is guaranteed to match the current cursor position
+            const shouldShowResize = await isOnImageInMarkdownEditor();
 
-            if (!hasResizeCommand) {
-                contextMenu.items.push({
-                    commandName: 'resizeImage',
-                    label: 'Resize Image',
-                });
-
-                // Add quick resize options if enabled
-                const showQuickResize = await joplin.settings.value(SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU);
-                if (showQuickResize) {
-                    contextMenu.items.push(
-                        {
-                            commandName: 'resize100',
-                            label: 'Resize 100%',
-                        },
-                        {
-                            commandName: 'resize75',
-                            label: 'Resize 75%',
-                        },
-                        {
-                            commandName: 'resize50',
-                            label: 'Resize 50%',
-                        },
-                        {
-                            commandName: 'resize25',
-                            label: 'Resize 25%',
-                        }
-                    );
-                }
-
-                // Add copy image option if enabled
-                const showCopyImage = await joplin.settings.value(SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU);
-                if (showCopyImage) {
-                    contextMenu.items.push({
-                        commandName: 'copyImageToClipboard',
-                        label: 'Copy Image',
-                    });
-                }
-
-                logger.info('Added context menu item - cursor on image');
+            if (!shouldShowResize) {
+                // No image at cursor, return menu unchanged
+                return contextMenu;
             }
-        }
 
-        return contextMenu;
+            // Check if we've already added our commands (avoid duplicates)
+            const hasResizeCommand = contextMenu.items.some((item) => item.commandName === 'resizeImage');
+            if (hasResizeCommand) {
+                return contextMenu;
+            }
+
+            // Build menu items for image context
+            contextMenu.items.push({
+                commandName: 'resizeImage',
+                label: 'Resize Image',
+            });
+
+            // Add quick resize options if enabled
+            const showQuickResize = await joplin.settings.value(SETTING_SHOW_QUICK_RESIZE_IN_CONTEXT_MENU);
+            if (showQuickResize) {
+                contextMenu.items.push(
+                    {
+                        commandName: 'resize100',
+                        label: 'Resize 100%',
+                    },
+                    {
+                        commandName: 'resize75',
+                        label: 'Resize 75%',
+                    },
+                    {
+                        commandName: 'resize50',
+                        label: 'Resize 50%',
+                    },
+                    {
+                        commandName: 'resize25',
+                        label: 'Resize 25%',
+                    }
+                );
+            }
+
+            // Add copy image option if enabled
+            const showCopyImage = await joplin.settings.value(SETTING_SHOW_COPY_IMAGE_IN_CONTEXT_MENU);
+            if (showCopyImage) {
+                contextMenu.items.push({
+                    commandName: 'copyImageToClipboard',
+                    label: 'Copy Image',
+                });
+            }
+
+            logger.info('Added context menu items - cursor on image');
+
+            return contextMenu;
+        } catch (error) {
+            logger.error('Error in context menu filter:', error);
+            // Return original menu on error to avoid breaking context menu
+            return contextMenu;
+        }
     });
 }
