@@ -27,7 +27,7 @@ interface ReplaceRangeArgs {
     text: string;
     from: EditorPosition;
     to: EditorPosition;
-    expectedText?: string;
+    expectedText: string;
 }
 
 /**
@@ -281,19 +281,19 @@ export default function (_context: { contentScriptId: string }) {
                     // Args can come as [text, from, to, expectedText] or as a single object
                     let replaceArgs: ReplaceRangeArgs;
 
-                    if (args.length >= 3) {
-                        // Called as (text, from, to, expectedText?)
+                    if (args.length === 4) {
+                        // Called as (text, from, to, expectedText)
                         replaceArgs = {
                             text: args[0] as string,
                             from: args[1] as EditorPosition,
                             to: args[2] as EditorPosition,
-                            expectedText: args[3] as string | undefined,
+                            expectedText: args[3] as string,
                         };
                     } else if (args.length === 1 && typeof args[0] === 'object') {
-                        // Called as ({ text, from, to, expectedText? })
+                        // Called as ({ text, from, to, expectedText })
                         replaceArgs = args[0] as ReplaceRangeArgs;
                     } else {
-                        logger.error('REPLACE_RANGE_COMMAND: invalid arguments format');
+                        logger.error('REPLACE_RANGE_COMMAND: invalid arguments format - expectedText is required');
                         return false;
                     }
 
@@ -310,18 +310,16 @@ export default function (_context: { contentScriptId: string }) {
                     const toOffset = posToOffset(doc, to);
 
                     // Optimistic concurrency control: Verify text hasn't changed
-                    if (expectedText !== undefined) {
-                        const currentText = doc.sliceString(fromOffset, toOffset);
-                        if (currentText !== expectedText) {
-                            logger.warn(
-                                'replaceRange: Content changed since detection; aborting replacement.',
-                                '\nExpected:',
-                                expectedText,
-                                '\nFound:',
-                                currentText
-                            );
-                            return false;
-                        }
+                    const currentText = doc.sliceString(fromOffset, toOffset);
+                    if (currentText !== expectedText) {
+                        logger.warn(
+                            'replaceRange: Content changed since detection; aborting replacement.',
+                            '\nExpected:',
+                            expectedText,
+                            '\nFound:',
+                            currentText
+                        );
+                        return false;
                     }
 
                     view.dispatch({
