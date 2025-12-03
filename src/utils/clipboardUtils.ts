@@ -52,6 +52,11 @@ async function convertToPNG(imageDataUrl: string, sourceFormat: string): Promise
     return new Promise((resolve, reject) => {
         const image = new Image();
 
+        const cleanup = () => {
+            image.onload = null;
+            image.onerror = null;
+        };
+
         image.onload = () => {
             try {
                 const canvas = document.createElement('canvas');
@@ -77,10 +82,13 @@ async function convertToPNG(imageDataUrl: string, sourceFormat: string): Promise
                 }
             } catch (err) {
                 reject(err);
+            } finally {
+                cleanup();
             }
         };
 
         image.onerror = () => {
+            cleanup();
             reject(new Error(`Failed to load image for ${sourceFormat} conversion`));
         };
 
@@ -133,7 +141,11 @@ async function rasterizeSvgToPNG(svgDataUrl: string): Promise<string> {
                     const dataUrl = canvas.toDataURL('image/png');
                     resolve(dataUrl);
                 } catch (dataUrlError) {
-                    reject(dataUrlError);
+                    if (dataUrlError instanceof DOMException && dataUrlError.name === 'SecurityError') {
+                        reject(new Error('Canvas is tainted (CORS). Cannot rasterize SVG.'));
+                    } else {
+                        reject(dataUrlError);
+                    }
                 }
             } catch (err) {
                 reject(err);
