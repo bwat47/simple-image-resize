@@ -53,7 +53,10 @@ You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using ke
 
 **Display quick resize options in context menu** - [Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu.
 
-**Display copy image option in context menu** - [Desktop Only] Display copy image option in context menu. Supported image formats: png, jpg, webp (not animated), avif (not animated).
+**Display copy image option in context menu** - [Desktop Only] Display copy image option in context menu. Supported image formats: png, jpg, webp (not animated), avif (not animated), svg (rasterized to png).
+
+> [!note]
+> The Joplin clipboard API only supports jpg and png formats, so webp, avif, and svg images are converted to png before being copied to the clipboard.
 
 ### Default keyboard shortcuts:
 
