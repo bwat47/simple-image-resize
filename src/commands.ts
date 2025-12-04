@@ -38,7 +38,7 @@ async function detectAndPrepareImage() {
     const replacementRange = cursorDetection.range;
 
     // Get original dimensions
-    logger.info(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
+    logger.debug(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
     let originalDimensions;
     try {

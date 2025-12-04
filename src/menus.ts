@@ -97,7 +97,7 @@ export function registerContextMenu(): void {
                 });
             }
 
-            logger.info('Added context menu items - cursor on image');
+            logger.debug('Added context menu items - cursor on image');
 
             return contextMenu;
         } catch (error) {
