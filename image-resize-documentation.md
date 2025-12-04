@@ -95,13 +95,14 @@ HTML_TITLE: /title=(["'])(.*?)\1/i;
 
 - `cursorContentScript.ts` uses CodeMirror's syntax tree API (`syntaxTree()`) for detection
 - `GET_IMAGE_AT_CURSOR_COMMAND` performs syntax tree traversal of current line
+- Tracks last right-click position to support context menu operations when cursor is elsewhere (e.g., inside a selection)
 - `findImagesOnLine()` searches for `Image`, `HTMLTag`, and `HTMLBlock` nodes
 - Returns complete image context + `{ from, to }` range in single call
 
 **Plugin Integration:**
 
 - `detectImageAtCursor()` thin wrapper around content script command
-- `isOnImageInMarkdownEditor()` gates context menu by checking cursor position
+- `isOnImageInMarkdownEditor()` gates context menu by checking cursor position (or right-click position)
 - User places cursor anywhere within image syntax and invokes command
 - Works on Desktop, Android, and Web app through content script
 

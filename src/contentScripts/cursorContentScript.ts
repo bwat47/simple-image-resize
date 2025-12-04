@@ -64,6 +64,7 @@ interface CMDoc {
     line(n: number): { from: number; to: number; text: string };
     lineAt(pos: number): { number: number; from: number; to: number; text: string };
     lines: number;
+    length: number;
     sliceString(from: number, to: number): string;
 }
 
@@ -76,6 +77,8 @@ interface CMView {
     state: CMState;
     dispatch(changes: { changes: { from: number; to: number; insert: string } }): void;
     requestMeasure(): void;
+    dom: HTMLElement;
+    posAtCoords(coords: { x: number; y: number }): number | null;
 }
 
 interface CodeMirrorWrapper {
@@ -140,9 +143,11 @@ function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 
  * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
  * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
  */
-function findImagesOnLine(state: CMState): Array<{ type: 'markdown' | 'html'; from: number; to: number }> {
-    const cursor = state.selection.main.head;
-    const currentLine = state.doc.lineAt(cursor);
+function findImagesOnLine(
+    state: CMState,
+    cursorPos: number
+): Array<{ type: 'markdown' | 'html'; from: number; to: number }> {
+    const currentLine = state.doc.lineAt(cursorPos);
     const images: Array<{ type: 'markdown' | 'html'; from: number; to: number }> = [];
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -205,13 +210,12 @@ function findImagesOnLine(state: CMState): Array<{ type: 'markdown' | 'html'; fr
  * Get the image at cursor position using syntax tree.
  * This is the main detection function that replaces regex-based detection.
  */
-function getImageAtCursor(state: CMState): EditorImageAtCursorResult | null {
-    const cursor = state.selection.main.head;
-    const images = findImagesOnLine(state);
+function getImageAtCursor(state: CMState, cursorPos: number): EditorImageAtCursorResult | null {
+    const images = findImagesOnLine(state, cursorPos);
 
     // Find the image that contains the cursor
     for (const imageNode of images) {
-        if (cursor >= imageNode.from && cursor <= imageNode.to) {
+        if (cursorPos >= imageNode.from && cursorPos <= imageNode.to) {
             const imageText = state.doc.sliceString(imageNode.from, imageNode.to);
             const details =
                 imageNode.type === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);
@@ -258,17 +262,51 @@ function posToOffset(doc: CMDoc, pos: EditorPosition): number {
 export default function (_context: { contentScriptId: string }) {
     return {
         plugin: function (codeMirrorWrapper: CodeMirrorWrapper) {
+            const view = codeMirrorWrapper.editor;
+
+            // Track the position of the last right-click
+            // This allows us to get the context at the click location even if the cursor
+            // is elsewhere (e.g., when right-clicking inside a text selection)
+            let lastRightClickPos: number | null = null;
+
+            view.dom.addEventListener('mousedown', (event: MouseEvent) => {
+                // Clear on any click first to ensure we don't use stale data
+                lastRightClickPos = null;
+
+                // If it's a right click (button 2), capture the position
+                if (event.button === 2) {
+                    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                    if (pos !== null) {
+                        lastRightClickPos = pos;
+                        logger.debug('Right click detected at pos:', pos);
+                    }
+                }
+            });
+
+            // Clear the tracked position on key press to ensure keyboard navigation
+            // resets the context to the cursor
+            view.dom.addEventListener('keydown', () => {
+                lastRightClickPos = null;
+            });
+
             // Command: Get image at cursor using syntax tree (primary method)
             codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
-                    const view = codeMirrorWrapper.editor;
                     // Force view to sync/measure before reading cursor position
                     // This works around a timing issue where the view might not
                     // have synced with the cursor position update from the right-click event
                     // See: https://codemirror.net/docs/ref/#view.EditorView.requestMeasure
                     view.requestMeasure();
 
-                    return getImageAtCursor(view.state);
+                    // Use the position from the last right-click if available and valid,
+                    // otherwise fall back to the main cursor position.
+                    let pos = view.state.selection.main.head;
+                    if (lastRightClickPos !== null && lastRightClickPos <= view.state.doc.length) {
+                        pos = lastRightClickPos;
+                        logger.debug('Using last right-click position:', pos);
+                    }
+
+                    return getImageAtCursor(view.state, pos);
                 } catch (error) {
                     logger.error('getImageAtCursor failed:', error);
                     return null;
