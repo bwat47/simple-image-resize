@@ -273,8 +273,8 @@ export default function (_context: { contentScriptId: string }) {
                 // Clear on any click first to ensure we don't use stale data
                 lastRightClickPos = null;
 
-                // If it's a right click (button 2), capture the position
-                if (event.button === 2) {
+                // If it's a right click (button 2) or Ctrl+Left Click (for macOS), capture the position
+                if (event.button === 2 || (event.ctrlKey && event.button === 0)) {
                     const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
                     if (pos !== null) {
                         lastRightClickPos = pos;
