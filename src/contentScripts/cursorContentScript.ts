@@ -269,17 +269,18 @@ export default function (_context: { contentScriptId: string }) {
             // is elsewhere (e.g., when right-clicking inside a text selection)
             let lastRightClickPos: number | null = null;
 
-            view.dom.addEventListener('mousedown', (event: MouseEvent) => {
-                // Clear on any click first to ensure we don't use stale data
+            view.dom.addEventListener('mousedown', () => {
+                // Clear on any click to ensure we don't use stale data
                 lastRightClickPos = null;
+            });
 
-                // If it's a right click (button 2) or Ctrl+Left Click (for macOS), capture the position
-                if (event.button === 2 || (event.ctrlKey && event.button === 0)) {
-                    const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
-                    if (pos !== null) {
-                        lastRightClickPos = pos;
-                        logger.debug('Right click detected at pos:', pos);
-                    }
+            view.dom.addEventListener('contextmenu', (event: MouseEvent) => {
+                // Capture position on context menu event
+                // This handles Right Click (all OS), Ctrl+Click (Mac), and Menu Key automatically
+                const pos = view.posAtCoords({ x: event.clientX, y: event.clientY });
+                if (pos !== null) {
+                    lastRightClickPos = pos;
+                    logger.debug('Context menu detected at pos:', pos);
                 }
             });
 
