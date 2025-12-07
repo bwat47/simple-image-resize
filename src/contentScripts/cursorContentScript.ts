@@ -12,6 +12,8 @@
  */
 
 import { syntaxTree } from '@codemirror/language';
+import { EditorView } from '@codemirror/view';
+import { Text } from '@codemirror/state';
 import { REGEX_PATTERNS, CONSTANTS } from '../constants';
 import { decodeHtmlEntities } from '../utils/stringUtils';
 import { logger } from '../logger';
@@ -59,27 +61,9 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
     return true;
 }
 
-// CodeMirror types (minimal definitions for what we use)
-interface CMDoc {
-    line(n: number): { from: number; to: number; text: string };
-    lineAt(pos: number): { number: number; from: number; to: number; text: string };
-    lines: number;
-    sliceString(from: number, to: number): string;
-}
-
-interface CMState {
-    doc: CMDoc;
-    selection: { main: { head: number } };
-}
-
-interface CMView {
-    state: CMState;
-    dispatch(changes: { changes: { from: number; to: number; insert: string } }): void;
-    requestMeasure(): void;
-}
-
+// Joplin's CodeMirror wrapper type (not exported by Joplin)
 interface CodeMirrorWrapper {
-    editor: CMView;
+    editor: EditorView;
     registerCommand(name: string, callback: (...args: unknown[]) => unknown): void;
 }
 
@@ -140,13 +124,13 @@ function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 
  * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
  * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
  */
-function findImagesOnLine(state: CMState): Array<{ type: 'markdown' | 'html'; from: number; to: number }> {
+function findImagesOnLine(view: EditorView): Array<{ type: 'markdown' | 'html'; from: number; to: number }> {
+    const state = view.state;
     const cursor = state.selection.main.head;
     const currentLine = state.doc.lineAt(cursor);
     const images: Array<{ type: 'markdown' | 'html'; from: number; to: number }> = [];
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    syntaxTree(state as any).iterate({
+    syntaxTree(state).iterate({
         from: currentLine.from,
         to: currentLine.to,
         enter: (node) => {
@@ -205,9 +189,10 @@ function findImagesOnLine(state: CMState): Array<{ type: 'markdown' | 'html'; fr
  * Get the image at cursor position using syntax tree.
  * This is the main detection function that replaces regex-based detection.
  */
-function getImageAtCursor(state: CMState): EditorImageAtCursorResult | null {
+function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
+    const state = view.state;
     const cursor = state.selection.main.head;
-    const images = findImagesOnLine(state);
+    const images = findImagesOnLine(view);
 
     // Find the image that contains the cursor
     for (const imageNode of images) {
@@ -246,7 +231,7 @@ function getImageAtCursor(state: CMState): EditorImageAtCursorResult | null {
  * CM6 doc.line() expects 1-indexed line numbers, so we convert
  * from our 0-indexed EditorPosition before calling it.
  */
-function posToOffset(doc: CMDoc, pos: EditorPosition): number {
+function posToOffset(doc: Text, pos: EditorPosition): number {
     // CM6 line() uses 1-indexed line numbers
     const lineNum = Math.max(1, Math.min(pos.line + 1, doc.lines));
     const lineInfo = doc.line(lineNum);
@@ -268,7 +253,7 @@ export default function (_context: { contentScriptId: string }) {
                     // See: https://codemirror.net/docs/ref/#view.EditorView.requestMeasure
                     view.requestMeasure();
 
-                    return getImageAtCursor(view.state);
+                    return getImageAtCursor(view);
                 } catch (error) {
                     logger.error('getImageAtCursor failed:', error);
                     return null;
