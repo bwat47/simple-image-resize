@@ -8,7 +8,7 @@
  */
 
 import joplin from 'api';
-import { MenuItemLocation, ToolbarButtonLocation } from 'api/types';
+import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
 import { settingsCache } from './settings';
@@ -60,6 +60,10 @@ export function registerContextMenu(): void {
             }
 
             // Build menu items for image context
+            // Add separator before our items
+            const separator: MenuItem = { type: 'separator' };
+            contextMenu.items.push(separator);
+
             contextMenu.items.push({
                 commandName: 'resizeImage',
                 label: 'Resize Image',
