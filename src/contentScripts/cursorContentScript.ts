@@ -234,8 +234,7 @@ function posToOffset(doc: Text, pos: EditorPosition): number {
     return lineInfo.from + ch;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export default function (_context: { contentScriptId: string }) {
+export default function () {
     return {
         plugin: function (editorControl: CodeMirrorControl) {
             if (!editorControl?.cm6) {
