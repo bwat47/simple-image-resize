@@ -14,11 +14,11 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { Text } from '@codemirror/state';
-import { CodeMirrorControl } from 'api/types';
+import type { CodeMirrorControl } from 'api/types';
+import type { EditorImageAtCursorResult, EditorPosition } from '../types';
 import { REGEX_PATTERNS, CONSTANTS } from '../constants';
 import { decodeHtmlEntities } from '../utils/stringUtils';
 import { logger } from '../logger';
-import { EditorImageAtCursorResult, EditorPosition } from '../types';
 import { measureImageDimensions, ImageDimensions } from '../utils/imageDimensionUtils';
 
 // Command names - exported for use by other modules
