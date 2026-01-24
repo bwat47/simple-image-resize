@@ -14,6 +14,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { Text } from '@codemirror/state';
+import { CodeMirrorControl } from 'api/types';
 import { REGEX_PATTERNS, CONSTANTS } from '../constants';
 import { decodeHtmlEntities } from '../utils/stringUtils';
 import { logger } from '../logger';
@@ -59,12 +60,6 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
     }
 
     return true;
-}
-
-// Joplin's CodeMirror wrapper type (not exported by Joplin)
-interface CodeMirrorWrapper {
-    editor: EditorView;
-    registerCommand(name: string, callback: (...args: unknown[]) => unknown): void;
 }
 
 /**
@@ -242,11 +237,16 @@ function posToOffset(doc: Text, pos: EditorPosition): number {
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export default function (_context: { contentScriptId: string }) {
     return {
-        plugin: function (codeMirrorWrapper: CodeMirrorWrapper) {
+        plugin: function (editorControl: CodeMirrorControl) {
+            if (!editorControl?.cm6) {
+                logger.warn('CodeMirror 6 not available; skipping content script commands.');
+                return;
+            }
+
             // Command: Get image at cursor using syntax tree (primary method)
-            codeMirrorWrapper.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
+            editorControl.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
-                    const view = codeMirrorWrapper.editor;
+                    const view = editorControl.editor as EditorView;
                     // Force view to sync/measure before reading cursor position
                     // This works around a timing issue where the view might not
                     // have synced with the cursor position update from the right-click event
@@ -261,7 +261,7 @@ export default function (_context: { contentScriptId: string }) {
             });
 
             // Command: Replace text in a range
-            codeMirrorWrapper.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
+            editorControl.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
                 try {
                     // Args can come as [text, from, to, expectedText] or as a single object
                     let replaceArgs: ReplaceRangeArgs;
@@ -288,7 +288,7 @@ export default function (_context: { contentScriptId: string }) {
                     }
 
                     const { text, from, to, expectedText } = replaceArgs;
-                    const view = codeMirrorWrapper.editor;
+                    const view = editorControl.editor as EditorView;
                     const doc = view.state.doc;
 
                     const fromOffset = posToOffset(doc, from);
@@ -320,7 +320,7 @@ export default function (_context: { contentScriptId: string }) {
 
             // Command: Get image dimensions by loading it in the editor context
             // This runs inside the editor webview which has access to local files
-            codeMirrorWrapper.registerCommand(
+            editorControl.registerCommand(
                 GET_IMAGE_DIMENSIONS_COMMAND,
                 async (...args: unknown[]): Promise<ImageDimensions | null> => {
                     try {
