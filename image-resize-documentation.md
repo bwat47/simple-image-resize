@@ -101,7 +101,7 @@ HTML_TITLE: /title=(["'])(.*?)\1/i;
 **Plugin Integration:**
 
 - `detectImageAtCursor()` thin wrapper around content script command
-- `isOnImageInMarkdownEditor()` gates context menu by checking cursor position
+- `isOnImageInMarkdownEditor()` gates context menu by validating markdown code view state (`editor.codeView`), editor pane visibility (`noteVisiblePanes` includes `editor`), and cursor image position
 - User places cursor anywhere within image syntax and invokes command
 - Works on Desktop, Android, and Web app through content script
 
@@ -170,7 +170,7 @@ _Markdown title_ (`escapeMarkdownTitle`):
     - Resize 50% (CmdOrCtrl+Shift+3)
     - Resize 25% (CmdOrCtrl+Shift+4)
 - Toolbar button in editor toolbar for mobile access (no keyboard shortcuts on mobile).
-- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu`; avoids showing in rich text editor.
+- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` with explicit markdown code-view and editor-pane visibility checks; avoids showing in rich text editor or viewer-only context.
 - Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled; "Copy Image" option appears when `showCopyImageInContextMenu` setting is enabled.
 - Replacement uses content script command with the range detected by cursor detection.
 

@@ -42,11 +42,27 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
 }
 
 /**
+ * Checks if the Markdown code editor is the active, visible editing surface.
+ * This excludes rich text editor and note viewer-only layouts.
+ */
+async function isMarkdownEditorVisible(): Promise<boolean> {
+    const isMarkdown = Boolean(await joplin.settings.globalValue('editor.codeView'));
+    const panes = (await joplin.settings.globalValue('noteVisiblePanes')) as string[] | null | undefined;
+    const editorVisible = Array.isArray(panes) && panes.includes('editor');
+
+    return isMarkdown && editorVisible;
+}
+
+/**
  * Checks if we're in the markdown editor and cursor is on an image.
  * Used for conditional context menu display.
  */
 export async function isOnImageInMarkdownEditor(): Promise<boolean> {
     try {
+        if (!(await isMarkdownEditorVisible())) {
+            return false;
+        }
+
         // Check if cursor is on an image using the content script
         const detection = await detectImageAtCursor();
         return detection !== null;
