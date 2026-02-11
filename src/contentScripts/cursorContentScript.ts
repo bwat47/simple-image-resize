@@ -27,7 +27,8 @@ export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
 export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditorContextMenuOrigin';
 
-const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 250;
+// Time window to consider a context menu event as originating from the editor (in milliseconds)
+const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
 
 interface ReplaceRangeArgs {
     text: string;
