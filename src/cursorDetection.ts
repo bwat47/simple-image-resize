@@ -1,7 +1,10 @@
 import joplin from 'api';
 import { EditorImageAtCursorResult, ImageContext, EditorRange } from './types';
 import { logger } from './logger';
-import { GET_IMAGE_AT_CURSOR_COMMAND } from './contentScripts/cursorContentScript';
+import {
+    GET_IMAGE_AT_CURSOR_COMMAND,
+    IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
+} from './contentScripts/cursorContentScript';
 
 interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions'>;
@@ -51,6 +54,23 @@ export async function isOnImageInMarkdownEditor(): Promise<boolean> {
         const detection = await detectImageAtCursor();
         return detection !== null;
     } catch {
+        return false;
+    }
+}
+
+/**
+ * Checks if the current context menu invocation originated from the markdown editor.
+ * Returns false for markdown viewer and other non-editor surfaces.
+ */
+export async function isEditorContextMenuOrigin(): Promise<boolean> {
+    try {
+        const result = await joplin.commands.execute('editor.execCommand', {
+            name: IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
+        });
+
+        return result === true;
+    } catch (error) {
+        logger.debug('Editor context menu origin check failed:', error);
         return false;
     }
 }
