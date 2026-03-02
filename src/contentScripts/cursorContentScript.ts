@@ -248,6 +248,7 @@ export default function () {
 
             const view = editorControl.editor as EditorView;
             let lastEditorContextMenuAt = 0;
+            let editorContextMenuOriginPending = false;
 
             // Track right-clicks in the editor to distinguish editor-origin
             // context menu opens from viewer-origin context menu opens.
@@ -255,13 +256,19 @@ export default function () {
                 'contextmenu',
                 () => {
                     lastEditorContextMenuAt = Date.now();
+                    editorContextMenuOriginPending = true;
                 },
                 true
             );
 
             editorControl.registerCommand(IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND, (): boolean => {
                 const wasRecentlyTriggeredInEditor =
+                    editorContextMenuOriginPending &&
                     Date.now() - lastEditorContextMenuAt <= EDITOR_CONTEXT_MENU_EVENT_GRACE_MS;
+
+                // Consume the marker so origin is bound to a single menu invocation.
+                editorContextMenuOriginPending = false;
+
                 return wasRecentlyTriggeredInEditor;
             });
 
