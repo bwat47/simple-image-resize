@@ -35,8 +35,8 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 - `dialogLock.ts` - Lightweight lock guard so the resize dialog can only open once at a time, avoiding overlapping modal instances.
 - `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes.
 - `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
-- `contentScripts/cursorContentScript.ts` - CodeMirror 6 content script running in editor context. Uses syntax tree for reliable image detection (Markdown, simple HTML, nested HTML). Registers commands: `GET_IMAGE_AT_CURSOR_COMMAND` (syntax tree-based detection + extraction), `REPLACE_RANGE_COMMAND` (text replacement), `GET_IMAGE_DIMENSIONS_COMMAND` (dimension measurement using shared utility). The editor context has file access on mobile platforms. Imports shared regex patterns and utilities for extraction after syntax tree validation.
-- `cursorDetection.ts` - Thin wrapper around content script's `GET_IMAGE_AT_CURSOR_COMMAND`; returns image context + editor range. Single content script call provides complete detection results.
+- `contentScripts/cursorContentScript.ts` - CodeMirror 6 content script running in editor context. Uses syntax tree for reliable image detection (Markdown, simple HTML, nested HTML). Registers commands: `GET_IMAGE_AT_CURSOR_COMMAND` (syntax tree-based detection + extraction), `REPLACE_RANGE_COMMAND` (text replacement), `GET_IMAGE_DIMENSIONS_COMMAND` (dimension measurement using shared utility), and `IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND` (checks if context menu open originated from editor interaction). The editor context has file access on mobile platforms. Imports shared regex patterns and utilities for extraction after syntax tree validation.
+- `cursorDetection.ts` - Thin wrapper around content script commands; returns image context + editor range from `GET_IMAGE_AT_CURSOR_COMMAND` and exposes editor-origin checks for context menu gating.
 - `imageSizeCalculator.ts` - Multi-strategy dimension fetching: content script (Android/Desktop) → base64 (Web/Desktop) → defaults. Uses shared dimension measurement utility for base64 and external images.
 - `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width attribute for HTML with optional height attribute based on settings (preserves aspect ratio).
 - `utils/stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title. `escapeMarkdownTitle()` only escapes quotes (not HTML entities or backslashes) because regex extracts raw text and Markdown doesn't interpret HTML entities.
@@ -102,6 +102,7 @@ HTML_TITLE: /title=(["'])(.*?)\1/i;
 
 - `detectImageAtCursor()` thin wrapper around content script command
 - `isOnImageInMarkdownEditor()` gates context menu by checking cursor position
+- `isEditorContextMenuOrigin()` gates context menu items so they only appear for editor-origin right clicks (not markdown viewer right clicks)
 - User places cursor anywhere within image syntax and invokes command
 - Works on Desktop, Android, and Web app through content script
 
@@ -170,7 +171,7 @@ _Markdown title_ (`escapeMarkdownTitle`):
     - Resize 50% (CmdOrCtrl+Shift+3)
     - Resize 25% (CmdOrCtrl+Shift+4)
 - Toolbar button in editor toolbar for mobile access (no keyboard shortcuts on mobile).
-- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu`; avoids showing in rich text editor.
+- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu`; avoids showing in rich text editor and checks editor-origin context menu events to avoid showing items when right-clicking in the markdown viewer pane.
 - Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled; "Copy Image" option appears when `showCopyImageInContextMenu` setting is enabled.
 - Replacement uses content script command with the range detected by cursor detection.
 

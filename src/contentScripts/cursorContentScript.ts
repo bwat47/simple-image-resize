@@ -25,6 +25,10 @@ import { measureImageDimensions, ImageDimensions } from '../utils/imageDimension
 export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
 export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
+export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditorContextMenuOrigin';
+
+// Time window to consider a context menu event as originating from the editor (in milliseconds)
+const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
 
 interface ReplaceRangeArgs {
     text: string;
@@ -242,10 +246,35 @@ export default function () {
                 return;
             }
 
+            const view = editorControl.editor as EditorView;
+            let lastEditorContextMenuAt = 0;
+            let editorContextMenuOriginPending = false;
+
+            // Track right-clicks in the editor to distinguish editor-origin
+            // context menu opens from viewer-origin context menu opens.
+            view.dom.addEventListener(
+                'contextmenu',
+                () => {
+                    lastEditorContextMenuAt = Date.now();
+                    editorContextMenuOriginPending = true;
+                },
+                true
+            );
+
+            editorControl.registerCommand(IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND, (): boolean => {
+                const wasRecentlyTriggeredInEditor =
+                    editorContextMenuOriginPending &&
+                    Date.now() - lastEditorContextMenuAt <= EDITOR_CONTEXT_MENU_EVENT_GRACE_MS;
+
+                // Consume the marker so origin is bound to a single menu invocation.
+                editorContextMenuOriginPending = false;
+
+                return wasRecentlyTriggeredInEditor;
+            });
+
             // Command: Get image at cursor using syntax tree (primary method)
             editorControl.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
-                    const view = editorControl.editor as EditorView;
                     // Force view to sync/measure before reading cursor position
                     // This works around a timing issue where the view might not
                     // have synced with the cursor position update from the right-click event
@@ -287,7 +316,6 @@ export default function () {
                     }
 
                     const { text, from, to, expectedText } = replaceArgs;
-                    const view = editorControl.editor as EditorView;
                     const doc = view.state.doc;
 
                     const fromOffset = posToOffset(doc, from);

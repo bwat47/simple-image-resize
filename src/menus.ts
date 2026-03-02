@@ -9,7 +9,7 @@
 
 import joplin from 'api';
 import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
-import { isOnImageInMarkdownEditor } from './cursorDetection';
+import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
 import { settingsCache } from './settings';
 
@@ -40,6 +40,13 @@ export async function registerToolbarButton(): Promise<void> {
 export function registerContextMenu(): void {
     joplin.workspace.filterEditorContextMenu(async (contextMenu) => {
         try {
+            // Skip when the context menu did not originate from the editor
+            // (for example right-clicking in the markdown viewer pane).
+            const isEditorOrigin = await isEditorContextMenuOrigin();
+            if (!isEditorOrigin) {
+                return contextMenu;
+            }
+
             // Small delay to work around timing issue where cursor position
             // may not have updated yet when context menu filter is called
             await new Promise((resolve) => setTimeout(resolve, 10));
