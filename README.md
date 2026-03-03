@@ -20,7 +20,7 @@ In the markdown editor, right-click anywhere inside a markdown or HTML image emb
 This will open a simple image resize dialogue, the following options are provided.
 
 > [!note]
-> You need to put your cursor inside the image embed text (not on the rendered image itself)
+> In Joplin versions prior to 3.6.3 you need to put your cursor inside the image embed text (not on the rendered image itself). In Joplin version 3.6.3 or newer, you can also right click anywhere on the rendered image.
 
 > [!note]
 > On mobile/web you can put your cursor inside the image embed text and then open the dialog using the toolbar icon
