@@ -99,15 +99,6 @@ export function registerContextMenu(): void {
                 );
             }
 
-            // Add copy image option if enabled
-            const showCopyImage = settingsCache.showCopyImageInContextMenu;
-            if (showCopyImage) {
-                contextMenu.items.push({
-                    commandName: 'copyImageToClipboard',
-                    label: 'Copy Image',
-                });
-            }
-
             logger.debug('Added context menu items - cursor on image');
 
             return contextMenu;
