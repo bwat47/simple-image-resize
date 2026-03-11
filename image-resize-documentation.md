@@ -169,7 +169,7 @@ _Markdown title_ (`escapeMarkdownTitle`):
     - Resize 50% (CmdOrCtrl+Shift+3)
     - Resize 25% (CmdOrCtrl+Shift+4)
 - Toolbar button in editor toolbar for mobile access (no keyboard shortcuts on mobile).
-- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu`; avoids showing in rich text editor and checks editor-origin context menu events to avoid showing items when right-clicking in the markdown viewer pane.
+- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` plus `settings.globalValue('editor.codeView')`; avoids showing in rich text editor and checks editor-origin context menu events to avoid showing items when right-clicking in the markdown viewer pane.
 - Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled.
 - Replacement uses content script command with the range detected by cursor detection.
 
