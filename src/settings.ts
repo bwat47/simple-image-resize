@@ -56,14 +56,6 @@ const SETTINGS_CONFIG = {
         label: 'Display quick resize options in context menu',
         description: '[Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
     },
-    showCopyImageInContextMenu: {
-        key: `${SECTION_ID}.showCopyImageInContextMenu`,
-        defaultValue: false,
-        type: SettingItemType.Bool,
-        label: 'Display copy image option in context menu',
-        description:
-            '[Desktop Only] Show "Copy Image" option in the right-click context menu to copy images to clipboard',
-    },
     showToastMessages: {
         key: `${SECTION_ID}.showToastMessages`,
         defaultValue: true,
@@ -78,7 +70,6 @@ export type SettingsCache = {
     defaultPercentage: number;
     htmlSyntaxStyle: 'widthAndHeight' | 'widthOnly';
     showQuickResizeInContextMenu: boolean;
-    showCopyImageInContextMenu: boolean;
     showToastMessages: boolean;
 };
 
@@ -90,7 +81,6 @@ export const settingsCache: SettingsCache = {
     defaultPercentage: SETTINGS_CONFIG.defaultPercentage.defaultValue,
     htmlSyntaxStyle: SETTINGS_CONFIG.htmlSyntaxStyle.defaultValue,
     showQuickResizeInContextMenu: SETTINGS_CONFIG.showQuickResizeInContextMenu.defaultValue,
-    showCopyImageInContextMenu: SETTINGS_CONFIG.showCopyImageInContextMenu.defaultValue,
     showToastMessages: SETTINGS_CONFIG.showToastMessages.defaultValue,
 };
 

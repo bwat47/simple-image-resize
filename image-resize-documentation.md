@@ -29,7 +29,7 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 
 - `index.ts` - Plugin bootstrap: orchestrates initialization by calling `registerSettings()`, `registerCommands()`, `registerMenus()`, `registerToolbarButton()`, and `registerContextMenu()`. Registers the CodeMirror content script.
 - `settings.ts` - Settings registration for default resize mode and context menu behavior; exports setting key constants for type-safe access.
-- `commands.ts` - Command registration for all resize operations (resizeImage dialog + quick resize commands: 100%, 75%, 50%, 25%) and copy image to clipboard; includes shared helpers for image detection, dimension fetching, and editor replacement.
+- `commands.ts` - Command registration for all resize operations (resizeImage dialog + quick resize commands: 100%, 75%, 50%, 25%); includes shared helpers for image detection, dimension fetching, and editor replacement.
 - `menus.ts` - Menu registration: creates Tools submenu with keyboard shortcuts (CmdOrCtrl+Shift+R/1/2/3/4), toolbar button for mobile access, and dynamic context menu based on cursor position and settings.
 - `dialogHandler.ts` - Modal dialog HTML generation and script/CSS loading; collects result; controls state defaults via `getInitialDialogState` helper.
 - `dialogLock.ts` - Lightweight lock guard so the resize dialog can only open once at a time, avoiding overlapping modal instances.
@@ -42,7 +42,6 @@ The plugin supports Desktop, Android, and Web app through platform-specific stra
 - `utils/stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title. `escapeMarkdownTitle()` only escapes quotes (not HTML entities or backslashes) because regex extracts raw text and Markdown doesn't interpret HTML entities.
 - `utils/resourceUtils.ts` - Resource ID validation and base64 conversion for web app compatibility.
 - `utils/imageDimensionUtils.ts` - Shared image dimension measurement utility. Provides `measureImageDimensions()` for loading images via DOM Image with configurable timeout and privacy settings. Used by both main plugin context and content script context to eliminate code duplication.
-- `utils/clipboardUtils.ts` - Clipboard operations for copying images. Handles both Joplin resources and external URLs with AbortController-based timeout for network requests. Includes canvas-based conversion for WebP/AVIF formats with CORS error handling.
 - `utils/toastUtils.ts` - Toast notification wrapper with setting-controlled display; respects `showToastMessages` setting.
 - `logger.ts` - Centralized logger with optional debug toggle. Provides consistent prefixing for all plugin logs and exposes a simple `setDebug` method to enable verbose output.
 - `constants.ts` - Simplified regex patterns for extraction (used with syntax tree detection), timeout constants, and default fallback dimensions.
@@ -157,7 +156,6 @@ _Markdown title_ (`escapeMarkdownTitle`):
 - `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` - used to preselect dialog mode.
 - `imageResize.defaultPercentage`: `number` (1-100) - the default percentage value when using percentage resize mode. Defaults to 50. Controls the initial value shown in the percentage input field when the resize dialog opens.
 - `imageResize.showQuickResizeInContextMenu`: `boolean` - when enabled, shows quick resize options (100%, 75%, 50%, 25%) in the right-click context menu alongside the main "Resize Image" option.
-- `imageResize.showCopyImageInContextMenu`: `boolean` - when enabled, shows "Copy Image" option in the right-click context menu to copy images to clipboard.
 - `imageResize.htmlSyntaxStyle`: `'widthAndHeight' | 'widthOnly'` - controls whether HTML image tags include both width and height attributes (default; better compatibility for pasting outside Joplin) or just width (cleaner; Joplin auto-calculates height).
 - `imageResize.showToastMessages`: `boolean` - when enabled (default), displays brief toast notifications for plugin actions (success, errors, info). Disable to suppress all toast messages.
 - **Note**: Syntax always defaults to HTML in the dialog (not user-configurable).
@@ -171,8 +169,8 @@ _Markdown title_ (`escapeMarkdownTitle`):
     - Resize 50% (CmdOrCtrl+Shift+3)
     - Resize 25% (CmdOrCtrl+Shift+4)
 - Toolbar button in editor toolbar for mobile access (no keyboard shortcuts on mobile).
-- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu`; avoids showing in rich text editor and checks editor-origin context menu events to avoid showing items when right-clicking in the markdown viewer pane.
-- Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled; "Copy Image" option appears when `showCopyImageInContextMenu` setting is enabled.
+- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` plus `settings.globalValue('editor.codeView')`; avoids showing in rich text editor and checks editor-origin context menu events to avoid showing items when right-clicking in the markdown viewer pane.
+- Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled.
 - Replacement uses content script command with the range detected by cursor detection.
 
 ## Errors & UX
