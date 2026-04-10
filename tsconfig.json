@@ -5,7 +5,10 @@
         "target": "es2018",
         "jsx": "react",
         "allowJs": true,
-        "baseUrl": ".",
-        "types": ["node", "jest"]
+        "types": ["node", "jest"],
+        "paths": {
+            "api": ["./api/index.ts"],
+            "api/*": ["./api/*"]
+        }
     }
 }
