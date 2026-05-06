@@ -96,6 +96,7 @@ HTML_TITLE: /title=(["'])(.*?)\1/i;
 - `GET_IMAGE_AT_CURSOR_COMMAND` performs syntax tree traversal of current line
 - `findImagesOnLine()` searches for `Image`, `HTMLTag`, and `HTMLBlock` nodes
 - Returns complete image context + `{ from, to }` range in single call
+- Pure leading whitespace before an image on the same line is treated as part of the cursor activation area, while replacement still targets only the image syntax range.
 
 **Plugin Integration:**
 
