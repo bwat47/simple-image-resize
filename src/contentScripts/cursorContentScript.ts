@@ -37,6 +37,12 @@ interface ReplaceRangeArgs {
     expectedText: string;
 }
 
+interface ImageNodeRange {
+    type: 'markdown' | 'html';
+    from: number;
+    to: number;
+}
+
 /**
  * Validates that range positions are logically correct (from <= to) and finite.
  * Checks for NaN, Infinity, and -Infinity which TypeScript's type system permits
@@ -123,11 +129,11 @@ function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 
  * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
  * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
  */
-function findImagesOnLine(view: EditorView): Array<{ type: 'markdown' | 'html'; from: number; to: number }> {
+function findImagesOnLine(view: EditorView): ImageNodeRange[] {
     const state = view.state;
     const cursor = state.selection.main.head;
     const currentLine = state.doc.lineAt(cursor);
-    const images: Array<{ type: 'markdown' | 'html'; from: number; to: number }> = [];
+    const images: ImageNodeRange[] = [];
 
     syntaxTree(state).iterate({
         from: currentLine.from,
@@ -185,6 +191,21 @@ function findImagesOnLine(view: EditorView): Array<{ type: 'markdown' | 'html'; 
 }
 
 /**
+ * Treat indentation before an image as part of its activation area while keeping
+ * the replacement range scoped to the image syntax itself.
+ */
+export function isCursorInImageActivationRange(
+    lineTextBeforeImage: string,
+    cursor: number,
+    imageNode: ImageNodeRange
+): boolean {
+    const leadingWhitespaceStart = imageNode.from - lineTextBeforeImage.length;
+    const activationFrom = /^\s*$/.test(lineTextBeforeImage) ? leadingWhitespaceStart : imageNode.from;
+
+    return cursor >= activationFrom && cursor <= imageNode.to;
+}
+
+/**
  * Get the image at cursor position using syntax tree.
  * This is the main detection function that replaces regex-based detection.
  */
@@ -195,7 +216,10 @@ function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
 
     // Find the image that contains the cursor
     for (const imageNode of images) {
-        if (cursor >= imageNode.from && cursor <= imageNode.to) {
+        const imageLine = state.doc.lineAt(imageNode.from);
+        const lineTextBeforeImage = state.doc.sliceString(imageLine.from, imageNode.from);
+
+        if (isCursorInImageActivationRange(lineTextBeforeImage, cursor, imageNode)) {
             const imageText = state.doc.sliceString(imageNode.from, imageNode.to);
             const details =
                 imageNode.type === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);

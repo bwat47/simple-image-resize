@@ -1,230 +1,79 @@
-# simple-image-resize - Architecture (Concise)
+# simple-image-resize Architecture
 
-Goal: Markdown + HTML image syntax conversion and lossless image resizing in Joplin with direct, in-editor replacement of the image embed.
+This plugin detects a single image embed in Joplin's Markdown editor, gathers the image's dimensions, lets the user choose resize options, and replaces the original embed in-place.
 
-## Flow Overview
+## Request Flow
 
-1. **Detect image:** Content script uses CodeMirror syntax tree to find image at cursor position; validates as Markdown, simple HTML, or nested HTML; extracts details via regex; returns complete context + replace range in single call.
-2. **Determine dimensions:** Use platform-appropriate strategies (content script for Android/Desktop, base64 for Web app) with fallback to defaults. Apply timeouts.
-3. **Show dialog:** Inline JS-powered modal (compiled from `dialog/resizeDialog.ts`) toggles syntax/mode availability; syntax defaults to HTML while resize mode respects settings. User chooses target syntax + resize mode + values + alt/title.
-4. **Build & replace:** Generate new syntax with proper escaping (HTML entities for attributes, quote-only for Markdown titles); replace at detected range via content script; toast on success.
+1. Detect the image at the current editor cursor position.
+2. Resolve original image dimensions using the best available platform-specific strategy.
+3. Show the resize dialog and collect target syntax, size, alt text, and title.
+4. Build the new Markdown or HTML image syntax.
+5. Replace the original embed in the editor and show feedback.
 
-## Platform Support
+## Main Pieces
 
-The plugin supports Desktop, Android, and Web app through platform-specific strategies:
+### Plugin Shell
 
-| Platform | Cursor Detection | Text Replacement | Dimension Fetching                |
-| -------- | ---------------- | ---------------- | --------------------------------- |
-| Desktop  | Content script   | Content script   | Content script or Base64          |
-| Android  | Content script   | Content script   | Content script (via resourcePath) |
-| Web App  | Content script   | Content script   | Base64 conversion                 |
+- `src/index.ts` boots the plugin, registers settings, commands, menus, toolbar integration, and the CodeMirror content script.
+- `src/settings.ts` defines plugin settings and exposes cached configuration.
+- `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior.
 
-**Dimension fetching strategy order:**
+### Detection and Editor Operations
 
-1. Content script with `joplin.data.resourcePath()` - works on Android + Desktop
-2. Base64 conversion via `joplin.data.get(['resources', id, 'file'])` - works on Web app + Desktop
-3. Default dimensions (400x300) - fallback when all strategies fail
-
-## Core Modules (src/)
+- `src/contentScripts/cursorContentScript.ts` runs inside the CodeMirror editor context.
+- It is the source of truth for cursor-based image detection, editor text replacement, dimension lookup in editor context, and editor-origin context menu checks.
+- Detection is syntax-tree based, not regex-first. It recognizes Markdown image nodes plus HTML `img` tags, including nested HTML blocks.
+- Once a node is validated as an image, lightweight regex extraction pulls out source, alt text, and title.
+- Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
+- `src/cursorDetection.ts` is the thin plugin-side wrapper around these content script commands.
 
-- `index.ts` - Plugin bootstrap: orchestrates initialization by calling `registerSettings()`, `registerCommands()`, `registerMenus()`, `registerToolbarButton()`, and `registerContextMenu()`. Registers the CodeMirror content script.
-- `settings.ts` - Settings registration for default resize mode and context menu behavior; exports setting key constants for type-safe access.
-- `commands.ts` - Command registration for all resize operations (resizeImage dialog + quick resize commands: 100%, 75%, 50%, 25%); includes shared helpers for image detection, dimension fetching, and editor replacement.
-- `menus.ts` - Menu registration: creates Tools submenu with keyboard shortcuts (CmdOrCtrl+Shift+R/1/2/3/4), toolbar button for mobile access, and dynamic context menu based on cursor position and settings.
-- `dialogHandler.ts` - Modal dialog HTML generation and script/CSS loading; collects result; controls state defaults via `getInitialDialogState` helper.
-- `dialogLock.ts` - Lightweight lock guard so the resize dialog can only open once at a time, avoiding overlapping modal instances.
-- `dialog/resizeDialog.css` - Dialog stylesheet with theme-aware styling using Joplin CSS variables; includes custom radio buttons, utility classes.
-- `dialog/resizeDialog.ts` - TypeScript source for browser-side controller (compiled to `.js` during build); syncs syntax + resize radios, disables fields, aspect ratio preservation.
-- `contentScripts/cursorContentScript.ts` - CodeMirror 6 content script running in editor context. Uses syntax tree for reliable image detection (Markdown, simple HTML, nested HTML). Registers commands: `GET_IMAGE_AT_CURSOR_COMMAND` (syntax tree-based detection + extraction), `REPLACE_RANGE_COMMAND` (text replacement), `GET_IMAGE_DIMENSIONS_COMMAND` (dimension measurement using shared utility), and `IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND` (checks if context menu open originated from editor interaction). The editor context has file access on mobile platforms. Imports shared regex patterns and utilities for extraction after syntax tree validation.
-- `cursorDetection.ts` - Thin wrapper around content script commands; returns image context + editor range from `GET_IMAGE_AT_CURSOR_COMMAND` and exposes editor-origin checks for context menu gating.
-- `imageSizeCalculator.ts` - Multi-strategy dimension fetching: content script (Android/Desktop) → base64 (Web/Desktop) → defaults. Uses shared dimension measurement utility for base64 and external images.
-- `imageSyntaxBuilder.ts` - Generates Markdown/HTML output; preserves/escapes alt and optional title; applies width attribute for HTML with optional height attribute based on settings (preserves aspect ratio).
-- `utils/stringUtils.ts` - Decode HTML entities on input; escape for HTML attributes and Markdown title. `escapeMarkdownTitle()` only escapes quotes (not HTML entities or backslashes) because regex extracts raw text and Markdown doesn't interpret HTML entities.
-- `utils/resourceUtils.ts` - Resource ID validation and base64 conversion for web app compatibility.
-- `utils/imageDimensionUtils.ts` - Shared image dimension measurement utility. Provides `measureImageDimensions()` for loading images via DOM Image with configurable timeout and privacy settings. Used by both main plugin context and content script context to eliminate code duplication.
-- `utils/toastUtils.ts` - Toast notification wrapper with setting-controlled display; respects `showToastMessages` setting.
-- `logger.ts` - Centralized logger with optional debug toggle. Provides consistent prefixing for all plugin logs and exposes a simple `setDebug` method to enable verbose output.
-- `constants.ts` - Simplified regex patterns for extraction (used with syntax tree detection), timeout constants, and default fallback dimensions.
-- `types.ts` - Strong types for contexts, options, dialog result, dimensions.
-- `tests/test-utils/imageExtraction.ts` - Test utility for validating extraction regex patterns without CodeMirror mocking. Tests same patterns used by content script.
+### Resize Pipeline
 
-## Detection & Extraction Architecture
+- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app.
+- `src/dialogHandler.ts` builds and runs the resize dialog.
+- `src/dialogLock.ts` prevents overlapping dialogs.
+- `src/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output.
 
-**Detection:** Uses CodeMirror's syntax tree (`@codemirror/language`) for reliable, context-aware detection.
+### Shared Utilities
 
-**Node types detected:**
+- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement logic.
+- `src/utils/resourceUtils.ts` handles resource-specific helpers.
+- `src/utils/stringUtils.ts` handles HTML entity decoding and output escaping.
+- `src/utils/toastUtils.ts` centralizes toast messaging.
+- `src/logger.ts`, `src/constants.ts`, and `src/types.ts` provide logging, shared constants, and core types.
 
-- `Image` - Markdown images: `![alt](url)`
-- `HTMLTag` - Simple HTML in Markdown: `<img src="...">`
-- `HTMLBlock` - Nested HTML in Markdown: `<div><img src="..."></div>`
+## Detection Model
 
-**Benefits:**
+The architecture separates image detection from image extraction:
 
-- No false positives (won't match images in code blocks or inline code)
-- Accurate cursor position detection using node boundaries
-- Single content script call returns complete results
+- Detection uses CodeMirror's syntax tree so the plugin can reason about real Markdown and HTML structure instead of raw text alone.
+- Extraction uses focused regex patterns only after a syntax node has already been identified as an image.
 
-**Extraction:** After syntax tree validates an image node, simplified regex patterns extract details:
+That split keeps detection reliable while keeping the extraction code small and easy to maintain.
 
-```ts
-// Extract parts from validated Markdown image: ![alt](src "title")
-MARKDOWN_EXTRACT: /!\[(?<altText>[^\]]*)\]\(\s*(?<src>[^)\s]+)(?:\s+["'](?<title>[^"']+)["'])?\s*\)/;
+## Platform Strategy
 
-// Extract resource ID or external URL from source
-RESOURCE_ID: /:\/([a-f0-9]{32})/;
-EXTERNAL_URL: /(https?:\/\/[^\s"']+)/;
+The same high-level flow is used on desktop, Android, and the web app, but dimension lookup adapts to platform capabilities:
 
-// Extract HTML img attributes (using backreferences for quote matching)
-HTML_SRC: /src=(["'])([^"']+)\1/i;
-HTML_ALT: /alt=(["'])(.*?)\1/i;
-HTML_TITLE: /title=(["'])(.*?)\1/i;
-```
+- Prefer editor-context access when available.
+- Fall back to base64-based loading when needed.
+- Fall back again to default dimensions if lookup fails.
 
-**Notes:**
+This keeps the user-facing behavior consistent without forcing the rest of the plugin to care about platform differences.
 
-- Extraction patterns are simpler (~40% less complex) because detection is handled by syntax tree
-- Patterns only extract from validated image nodes, not detect images
-- Markdown title regex captures raw text without interpreting escape sequences
-- HTML extraction decodes entities (`&quot;` → `"`, `&amp;` → `&`, etc.)
-- Titles are optional; preserved across conversions
+## Output Rules
 
-## Cursor Detection Logic
+- Markdown output preserves standard Markdown image syntax and does not encode explicit size.
+- HTML output is used for resized images and can emit width only or width plus height, depending on settings.
+- Alt text and title are preserved across conversions, with escaping rules handled centrally in the string utilities.
 
-**Content Script Architecture:**
+## Design Intent
 
-- `cursorContentScript.ts` uses CodeMirror's syntax tree API (`syntaxTree()`) for detection
-- `GET_IMAGE_AT_CURSOR_COMMAND` performs syntax tree traversal of current line
-- `findImagesOnLine()` searches for `Image`, `HTMLTag`, and `HTMLBlock` nodes
-- Returns complete image context + `{ from, to }` range in single call
+The project is organized around a few boundaries:
 
-**Plugin Integration:**
+- Editor-specific logic lives in the content script.
+- Plugin orchestration stays in the main plugin context.
+- Syntax generation is separate from detection.
+- Platform-specific dimension lookup is isolated behind a shared calculator.
 
-- `detectImageAtCursor()` thin wrapper around content script command
-- `isOnImageInMarkdownEditor()` gates context menu by checking cursor position
-- `isEditorContextMenuOrigin()` gates context menu items so they only appear for editor-origin right clicks (not markdown viewer right clicks)
-- User places cursor anywhere within image syntax and invokes command
-- Works on Desktop, Android, and Web app through content script
-
-**Benefits:**
-
-- No regex matching in main plugin code
-- Reliable detection using CodeMirror's parser (no false positives)
-- Single content script call provides all details (was 2 calls + regex matching)
-- `DialogLock` ensures only one resize dialog instance per editor session
-
-## Resizing & Emission
-
-- Resize modes:
-    - Percentage: preserve aspect ratio; compute width/height from original.
-    - Absolute: width/height; auto-calc the missing dimension and keep both fields synced to preserve aspect ratio.
-    - When targeting HTML with percentage mode, the dialog previews the computed width/height so users can see resulting dimensions while the absolute inputs remain disabled.
-- Markdown output: original size only (resize controls disabled when targeting Markdown).
-- HTML output: always includes `width` attribute; `height` attribute is conditionally included based on the `htmlSyntaxStyle` setting (both attributes preserve aspect ratio; width-only provides cleaner syntax for Joplin which auto-calculates height, while width-and-height improves compatibility when pasting to external sources).
-- Quick resize commands (100%, 75%, 50%, 25%):
-    - 100%: Converts image to Markdown syntax (removes custom sizing).
-    - 75%/50%/25%: Converts to HTML with specified percentage of original dimensions.
-    - Available via Tools menu with default keyboard shortcuts or optionally in context menu.
-
-## Alt/Title Handling (Round-trip)
-
-**Input (HTML → Dialog):**
-
-- Decode HTML entities: `&quot;` → `"`, `&apos;` → `'`, `&amp;` → `&`, `&lt;` → `<`, `&gt;` → `>`
-- Dialog shows plain text for user editing
-
-**Output Escaping:**
-
-_HTML attributes_ (`escapeHtmlAttribute`):
-
-- Escape: `&` → `&amp;`, `"` → `&quot;`, `'` → `&#39;`, `<` → `&lt;`, `>` → `&gt;`
-- Standard HTML entity encoding
-
-_Markdown title_ (`escapeMarkdownTitle`):
-
-- Only escape: `"` → `\"`
-- **Do NOT escape:** `&`, `\`, `<`, `>` (Markdown doesn't interpret HTML entities)
-- Regex captures raw text without escape sequences, so output raw text
-
-**Round-trip Stability:**
-
-- Markdown `"test & <ok>\ABC"` → HTML `title="test &amp; &lt;ok&gt;\ABC"` → Markdown `"test & <ok>\ABC"` ✓
-- No accumulation of escaped characters on repeated conversions
-- Fixed double-escaping issues with ampersands and backslashes
-
-## Settings
-
-- `imageResize.defaultResizeMode`: `'percentage' | 'absolute'` - used to preselect dialog mode.
-- `imageResize.defaultPercentage`: `number` (1-100) - the default percentage value when using percentage resize mode. Defaults to 50. Controls the initial value shown in the percentage input field when the resize dialog opens.
-- `imageResize.showQuickResizeInContextMenu`: `boolean` - when enabled, shows quick resize options (100%, 75%, 50%, 25%) in the right-click context menu alongside the main "Resize Image" option.
-- `imageResize.htmlSyntaxStyle`: `'widthAndHeight' | 'widthOnly'` - controls whether HTML image tags include both width and height attributes (default; better compatibility for pasting outside Joplin) or just width (cleaner; Joplin auto-calculates height).
-- `imageResize.showToastMessages`: `boolean` - when enabled (default), displays brief toast notifications for plugin actions (success, errors, info). Disable to suppress all toast messages.
-- **Note**: Syntax always defaults to HTML in the dialog (not user-configurable).
-
-## Editor Integration
-
-- Tools menu submenu "Simple Image Resize" contains all resize commands with keyboard shortcuts:
-    - Resize Image (CmdOrCtrl+Shift+R) - opens dialog
-    - Resize 100% (CmdOrCtrl+Shift+1) - convert to Markdown
-    - Resize 75% (CmdOrCtrl+Shift+2)
-    - Resize 50% (CmdOrCtrl+Shift+3)
-    - Resize 25% (CmdOrCtrl+Shift+4)
-- Toolbar button in editor toolbar for mobile access (no keyboard shortcuts on mobile).
-- Context menu limited to Markdown editor via `workspace.filterEditorContextMenu` plus `settings.globalValue('editor.codeView')`; avoids showing in rich text editor and checks editor-origin context menu events to avoid showing items when right-clicking in the markdown viewer pane.
-- Context menu shows "Resize Image" always when cursor is on an image; quick resize options appear when `showQuickResizeInContextMenu` setting is enabled.
-- Replacement uses content script command with the range detected by cursor detection.
-
-## Errors & UX
-
-- Error message when cursor is not on an image: "No valid image found. Place cursor inside an image embed."
-- Try/catch around command execution with error logs and user toasts (success/error).
-- When dimension fetching fails on all strategies, default dimensions (400x300) are used silently to keep UX responsive.
-
-## Performance & Privacy
-
-- Timeouts for image probes (5s for resources, 10s for external); defaults applied on failure to keep UX responsive.
-- External images: DOM Image with `crossOrigin='anonymous'` and `referrerPolicy='no-referrer'` to minimize tracking.
-- Resource dimension fetching tries fastest method first (content script), falls back to base64 conversion.
-
-## Testing Focus (Jest)
-
-All 38 tests passing:
-
-- `imageDetection` (10 tests) - Validates extraction regex patterns: Markdown/HTML extraction, resource vs external, titles, HTML entity decoding, escaped `)` in URLs. Test utility (`tests/test-utils/imageExtraction.ts`) mirrors content script extraction logic.
-- `imageSyntaxBuilder` (14 tests) - Markdown/HTML conversion, alt/title escaping/decoding, width/height emission (both widthAndHeight and widthOnly modes), round-trip stability (no accumulation of escaped characters).
-- `dialogHandler` (13 tests) - Initial state calculation for dialog based on syntax and resize mode, field enabling/disabling logic.
-- `dialogLock` (4 tests) - Lock acquisition and release behavior, prevents overlapping dialog instances.
-
-**Note:** Content script itself is not unit tested (would require complex CodeMirror mocks). Instead, extraction patterns are validated through test utility that uses same regex patterns as production code.
-
-## Non-Goals / Exclusions
-
-- No batch processing (single image per operation).
-- No inline preview in dialog.
-- Markdown syntax does not support explicit width/height (by design of this plugin).
-
-## Future Ideas
-
-- Batch processing across a selection.
-- Inline thumbnail preview.
-- Additional quick resize presets (e.g., 10%, 33%, 150%, 200%).
-- Additional output formats (e.g., Pandoc-style Markdown width hints).
-
-## Summary
-
-A focused command + dialog plugin: detect a single image at cursor position (Markdown or HTML, resource or external), gather dimensions with reliable cross-platform fallbacks, offer simple resize choices, and emit clean, escaped syntax with direct in-editor replacement and clear user feedback. Works on Desktop, Android, and Web app.
-
-## Architecture Evolution
-
-**Syntax Tree Refactoring (current):**
-
-- Detection: CodeMirror syntax tree API (`@codemirror/language`)
-- Extraction: Simplified regex patterns (~40% less complex)
-- Benefits: No false positives, reliable cursor detection, single content script call, supports nested HTML
-
-**Previous Architecture:**
-
-- Detection + Extraction: Complex regex patterns handled both
-- Multiple content script calls required
-- Potential for false positives in code blocks
-
-The refactoring separated concerns (syntax tree for detection, regex for extraction), simplified code, and improved reliability while maintaining all existing functionality.
+The result is a small pipeline: detect, measure, prompt, build, replace.
