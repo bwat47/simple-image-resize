@@ -117,7 +117,7 @@ async function getExternalImageDimensions(url: string): Promise<ImageDimensions>
     } catch (err: unknown) {
         logger.error(`Failed to get dimensions for external URL ${url}:`, err);
         const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`Could not determine external image dimensions: ${message}`);
+        throw Object.assign(new Error(`Could not determine external image dimensions: ${message}`), { cause: err });
     }
 }
 

@@ -92,6 +92,6 @@ export async function convertResourceToBase64(resourceId: string): Promise<strin
     } catch (err) {
         logger.debug(`Error converting resource ${resourceId} to base64:`, err);
         const message = err instanceof Error ? err.message : String(err);
-        throw new Error(`Could not convert resource to base64: ${message}`);
+        throw Object.assign(new Error(`Could not convert resource to base64: ${message}`), { cause: err });
     }
 }

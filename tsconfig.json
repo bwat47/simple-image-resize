@@ -1,10 +1,15 @@
 {
     "compilerOptions": {
         "outDir": "./dist/",
-        "module": "commonjs",
-        "target": "es2018",
+        "module": "ESNext",
+        "target": "es2020",
         "jsx": "react",
         "allowJs": true,
+        "esModuleInterop": true,
+        "forceConsistentCasingInFileNames": true,
+        "moduleResolution": "bundler",
+        "strict": true,
+        "skipLibCheck": true,
         "types": ["node", "jest"],
         "paths": {
             "api": ["./api/index.ts"],
