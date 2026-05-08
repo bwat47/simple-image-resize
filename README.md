@@ -1,7 +1,7 @@
-> [!important]
-> My coding knowledge is currently very limited. This plugin was created entirely with AI tools, and I may be limited in my ability to fix any issues.
+> [!note]
+> This plugin was created entirely with AI tools.
 
-> [!important]
+> [!note]
 > As of version 1.5.1, the legacy editor is no longer supported.
 
 # Simple Image Resize
@@ -20,10 +20,10 @@ In the markdown editor, right-click anywhere inside a markdown or HTML image emb
 This will open a simple image resize dialogue, the following options are provided.
 
 > [!note]
-> In Joplin versions prior to 3.6.3 you need to put your cursor inside the image embed text (not on the rendered image itself). In Joplin version 3.6.3 or newer, you can also right click anywhere on the rendered image.
+> The plugin detects images at the cursor position in the editor. In Joplin versions prior to 3.6.3 you need to put your cursor inside the image embed text (not on the rendered image itself). In Joplin version 3.6.3 or newer, you can also right click anywhere on the rendered image (joplin will automatically move the cursor to the image embed line).
 
 > [!note]
-> On mobile/web you can put your cursor inside the image embed text and then open the dialog using the toolbar icon
+> On mobile/web you need to put your cursor inside the image embed text and then open the dialog using the toolbar icon.
 
 ### Switch image syntax
 
