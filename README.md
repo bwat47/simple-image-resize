@@ -41,7 +41,7 @@ Enter the desired image size (in percentage or pixels) and click OK, and the plu
 
 ### Quick Resize
 
-You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using keyboard shortcuts or the right-click context menu.
+You can configure up to 5 quick resize slots (using percentage or pixel sizes), allowing you to quickly resize images using keyboard shortcuts or the right-click context menu.
 
 ### Settings
 
