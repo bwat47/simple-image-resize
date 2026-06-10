@@ -68,7 +68,7 @@
         "quickResizeOptions": {
             "type": "string",
             "label": "Quick resize options",
-            "description": "Comma-separated quick resize slots. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.",
+            "description": "Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.",
             "value": "100%, 75%, 50%, 33%, 25%"
         },
         "showToastMessages": {

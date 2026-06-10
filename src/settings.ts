@@ -63,7 +63,7 @@ const SETTINGS_CONFIG = {
         type: SettingItemType.String,
         label: 'Quick resize options',
         description:
-            'Comma-separated quick resize slots. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.',
+            'Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.',
     },
     showToastMessages: {
         key: `${SECTION_ID}.showToastMessages`,

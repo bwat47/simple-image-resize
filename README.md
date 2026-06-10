@@ -51,12 +51,15 @@ You can quickly resize images to 25%, 50%, 75%, or 100% (original size) using ke
 
 **HTML syntax style** - Include both width/height in HTML syntax (default, best compatibility when pasting images outside of Joplin) or width-only.
 
-**Display quick resize options in context menu** - [Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu.
+**Display quick resize options in context menu** - [Desktop Only] Show quick resize options (e.g. 25%, 50%, 75%, 100%, 500px) in the right-click context menu.
+
+**Quick resize options** - Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.
 
 ### Default keyboard shortcuts:
 
 - Resize Image dialog (CmdOrCtrl+Shift+R)
-- Resize 100% (CmdOrCtrl+Shift+1)
-- Resize 75% (CmdOrCtrl+Shift+2)
-- Resize 50% (CmdOrCtrl+Shift+3)
-- Resize 25% (CmdOrCtrl+Shift+4)
+- Quick Resize 1 (default 100%) (CmdOrCtrl+Shift+1)
+- Quick Resize 2 (default 75%) (CmdOrCtrl+Shift+2)
+- Quick Resize 3 (default 50%) (CmdOrCtrl+Shift+3)
+- Quick Resize 4 (default 33%) (CmdOrCtrl+Shift+4)
+- Quick Resize 5 (default 25%) (CmdOrCtrl+Shift+5)
