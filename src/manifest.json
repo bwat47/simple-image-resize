@@ -62,8 +62,14 @@
         "showQuickResizeInContextMenu": {
             "type": "bool",
             "label": "Display quick resize options in context menu",
-            "description": "[Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu",
+            "description": "[Desktop Only] Show configured quick resize options in the right-click context menu",
             "value": false
+        },
+        "quickResizeOptions": {
+            "type": "string",
+            "label": "Quick resize options",
+            "description": "Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.",
+            "value": "100%, 75%, 50%, 33%, 25%"
         },
         "showToastMessages": {
             "type": "bool",

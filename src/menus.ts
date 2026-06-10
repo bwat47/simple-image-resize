@@ -12,18 +12,40 @@ import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
 import { settingsCache } from './settings';
+import {
+    getQuickResizeLabel,
+    QUICK_RESIZE_SLOTS,
+    tryParseQuickResizeOptions,
+} from './quickResizeOptions';
+
+function buildQuickResizeMenuItems(includeAccelerators: boolean): MenuItem[] {
+    const quickResizeOptions = tryParseQuickResizeOptions(settingsCache.quickResizeOptions);
+
+    return quickResizeOptions.map((option, index) => {
+        const slot = QUICK_RESIZE_SLOTS[index];
+        const menuItem: MenuItem = {
+            label: getQuickResizeLabel(option),
+            commandName: slot.commandName,
+        };
+
+        if (includeAccelerators) {
+            menuItem.accelerator = slot.accelerator;
+        }
+
+        return menuItem;
+    });
+}
 
 export async function registerMenus(): Promise<void> {
+    const quickResizeItems = buildQuickResizeMenuItems(true);
+
     // Create submenu in Tools menu
     await joplin.views.menus.create(
         'simpleImageResizeMenu',
         'Simple Image Resize',
         [
             { label: 'Resize Image', commandName: 'resizeImage', accelerator: 'CmdOrCtrl+Shift+R' },
-            { label: 'Resize 100%', commandName: 'resize100', accelerator: 'CmdOrCtrl+Shift+1' },
-            { label: 'Resize 75%', commandName: 'resize75', accelerator: 'CmdOrCtrl+Shift+2' },
-            { label: 'Resize 50%', commandName: 'resize50', accelerator: 'CmdOrCtrl+Shift+3' },
-            { label: 'Resize 25%', commandName: 'resize25', accelerator: 'CmdOrCtrl+Shift+4' },
+            ...quickResizeItems,
         ],
         MenuItemLocation.Tools
     );
@@ -86,24 +108,7 @@ export function registerContextMenu(): void {
             // Add quick resize options if enabled
             const showQuickResize = settingsCache.showQuickResizeInContextMenu;
             if (showQuickResize) {
-                contextMenu.items.push(
-                    {
-                        commandName: 'resize100',
-                        label: 'Resize 100%',
-                    },
-                    {
-                        commandName: 'resize75',
-                        label: 'Resize 75%',
-                    },
-                    {
-                        commandName: 'resize50',
-                        label: 'Resize 50%',
-                    },
-                    {
-                        commandName: 'resize25',
-                        label: 'Resize 25%',
-                    }
-                );
+                contextMenu.items.push(...buildQuickResizeMenuItems(false));
             }
 
             logger.debug('Added context menu items - cursor on image');

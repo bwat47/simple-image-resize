@@ -3,7 +3,7 @@
  *
  * Registers all resize commands:
  * - resizeImage: Opens dialog for custom resize
- * - resize100/75/50/25: Quick resize to specific percentages
+ * - resize100/75/50/33/25: Stable quick resize slots
  *
  * All commands share common logic for image detection, dimension fetching,
  * and editor replacement.
@@ -21,6 +21,12 @@ import { resizeDialogLock } from './dialogLock';
 import { settingsCache } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast, ToastType } from './utils/toastUtils';
+import {
+    buildQuickResizeResult,
+    getQuickResizeSuccessMessage,
+    parseQuickResizeOptions,
+    QUICK_RESIZE_SLOTS,
+} from './quickResizeOptions';
 
 /**
  * Shared function to handle image detection and dimension fetching
@@ -74,34 +80,31 @@ async function replaceImageInEditor(newSyntax: string, replacementRange: EditorR
 }
 
 /**
- * Execute quick resize for a given percentage
+ * Execute quick resize for a configured slot.
  */
-async function executeQuickResize(percentage: number): Promise<void> {
+async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
     try {
+        // The cached setting is always normalized, so parsing is not expected to fail;
+        // the generic catch below handles the theoretical failure.
+        const quickResizeOptions = parseQuickResizeOptions(settingsCache.quickResizeOptions);
+
+        const option = quickResizeOptions[slotIndex];
+        if (!option) {
+            await showToast(`No quick resize option is configured for slot ${slotIndex + 1}.`, ToastType.Info);
+            return;
+        }
+
         const prepared = await detectAndPrepareImage();
         if (!prepared) return;
 
         const { fullContext, replacementRange } = prepared;
 
-        // 100% converts to Markdown (removes custom sizing), others use HTML
-        const targetSyntax = percentage === 100 ? 'markdown' : 'html';
-
-        const newSyntax = await buildNewSyntax(fullContext, {
-            targetSyntax,
-            altText: fullContext.altText,
-            resizeMode: 'percentage',
-            percentage,
-        });
+        const resizeResult = buildQuickResizeResult(option, fullContext.altText);
+        const newSyntax = await buildNewSyntax(fullContext, resizeResult);
 
         await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
-        // Different message for 100% (conversion) vs others (resize)
-        const message =
-            percentage === 100
-                ? 'Custom size removed - converted to Markdown syntax.'
-                : `Image resized to ${percentage}%.`;
-
-        await showToast(message, ToastType.Success);
+        await showToast(getQuickResizeSuccessMessage(option), ToastType.Success);
     } catch (err) {
         logger.error('Error:', err);
         const message = err instanceof Error ? err.message : 'Unknown error occurred';
@@ -110,14 +113,14 @@ async function executeQuickResize(percentage: number): Promise<void> {
 }
 
 /**
- * Register a quick resize command for a specific percentage
+ * Register a quick resize command for a stable slot.
  */
-async function registerQuickResizeCommand(percentage: number): Promise<void> {
+async function registerQuickResizeCommand(slotIndex: number, commandName: string): Promise<void> {
     await joplin.commands.register({
-        name: `resize${percentage}`,
-        label: `Resize ${percentage}%`,
+        name: commandName,
+        label: `Quick Resize ${slotIndex + 1}`,
         execute: async () => {
-            await executeQuickResize(percentage);
+            await executeQuickResizeSlot(slotIndex);
         },
     });
 }
@@ -168,9 +171,8 @@ export async function registerCommands(): Promise<void> {
         },
     });
 
-    // Register quick resize commands (100%, 75%, 50%, 25%)
-    await registerQuickResizeCommand(100);
-    await registerQuickResizeCommand(75);
-    await registerQuickResizeCommand(50);
-    await registerQuickResizeCommand(25);
+    // Register stable quick resize slots. Slot targets come from settings at execution time.
+    for (const [slotIndex, slot] of QUICK_RESIZE_SLOTS.entries()) {
+        await registerQuickResizeCommand(slotIndex, slot.commandName);
+    }
 }
