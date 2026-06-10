@@ -40,6 +40,32 @@ export function parseQuickResizeOptions(rawOptions: string): QuickResizeOption[]
     return tokens.map(parseQuickResizeToken);
 }
 
+export function normalizeQuickResizeOptionsSetting(rawOptions: string): string {
+    const normalizedTokens = rawOptions
+        .split(',')
+        .map((token) => token.trim())
+        .filter((token) => token.length > 0)
+        .reduce<string[]>((tokens, token) => {
+            if (tokens.length >= QUICK_RESIZE_SLOT_LIMIT) {
+                return tokens;
+            }
+
+            try {
+                tokens.push(parseQuickResizeToken(token).label);
+            } catch {
+                // Invalid entries are discarded so valid quick resize slots still work.
+            }
+
+            return tokens;
+        }, []);
+
+    if (normalizedTokens.length === 0) {
+        return QUICK_RESIZE_OPTIONS_DEFAULT;
+    }
+
+    return normalizedTokens.join(', ');
+}
+
 export function tryParseQuickResizeOptions(rawOptions: string): QuickResizeOption[] {
     try {
         return parseQuickResizeOptions(rawOptions);

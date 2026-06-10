@@ -1,5 +1,6 @@
 import {
     buildQuickResizeResult,
+    normalizeQuickResizeOptionsSetting,
     parseQuickResizeOptions,
     QUICK_RESIZE_OPTIONS_DEFAULT,
 } from '../src/quickResizeOptions';
@@ -36,6 +37,33 @@ describe('parseQuickResizeOptions', () => {
         ['percentage above maximum', '501%'],
     ])('rejects %s', (_name, rawOptions) => {
         expect(() => parseQuickResizeOptions(rawOptions)).toThrow();
+    });
+});
+
+describe('normalizeQuickResizeOptionsSetting', () => {
+    it('removes invalid quick resize options and keeps valid options', () => {
+        expect(normalizeQuickResizeOptionsSetting('100%, 500inches, 300px, 900%, 75%')).toBe(
+            '100%, 300px, 75%'
+        );
+    });
+
+    it('resets empty settings to the default quick resize options', () => {
+        expect(normalizeQuickResizeOptionsSetting('')).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
+        expect(normalizeQuickResizeOptionsSetting(' , , ')).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
+    });
+
+    it('resets fully invalid settings to the default quick resize options', () => {
+        expect(normalizeQuickResizeOptionsSetting('500inches, 900%, 0px')).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
+    });
+
+    it('removes values beyond the quick resize slot limit', () => {
+        expect(normalizeQuickResizeOptionsSetting('100%, 75%, 50%, 33%, 25%, 10%, 300px')).toBe(
+            QUICK_RESIZE_OPTIONS_DEFAULT
+        );
+    });
+
+    it('normalizes valid option casing and spacing', () => {
+        expect(normalizeQuickResizeOptionsSetting(' 300PX,75% , 025% ')).toBe('300px, 75%, 25%');
     });
 });
 

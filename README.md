@@ -53,7 +53,7 @@ You can configure up to 5 quick resize slots (using percentage or pixel sizes), 
 
 **Display quick resize options in context menu** - [Desktop Only] Show quick resize options (e.g. 25%, 50%, 75%, 100%, 500px) in the right-click context menu.
 
-**Quick resize options** - Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px.
+**Quick resize options** - Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px. Invalid entries are removed automatically, and an empty list resets to the defaults.
 
 ### Default keyboard shortcuts:
 

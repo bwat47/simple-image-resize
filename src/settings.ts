@@ -11,7 +11,7 @@
 import joplin from 'api';
 import { SettingItem, SettingItemType } from 'api/types';
 import { logger } from './logger';
-import { QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
+import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
 
 const SECTION_ID = 'imageResize';
 
@@ -100,7 +100,22 @@ export const settingsCache: SettingsCache = {
  */
 async function updateSettingsCache(): Promise<void> {
     for (const [key, config] of Object.entries(SETTINGS_CONFIG)) {
-        (settingsCache as Record<string, unknown>)[key] = await joplin.settings.value(config.key);
+        const value = await joplin.settings.value(config.key);
+
+        if (key === 'quickResizeOptions') {
+            const rawValue = typeof value === 'string' ? value : '';
+            const normalizedValue = normalizeQuickResizeOptionsSetting(rawValue);
+            settingsCache.quickResizeOptions = normalizedValue;
+
+            if (normalizedValue !== value) {
+                await joplin.settings.setValue(config.key, normalizedValue);
+                logger.info('Quick resize options setting normalized:', normalizedValue);
+            }
+
+            continue;
+        }
+
+        (settingsCache as Record<string, unknown>)[key] = value;
     }
     logger.debug('Settings cache updated:', settingsCache);
 }

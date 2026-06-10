@@ -17,7 +17,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/index.ts` boots the plugin, registers settings, commands, menus, toolbar integration, and the CodeMirror content script.
 - `src/settings.ts` defines plugin settings and exposes cached configuration.
 - `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior.
-- `src/quickResizeOptions.ts` parses the configurable quick resize slot setting and converts slots into resize requests.
+- `src/quickResizeOptions.ts` parses and normalizes the configurable quick resize slot setting, then converts slots into resize requests.
 
 ### Detection and Editor Operations
 
@@ -74,6 +74,8 @@ This keeps the user-facing behavior consistent without forcing the rest of the p
 Quick resize options are configured through a comma-separated setting. Each option must be a positive whole-number percentage from `1%` through `500%` or a positive whole-number pixel width such as `300px`.
 
 The plugin supports one to five configured quick resize slots. The default slots are `100%, 75%, 50%, 33%, 25%`, mapped to `CmdOrCtrl+Shift+1` through `CmdOrCtrl+Shift+5`. The command IDs remain stable for compatibility, while each command reads the current setting at execution time. A `100%` slot converts the image back to Markdown syntax to remove custom sizing; other percentage and pixel slots emit HTML image syntax.
+
+When settings load or change, recoverable quick resize setting errors are normalized before commands or menus use them. Invalid entries are dropped, entries beyond the five-slot limit are removed, valid entries are canonicalized, and an empty or fully invalid list is reset to the default slots.
 
 ## Design Intent
 
