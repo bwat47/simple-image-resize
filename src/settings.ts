@@ -11,6 +11,7 @@
 import joplin from 'api';
 import { SettingItem, SettingItemType } from 'api/types';
 import { logger } from './logger';
+import { QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
 
 const SECTION_ID = 'imageResize';
 
@@ -54,7 +55,15 @@ const SETTINGS_CONFIG = {
         defaultValue: false,
         type: SettingItemType.Bool,
         label: 'Display quick resize options in context menu',
-        description: '[Desktop Only] Show quick resize options (25%, 50%, 75%, 100%) in the right-click context menu',
+        description: '[Desktop Only] Show configured quick resize options in the right-click context menu',
+    },
+    quickResizeOptions: {
+        key: `${SECTION_ID}.quickResizeOptions`,
+        defaultValue: QUICK_RESIZE_OPTIONS_DEFAULT,
+        type: SettingItemType.String,
+        label: 'Quick resize options',
+        description:
+            'Comma-separated quick resize slots. Use 1-5 positive whole-number values, with units: 100%, 75%, 300px.',
     },
     showToastMessages: {
         key: `${SECTION_ID}.showToastMessages`,
@@ -70,6 +79,7 @@ export type SettingsCache = {
     defaultPercentage: number;
     htmlSyntaxStyle: 'widthAndHeight' | 'widthOnly';
     showQuickResizeInContextMenu: boolean;
+    quickResizeOptions: string;
     showToastMessages: boolean;
 };
 
@@ -81,6 +91,7 @@ export const settingsCache: SettingsCache = {
     defaultPercentage: SETTINGS_CONFIG.defaultPercentage.defaultValue,
     htmlSyntaxStyle: SETTINGS_CONFIG.htmlSyntaxStyle.defaultValue,
     showQuickResizeInContextMenu: SETTINGS_CONFIG.showQuickResizeInContextMenu.defaultValue,
+    quickResizeOptions: SETTINGS_CONFIG.quickResizeOptions.defaultValue,
     showToastMessages: SETTINGS_CONFIG.showToastMessages.defaultValue,
 };
 
