@@ -84,14 +84,9 @@ async function replaceImageInEditor(newSyntax: string, replacementRange: EditorR
  */
 async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
     try {
-        let quickResizeOptions;
-        try {
-            quickResizeOptions = parseQuickResizeOptions(settingsCache.quickResizeOptions);
-        } catch (error) {
-            const message = error instanceof Error ? error.message : 'Unknown validation error';
-            await showToast(`Invalid quick resize options setting: ${message}`, ToastType.Error);
-            return;
-        }
+        // The cached setting is always normalized, so parsing is not expected to fail;
+        // the generic catch below handles the theoretical failure.
+        const quickResizeOptions = parseQuickResizeOptions(settingsCache.quickResizeOptions);
 
         const option = quickResizeOptions[slotIndex];
         if (!option) {

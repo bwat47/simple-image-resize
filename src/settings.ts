@@ -108,6 +108,9 @@ async function updateSettingsCache(): Promise<void> {
             settingsCache.quickResizeOptions = normalizedValue;
 
             if (normalizedValue !== value) {
+                // This setValue re-fires onChange, which re-runs updateSettingsCache.
+                // Normalization must stay idempotent so the second pass finds an
+                // already-normalized value and doesn't write again (infinite loop).
                 await joplin.settings.setValue(config.key, normalizedValue);
                 logger.info('Quick resize options setting normalized:', normalizedValue);
             }
