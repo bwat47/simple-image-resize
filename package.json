@@ -10,7 +10,7 @@
         "lint": "eslint --ext .ts src/",
         "lint:fix": "eslint --ext .ts src/ --fix",
         "format": "prettier --write \"src/**/*.ts\"",
-        "test": "vitest run --coverage --passWithNoTests",
+        "test": "vitest run --passWithNoTests",
         "test:watch": "vitest",
         "knip": "knip"
     },
