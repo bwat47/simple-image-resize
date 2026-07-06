@@ -10,7 +10,7 @@
         "moduleResolution": "bundler",
         "strict": true,
         "skipLibCheck": true,
-        "types": ["node", "jest"],
+        "types": ["node", "vitest/globals"],
         "paths": {
             "api": ["./api/index.ts"],
             "api/*": ["./api/*"]

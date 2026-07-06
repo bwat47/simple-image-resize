@@ -1,4 +1,5 @@
 import joplin from 'api';
+import type { Mock, MockInstance } from 'vitest';
 import { initializeSettingsCache, settingsCache } from '../src/settings';
 import { QUICK_RESIZE_OPTIONS_DEFAULT } from '../src/quickResizeOptions';
 
@@ -16,19 +17,19 @@ const getSettingKey = (settingName: keyof typeof SETTING_VALUES): string => `ima
 describe('initializeSettingsCache', () => {
     const settingsValues = new Map<string, unknown>();
     let onChangeHandler: ((event: { keys: string[] }) => Promise<void>) | undefined;
-    let consoleInfoSpy: jest.SpyInstance;
+    let consoleInfoSpy: MockInstance;
 
     beforeEach(() => {
-        jest.clearAllMocks();
-        consoleInfoSpy = jest.spyOn(console, 'info').mockImplementation();
+        vi.clearAllMocks();
+        consoleInfoSpy = vi.spyOn(console, 'info').mockImplementation(() => undefined);
         settingsValues.clear();
 
         for (const [settingName, value] of Object.entries(SETTING_VALUES)) {
             settingsValues.set(`imageResize.${settingName}`, value);
         }
 
-        (joplin.settings.value as jest.Mock).mockImplementation(async (key: string) => settingsValues.get(key));
-        (joplin.settings.onChange as jest.Mock).mockImplementation(async (handler) => {
+        (joplin.settings.value as Mock).mockImplementation(async (key: string) => settingsValues.get(key));
+        (joplin.settings.onChange as Mock).mockImplementation(async (handler) => {
             onChangeHandler = handler;
         });
     });
