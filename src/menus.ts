@@ -12,11 +12,7 @@ import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
 import { settingsCache } from './settings';
-import {
-    getQuickResizeLabel,
-    QUICK_RESIZE_SLOTS,
-    tryParseQuickResizeOptions,
-} from './quickResizeOptions';
+import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
 
 function buildQuickResizeMenuItems(includeAccelerators: boolean): MenuItem[] {
     const quickResizeOptions = tryParseQuickResizeOptions(settingsCache.quickResizeOptions);
@@ -43,10 +39,7 @@ export async function registerMenus(): Promise<void> {
     await joplin.views.menus.create(
         'simpleImageResizeMenu',
         'Simple Image Resize',
-        [
-            { label: 'Resize Image', commandName: 'resizeImage', accelerator: 'CmdOrCtrl+Shift+R' },
-            ...quickResizeItems,
-        ],
+        [{ label: 'Resize Image', commandName: 'resizeImage', accelerator: 'CmdOrCtrl+Shift+R' }, ...quickResizeItems],
         MenuItemLocation.Tools
     );
 }

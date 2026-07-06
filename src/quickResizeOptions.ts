@@ -107,9 +107,7 @@ export function getQuickResizeSuccessMessage(option: QuickResizeOption): string 
 function parseQuickResizeToken(token: string): QuickResizeOption {
     const match = /^(\d+)(%|px)$/i.exec(token);
     if (!match) {
-        throw new Error(
-            `Invalid quick resize option "${token}". Use positive whole-number values like 75% or 300px.`
-        );
+        throw new Error(`Invalid quick resize option "${token}". Use positive whole-number values like 75% or 300px.`);
     }
 
     const value = Number.parseInt(match[1], 10);
