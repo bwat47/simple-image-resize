@@ -1,7 +1,7 @@
 import { ResizeDialogResult } from './types';
 
 export const QUICK_RESIZE_OPTIONS_DEFAULT = '100%, 75%, 50%, 33%, 25%';
-export const QUICK_RESIZE_SLOT_LIMIT = 5;
+const QUICK_RESIZE_SLOT_LIMIT = 5;
 
 export const QUICK_RESIZE_SLOTS = [
     { commandName: 'resize100', accelerator: 'CmdOrCtrl+Shift+1' },
