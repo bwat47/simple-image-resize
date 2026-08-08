@@ -43,6 +43,8 @@ interface ImageNodeRange {
     to: number;
 }
 
+type ImageSourceInfo = Pick<EditorImageAtCursorResult, 'source' | 'sourceType'>;
+
 /**
  * Validates that range positions are logically correct (from <= to) and finite.
  * Checks for NaN, Infinity, and -Infinity which TypeScript's type system permits
@@ -72,6 +74,16 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
     return true;
 }
 
+function resolveImageSource(src: string): ImageSourceInfo {
+    const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
+    if (resourceMatch) return { source: resourceMatch[1], sourceType: 'resource' };
+
+    const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
+    if (urlMatch) return { source: urlMatch[1], sourceType: 'external' };
+
+    return { source: src, sourceType: 'external' };
+}
+
 /**
  * Extract details from a Markdown image using simplified regex.
  */
@@ -81,15 +93,10 @@ function extractMarkdownDetails(imageText: string): Omit<EditorImageAtCursorResu
 
     const { altText, src, title } = match.groups;
 
-    // Determine if resource or external URL
-    const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
-    const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
-
     return {
         type: 'markdown',
         syntax: imageText,
-        source: resourceMatch ? resourceMatch[1] : urlMatch ? urlMatch[1] : src,
-        sourceType: resourceMatch ? 'resource' : 'external',
+        ...resolveImageSource(src),
         altText: altText || '',
         title: title || '',
     };
@@ -106,15 +113,10 @@ function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 
     const altMatch = imageText.match(REGEX_PATTERNS.HTML_ALT);
     const titleMatch = imageText.match(REGEX_PATTERNS.HTML_TITLE);
 
-    // Determine if resource or external URL
-    const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
-    const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
-
     return {
         type: 'html',
         syntax: imageText,
-        source: resourceMatch ? resourceMatch[1] : urlMatch ? urlMatch[1] : src,
-        sourceType: resourceMatch ? 'resource' : 'external',
+        ...resolveImageSource(src),
         altText: altMatch ? decodeHtmlEntities(altMatch[2]) : '', // Group 2 contains the value
         title: titleMatch ? decodeHtmlEntities(titleMatch[2]) : '', // Group 2 contains the value
     };
@@ -182,7 +184,6 @@ function findImagesOnLine(view: EditorView): ImageNodeRange[] {
                         });
                     }
                 }
-                return;
             }
         },
     });
