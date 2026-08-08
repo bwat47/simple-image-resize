@@ -194,7 +194,6 @@ function findImagesOnLine(view: EditorView): ImageNodeRange[] {
                         });
                     }
                 }
-                return;
             }
         },
     });
