@@ -7,7 +7,7 @@ image-resize-documentation.md
 
 ## Build, Test, and Development Commands
 
-- `npm test` Run Vitest test suite with coverage.
+- `npm test` Run Vitest test suite
 - `npm run test:watch` Run tests in watch mode during development.
 - `npm run dist` Build plugin and create archive at `publish/*.jpl`.
 - `npm run lint` Lint TypeScript with ESLint.
@@ -34,3 +34,13 @@ image-resize-documentation.md
 ## Log messages
 
 - Use `src\logger.ts` wrapper
+
+## Git
+
+- Use conventional commit format for commit messages
+- Never run git commit proactively; always wait for explicit user consent.
+
+## Codex working instructions
+
+- GitHub credentials are stored in the OS keyring.
+- If `gh auth status` fails inside the sandbox, retry it with escalated permissions before asking me to authenticate.
