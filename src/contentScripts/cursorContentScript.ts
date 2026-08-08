@@ -84,11 +84,17 @@ function extractMarkdownDetails(imageText: string): Omit<EditorImageAtCursorResu
     // Determine if resource or external URL
     const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
     const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
+    let source = src;
+    if (resourceMatch) {
+        source = resourceMatch[1];
+    } else if (urlMatch) {
+        source = urlMatch[1];
+    }
 
     return {
         type: 'markdown',
         syntax: imageText,
-        source: resourceMatch ? resourceMatch[1] : urlMatch ? urlMatch[1] : src,
+        source,
         sourceType: resourceMatch ? 'resource' : 'external',
         altText: altText || '',
         title: title || '',
@@ -109,11 +115,17 @@ function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 
     // Determine if resource or external URL
     const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
     const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
+    let source = src;
+    if (resourceMatch) {
+        source = resourceMatch[1];
+    } else if (urlMatch) {
+        source = urlMatch[1];
+    }
 
     return {
         type: 'html',
         syntax: imageText,
-        source: resourceMatch ? resourceMatch[1] : urlMatch ? urlMatch[1] : src,
+        source,
         sourceType: resourceMatch ? 'resource' : 'external',
         altText: altMatch ? decodeHtmlEntities(altMatch[2]) : '', // Group 2 contains the value
         title: titleMatch ? decodeHtmlEntities(titleMatch[2]) : '', // Group 2 contains the value
