@@ -2,6 +2,47 @@ import { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './utils/stringUtils';
 import { settingsCache } from './settings';
 
+function buildSourcePath(context: ImageContext): string {
+    return context.sourceType === 'resource' ? `:/${context.source}` : context.source;
+}
+
+function buildMarkdownSyntax(context: ImageContext, result: ResizeDialogResult, srcPath: string): string {
+    const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
+    return `![${sanitizeMarkdownAlt(result.altText)}](${srcPath}${titlePart})`;
+}
+
+function calculateWidth(context: ImageContext, result: ResizeDialogResult): number {
+    const { width: originalWidth, height: originalHeight } = context.originalDimensions;
+
+    if (result.resizeMode === 'percentage') {
+        const percent = result.percentage || 100;
+        return Math.round(originalWidth * (percent / 100));
+    }
+
+    if (result.absoluteWidth) {
+        return result.absoluteWidth;
+    }
+
+    if (result.absoluteHeight) {
+        return Math.round(result.absoluteHeight * (originalWidth / originalHeight));
+    }
+
+    return originalWidth;
+}
+
+function buildHtmlSyntax(context: ImageContext, result: ResizeDialogResult, srcPath: string): string {
+    const { width: originalWidth, height: originalHeight } = context.originalDimensions;
+    const newWidth = calculateWidth(context, result);
+
+    // Guard against division by zero (edge case with malformed image dimensions)
+    const newHeight = originalWidth > 0 ? Math.round(newWidth * (originalHeight / originalWidth)) : originalHeight;
+    const heightAttr = settingsCache.htmlSyntaxStyle === 'widthAndHeight' ? ` height="${newHeight}"` : '';
+    const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
+    const safeAlt = escapeHtmlAttribute(result.altText);
+
+    return `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}"${heightAttr}${titleAttr} />`;
+}
+
 /**
  * Generates new image syntax based on user selections.
  *
@@ -13,49 +54,11 @@ import { settingsCache } from './settings';
  * @returns New image syntax
  */
 export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
-    // Determine the correct source path format
-    const srcPath = context.sourceType === 'resource' ? `:/${context.source}` : context.source;
-
-    let newSyntax: string;
+    const srcPath = buildSourcePath(context);
 
     if (result.targetSyntax === 'markdown') {
-        const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
-        newSyntax = `![${sanitizeMarkdownAlt(result.altText)}](${srcPath}${titlePart})`;
-    } else {
-        const origW = context.originalDimensions.width;
-        const origH = context.originalDimensions.height;
-        let newWidth: number;
-
-        if (result.resizeMode === 'percentage') {
-            const percent = result.percentage || 100;
-            newWidth = Math.round(origW * (percent / 100));
-        } else {
-            const providedW = result.absoluteWidth;
-            const providedH = result.absoluteHeight;
-            if (providedW && providedH) {
-                newWidth = providedW;
-            } else if (providedW && !providedH) {
-                newWidth = providedW;
-            } else if (!providedW && providedH) {
-                newWidth = Math.round(providedH * (origW / origH));
-            } else {
-                newWidth = origW;
-            }
-        }
-
-        // Calculate height to preserve aspect ratio
-        // Guard against division by zero (edge case with malformed image dimensions)
-        const newHeight = origW > 0 ? Math.round(newWidth * (origH / origW)) : origH;
-
-        // Check setting for whether to include height attribute
-        const htmlSyntaxStyle = settingsCache.htmlSyntaxStyle;
-        const includeHeight = htmlSyntaxStyle === 'widthAndHeight';
-
-        const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
-        const safeAlt = escapeHtmlAttribute(result.altText);
-        const heightAttr = includeHeight ? ` height="${newHeight}"` : '';
-        newSyntax = `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}"${heightAttr}${titleAttr} />`;
+        return buildMarkdownSyntax(context, result, srcPath);
     }
 
-    return newSyntax;
+    return buildHtmlSyntax(context, result, srcPath);
 }
