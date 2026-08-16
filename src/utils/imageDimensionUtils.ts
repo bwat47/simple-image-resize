@@ -15,9 +15,9 @@ export interface MeasureImageOptions {
 
 /**
  * Measure image dimensions using a DOM Image.
- * Works with local file paths, file:// URLs, data URLs, and external URLs.
+ * Works with local file paths, file:// URLs, blob: object URLs, and external URLs.
  *
- * @param src - Image source (path, URL, or data URL)
+ * @param src - Image source (path or URL)
  * @param options - Configuration options for timeout and privacy settings
  * @returns Promise that resolves with dimensions or rejects on error
  */
