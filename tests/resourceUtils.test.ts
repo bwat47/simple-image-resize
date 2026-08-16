@@ -24,7 +24,6 @@ describe('getResourceBlob', () => {
         ['Buffer-compatible view', () => Buffer.from([137, 80, 78, 71])],
         ['number array', () => [137, 80, 78, 71]],
         ['numeric-key object', () => ({ 0: 137, 1: 80, 2: 78, 3: 71 })],
-        ['Buffer#toJSON object', () => ({ type: 'Buffer', data: [137, 80, 78, 71] })],
     ])('normalizes a %s response', async (_label, createData) => {
         mockResource(createData());
 
@@ -58,10 +57,26 @@ describe('getResourceBlob', () => {
         await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Sparse resource data at missing index 1');
     });
 
-    it('rejects invalid byte values inside a Buffer#toJSON data array', async () => {
-        mockResource({ type: 'Buffer', data: [256] });
+    it('passes through a Blob body unchanged', async () => {
+        const blob = new Blob([Uint8Array.from([137, 80, 78, 71])], { type: 'image/png' });
+        mockResource(blob);
 
-        await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Invalid byte value at index 0');
+        await expect(getResourceBlob(RESOURCE_ID)).resolves.toBe(blob);
+    });
+
+    it('applies the resource MIME type to an untyped Blob body', async () => {
+        mockResource(new Blob([Uint8Array.from([137, 80, 78, 71])]), 'image/webp');
+
+        const blob = await getResourceBlob(RESOURCE_ID);
+
+        expect(blob.type).toBe('image/webp');
+        expect(await blobBytes(blob)).toEqual([137, 80, 78, 71]);
+    });
+
+    it('rejects an empty Blob body', async () => {
+        mockResource(new Blob([], { type: 'image/png' }));
+
+        await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Resource file data is empty');
     });
 
     it.each([[[256]], [[-1]], [[1.5]], [['1']]])('rejects invalid byte values in %j', async (data) => {

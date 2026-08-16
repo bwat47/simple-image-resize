@@ -29,17 +29,11 @@ function failUnknownFormat(shape: string): never {
 }
 
 /**
- * Reads the two shapes a Buffer arrives in from the web app: index properties
- * carried on the object itself, or the Buffer#toJSON form with a nested array.
+ * Reads the web app shape: a Buffer that Joplin's IPC deep-copied key by key, so
+ * the byte indices arrive as own properties. Keys the walk picked up off the
+ * prototype are ignored.
  */
 function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<ArrayBuffer> {
-    // Buffer#toJSON form: { type: 'Buffer', data: [137, 80, ...] }. Checked before
-    // Object.keys(), which allocates a string per byte on the numeric-key form.
-    if (Array.isArray(object.data)) {
-        logger.debug(`toUint8Array: Received nested data array (${object.data.length} bytes)`);
-        return copyByteValues(object.data);
-    }
-
     const keys = Object.keys(object);
     const numericKeys = keys.filter((key) => /^\d+$/.test(key));
     logger.debug(`toUint8Array: Object with ${keys.length} total keys, ${numericKeys.length} numeric keys`);
@@ -59,11 +53,18 @@ function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<A
 }
 
 /**
- * Normalizes the binary formats returned by Joplin into a byte array:
- * - Desktop: ArrayBuffer or an ArrayBuffer view
- * - Web app: Array, or a Buffer in either of its two serialized forms - carrying
- *   contiguous numeric keys ({0: 137, 1: 80, ...}, nonnumeric metadata ignored),
- *   or the Buffer#toJSON form ({type: 'Buffer', data: [137, 80, ...]}).
+ * Normalizes the binary formats returned by Joplin into a byte array.
+ *
+ * The Data API always reads the file as a Node Buffer; what reaches the plugin
+ * depends on how that Buffer crosses into the plugin sandbox:
+ * - Desktop: Electron IPC structured-clones it into a Uint8Array.
+ * - Web app: RemoteMessenger has no case for typed arrays (its SerializableData
+ *   covers only ArrayBuffer, Blob, and FileSystemHandle), so it deep-copies the
+ *   Buffer with for...in, yielding {0: 137, 1: 80, ...}.
+ *
+ * Each platform produces exactly one of those. The remaining branches are
+ * defensive: Joplin passes an unsanctioned type through a channel that has no
+ * contract for it, so the shape can change without the plugin API changing.
  */
 function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
     if (data instanceof ArrayBuffer) {
@@ -109,6 +110,16 @@ export async function getResourceBlob(resourceId: string): Promise<Blob> {
         const body = file.body ?? file;
         if (body === null || body === undefined) {
             throw new Error('Could not find file data.');
+        }
+
+        // Blob is one of the three types Joplin's plugin IPC passes through untouched,
+        // so it is the likeliest shape to appear if the transport ever stops deep-copying
+        // the Buffer. Nothing produces it today.
+        if (body instanceof Blob) {
+            if (body.size === 0) {
+                throw new Error('Resource file data is empty.');
+            }
+            return body.type ? body : new Blob([body], { type: resource.mime });
         }
 
         const bytes = toUint8Array(body);
