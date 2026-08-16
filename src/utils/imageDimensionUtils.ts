@@ -15,9 +15,9 @@ export interface MeasureImageOptions {
 
 /**
  * Measure image dimensions using a DOM Image.
- * Works with local file paths, file:// URLs, data URLs, and external URLs.
+ * Works with local file paths, file:// URLs, blob: object URLs, and external URLs.
  *
- * @param src - Image source (path, URL, or data URL)
+ * @param src - Image source (path or URL)
  * @param options - Configuration options for timeout and privacy settings
  * @returns Promise that resolves with dimensions or rejects on error
  */
@@ -56,4 +56,17 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
 
         img.src = src;
     });
+}
+
+/**
+ * Measure image dimensions from a Blob using a temporary object URL.
+ * The URL is always revoked after the image finishes loading or fails.
+ */
+export async function measureBlobImageDimensions(blob: Blob, options: MeasureImageOptions): Promise<ImageDimensions> {
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+        return await measureImageDimensions(objectUrl, options);
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
 }

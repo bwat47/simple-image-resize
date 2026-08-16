@@ -8,72 +8,81 @@ export function validateResourceId(id: string): boolean {
     return !!id && typeof id === 'string' && /^[a-f0-9]{32}$/i.test(id);
 }
 
-/**
- * Converts binary data to base64 string using the FileReader API.
- */
-async function arrayBufferToBase64(buffer: ArrayBuffer | Uint8Array): Promise<string> {
-    const blob = new Blob([buffer as BlobPart]);
-    return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-            const dataUrl = reader.result as string;
-            resolve(dataUrl.split(',')[1]);
-        };
-        reader.onerror = () => reject(new Error('FileReader error'));
-        reader.readAsDataURL(blob);
-    });
+function validateByte(value: unknown, index: number): number {
+    if (!Number.isInteger(value) || (value as number) < 0 || (value as number) > 255) {
+        throw new Error(`Invalid byte value at index ${index}`);
+    }
+    return value as number;
+}
+
+function failUnknownFormat(shape: string): never {
+    logger.debug(`toUint8Array: Unknown data type: ${shape}`);
+    throw new Error(`Unknown resource data format: ${shape}`);
 }
 
 /**
- * Converts data to base64, handling the formats Joplin returns:
- * - Desktop: ArrayBuffer/Uint8Array
- * - Web app: Object with numeric keys (e.g., {0: 137, 1: 80, ...})
+ * Reads the web app shape: a Buffer that Joplin's IPC deep-copied key by key, so
+ * the byte indices arrive as own properties. Keys the walk picked up off the
+ * prototype are ignored.
  */
-async function toBase64(data: unknown): Promise<string> {
-    // ArrayBuffer or Uint8Array (desktop)
-    if (data instanceof ArrayBuffer || data instanceof Uint8Array) {
-        logger.debug('toBase64: Received ArrayBuffer/Uint8Array');
-        return await arrayBufferToBase64(data);
+function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<ArrayBuffer> {
+    const keys = Object.keys(object);
+    const numericKeys = keys.filter((key) => /^\d+$/.test(key));
+    logger.debug(`toUint8Array: Object with ${keys.length} total keys, ${numericKeys.length} numeric keys`);
+
+    if (numericKeys.length === 0) {
+        failUnknownFormat(`object with keys [${keys.slice(0, 5).join(', ')}]`);
     }
 
-    // Object with numeric keys (web app) - check for array-like structure
+    const bytes = new Uint8Array(numericKeys.length);
+    for (let index = 0; index < numericKeys.length; index++) {
+        if (!Object.prototype.hasOwnProperty.call(object, index)) {
+            throw new Error(`Sparse resource data at missing index ${index}`);
+        }
+        bytes[index] = validateByte(object[index], index);
+    }
+    return bytes;
+}
+
+/**
+ * Normalizes the binary formats returned by Joplin into a byte array.
+ *
+ * The Data API always reads the file as a Node Buffer; what reaches the plugin
+ * depends on how that Buffer crosses into the plugin sandbox:
+ * - Desktop: Electron IPC structured-clones it into a Uint8Array.
+ * - Web app: RemoteMessenger has no case for typed arrays (its SerializableData
+ *   covers only ArrayBuffer, Blob, and FileSystemHandle), so it deep-copies the
+ *   Buffer with for...in, yielding {0: 137, 1: 80, ...}.
+ *
+ * Each platform produces exactly one of those. The ArrayBuffer branch is defensive,
+ * as is the Blob guard in getResourceBlob: those are two of the three types Joplin's
+ * IPC passes through untouched, so either could appear if the transport ever stops
+ * deep-copying the Buffer. Nothing produces them today.
+ */
+function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
+    if (data instanceof ArrayBuffer) {
+        logger.debug('toUint8Array: Received ArrayBuffer');
+        return new Uint8Array(data);
+    }
+
+    if (ArrayBuffer.isView(data)) {
+        logger.debug('toUint8Array: Received ArrayBuffer view');
+        const view = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
+        return Uint8Array.from(view);
+    }
+
     if (typeof data === 'object' && data !== null) {
-        const obj = data as Record<string | number, number>;
-
-        // Handle actual arrays
-        if (Array.isArray(obj)) {
-            logger.debug('toBase64: Received Array');
-            return await arrayBufferToBase64(new Uint8Array(obj));
-        }
-
-        // Check if all keys are numeric (web app format: {0: 137, 1: 80, 2: 78, ...})
-        const allKeys = Object.keys(obj);
-        const keys = allKeys.filter((k) => /^\d+$/.test(k));
-        logger.debug(`toBase64: Object with ${allKeys.length} total keys, ${keys.length} numeric keys`);
-        if (keys.length > 0) {
-            logger.debug(`toBase64: Converting ${keys.length} bytes from object with numeric keys`);
-            const bytes = new Uint8Array(keys.length);
-            // Validate contiguity while copying (fail fast on sparse/corrupted data)
-            for (let i = 0; i < keys.length; i++) {
-                if (!(i in obj)) {
-                    logger.debug(`toBase64: Key ${i} missing; keys not contiguous from 0 to ${keys.length - 1}`);
-                    throw new Error(`Sparse resource data at missing index ${i} (non-contiguous or non-zero-based)`);
-                }
-                bytes[i] = obj[i];
-            }
-            return await arrayBufferToBase64(bytes);
-        }
+        return bytesFromObject(data as Record<string | number, unknown>);
     }
 
-    logger.debug(`toBase64: Unknown data type: ${typeof data}`);
-    throw new Error(`Unknown data format: ${typeof data}`);
+    failUnknownFormat(typeof data);
 }
 
 /**
- * Converts a Joplin resource to a base64 data URL for use as an image src.
- * Works on Desktop and Web app (not Android - use resourcePath approach instead).
+ * Loads a Joplin image resource into a Blob.
+ * Works on Desktop and Web app (not Android, where the resourcePath approach is used instead).
  */
-export async function convertResourceToBase64(resourceId: string): Promise<string> {
+export async function getResourceBlob(resourceId: string): Promise<Blob> {
     try {
         const resource = await joplin.data.get(['resources', resourceId], { fields: ['mime'] });
         const file = await joplin.data.get(['resources', resourceId, 'file']);
@@ -82,16 +91,34 @@ export async function convertResourceToBase64(resourceId: string): Promise<strin
             throw new Error('Resource not found or is empty.');
         }
 
+        if (typeof resource.mime !== 'string' || !resource.mime.toLowerCase().startsWith('image/')) {
+            throw new Error('Resource is not an image.');
+        }
+
         const body = file.body ?? file;
-        if (!body) {
+        if (body === null || body === undefined) {
             throw new Error('Could not find file data.');
         }
 
-        const base64 = await toBase64(body);
-        return `data:${resource.mime};base64,${base64}`;
+        // Blob is one of the three types Joplin's plugin IPC passes through untouched,
+        // so it is the likeliest shape to appear if the transport ever stops deep-copying
+        // the Buffer. Nothing produces it today.
+        if (body instanceof Blob) {
+            if (body.size === 0) {
+                throw new Error('Resource file data is empty.');
+            }
+            return body.type ? body : new Blob([body], { type: resource.mime });
+        }
+
+        const bytes = toUint8Array(body);
+        if (bytes.byteLength === 0) {
+            throw new Error('Resource file data is empty.');
+        }
+
+        return new Blob([bytes], { type: resource.mime });
     } catch (err) {
-        logger.debug(`Error converting resource ${resourceId} to base64:`, err);
+        logger.debug(`Error loading resource ${resourceId} as a Blob:`, err);
         const message = err instanceof Error ? err.message : String(err);
-        throw Object.assign(new Error(`Could not convert resource to base64: ${message}`), { cause: err });
+        throw Object.assign(new Error(`Could not create resource Blob: ${message}`), { cause: err });
     }
 }
