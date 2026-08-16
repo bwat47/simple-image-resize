@@ -6,10 +6,9 @@ import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScri
 import {
     measureBlobImageDimensions,
     measureImageDimensions,
+    EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
     RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
 } from './utils/imageDimensionUtils';
-
-const EXTERNAL_IMAGE_LOAD_TIMEOUT_MS = 10000;
 
 export const FALLBACK_IMAGE_DIMENSIONS = {
     width: 400,

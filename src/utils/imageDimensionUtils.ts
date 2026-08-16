@@ -8,12 +8,17 @@ export interface ImageDimensions {
     height: number;
 }
 
-export const RESOURCE_IMAGE_LOAD_TIMEOUT_MS = 5000;
-
 export interface MeasureImageOptions {
     timeoutMs: number;
     usePrivacySettings?: boolean; // For external URLs: sets crossOrigin and referrerPolicy
 }
+
+/**
+ * Image load timeouts used by imageSizeCalculator and cursorContentScript.
+ */
+export const RESOURCE_IMAGE_LOAD_TIMEOUT_MS = 5000;
+// Longer than the resource timeout because external images cross the network.
+export const EXTERNAL_IMAGE_LOAD_TIMEOUT_MS = 10000;
 
 /**
  * Measure image dimensions using a DOM Image.

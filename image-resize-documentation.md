@@ -30,7 +30,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 ### Resize Pipeline
 
-- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns external-image timeout and fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion.
+- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion.
 - `src/dialogHandler.ts` builds and runs the resize dialog.
 - `src/dialogLock.ts` prevents overlapping dialogs.
 - `src/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output.
@@ -38,7 +38,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 ### Shared Utilities
 
-- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement logic and the resource-loading timeout used by both execution contexts.
+- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement logic and the image load timeouts, kept dependency-free so both execution contexts can import them.
 - `src/utils/resourceUtils.ts` handles resource-specific helpers.
 - `src/utils/stringUtils.ts` handles HTML entity decoding and output escaping.
 - `src/utils/toastUtils.ts` centralizes toast messaging.
