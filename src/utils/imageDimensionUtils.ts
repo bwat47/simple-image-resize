@@ -57,3 +57,16 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
         img.src = src;
     });
 }
+
+/**
+ * Measure image dimensions from a Blob using a temporary object URL.
+ * The URL is always revoked after the image finishes loading or fails.
+ */
+export async function measureBlobImageDimensions(blob: Blob, options: MeasureImageOptions): Promise<ImageDimensions> {
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+        return await measureImageDimensions(objectUrl, options);
+    } finally {
+        URL.revokeObjectURL(objectUrl);
+    }
+}

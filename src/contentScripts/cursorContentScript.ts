@@ -382,7 +382,7 @@ export default function () {
                         }
 
                         return await measureImageDimensions(imagePath, {
-                            timeoutMs: CONSTANTS.BASE64_TIMEOUT_MS,
+                            timeoutMs: CONSTANTS.RESOURCE_IMAGE_TIMEOUT_MS,
                             usePrivacySettings: false,
                         });
                     } catch {

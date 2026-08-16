@@ -18,7 +18,7 @@ export const REGEX_PATTERNS = {
 };
 
 export const CONSTANTS = {
-    BASE64_TIMEOUT_MS: 5000,
+    RESOURCE_IMAGE_TIMEOUT_MS: 5000,
     EXTERNAL_IMAGE_TIMEOUT_MS: 10000, // Longer timeout for external images
     DEFAULT_EXTERNAL_WIDTH: 400, // Fallback dimensions when external image fails
     DEFAULT_EXTERNAL_HEIGHT: 300,

@@ -1,10 +1,10 @@
 import joplin from 'api';
 import { CONSTANTS } from './constants';
-import { validateResourceId, convertResourceToBase64 } from './utils/resourceUtils';
+import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
 import { ImageDimensions } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
-import { measureImageDimensions } from './utils/imageDimensionUtils';
+import { measureBlobImageDimensions, measureImageDimensions } from './utils/imageDimensionUtils';
 
 //TODO: Look into simplifying image dimension retrieval if https://github.com/laurent22/joplin/issues/12099 is addressed
 
@@ -12,7 +12,7 @@ import { measureImageDimensions } from './utils/imageDimensionUtils';
  * Retrieves image dimensions from either a Joplin resource or external URL.
  *
  * Uses platform-appropriate strategies for dimension detection:
- * - Resources: content script (Android/Desktop) → base64 (Web/Desktop) → defaults
+ * - Resources: content script (Android/Desktop) → Blob URL (Web/Desktop) → defaults
  * - External: DOM Image with CORS/privacy safeguards
  *
  * @param source - Resource ID (32-char hex) or external URL
@@ -34,7 +34,7 @@ export async function getOriginalImageDimensions(
 /**
  * Get dimensions for a Joplin resource using multiple fallback strategies:
  * 1. Content script (works on Android + Desktop)
- * 2. Base64 conversion (works on Web app + Desktop)
+ * 2. Blob URL created from resource bytes (works on Web app + Desktop)
  * 3. Default dimensions (last resort)
  */
 async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDimensions> {
@@ -59,17 +59,17 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
         logger.debug('Content script approach failed:', err);
     }
 
-    // Strategy 2: Try base64 conversion (works on Web app + Desktop)
+    // Strategy 2: Try a Blob URL created from resource bytes (works on Web app + Desktop)
     try {
-        logger.debug(`Trying base64 conversion for: ${resourceId}`);
-        const dataUrl = await convertResourceToBase64(resourceId);
-        if (dataUrl.startsWith('data:image')) {
-            const base64Result = await measureImageDimensions(dataUrl, { timeoutMs: CONSTANTS.BASE64_TIMEOUT_MS });
-            logger.debug(`Base64 returned dimensions: ${base64Result.width}x${base64Result.height}`);
-            return base64Result;
-        }
+        logger.debug(`Trying resource Blob for: ${resourceId}`);
+        const blob = await getResourceBlob(resourceId);
+        const blobResult = await measureBlobImageDimensions(blob, {
+            timeoutMs: CONSTANTS.RESOURCE_IMAGE_TIMEOUT_MS,
+        });
+        logger.debug(`Resource Blob returned dimensions: ${blobResult.width}x${blobResult.height}`);
+        return blobResult;
     } catch (err) {
-        logger.debug('Base64 approach failed:', err);
+        logger.debug('Resource Blob approach failed:', err);
     }
 
     // Strategy 3: Return default dimensions as last resort
