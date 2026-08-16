@@ -15,14 +15,6 @@ function validateByte(value: unknown, index: number): number {
     return value as number;
 }
 
-function copyByteValues(values: ArrayLike<unknown>): Uint8Array<ArrayBuffer> {
-    const bytes = new Uint8Array(values.length);
-    for (let index = 0; index < values.length; index++) {
-        bytes[index] = validateByte(values[index], index);
-    }
-    return bytes;
-}
-
 function failUnknownFormat(shape: string): never {
     logger.debug(`toUint8Array: Unknown data type: ${shape}`);
     throw new Error(`Unknown resource data format: ${shape}`);
@@ -62,9 +54,10 @@ function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<A
  *   covers only ArrayBuffer, Blob, and FileSystemHandle), so it deep-copies the
  *   Buffer with for...in, yielding {0: 137, 1: 80, ...}.
  *
- * Each platform produces exactly one of those. The remaining branches are
- * defensive: Joplin passes an unsanctioned type through a channel that has no
- * contract for it, so the shape can change without the plugin API changing.
+ * Each platform produces exactly one of those. The ArrayBuffer branch is defensive,
+ * as is the Blob guard in getResourceBlob: those are two of the three types Joplin's
+ * IPC passes through untouched, so either could appear if the transport ever stops
+ * deep-copying the Buffer. Nothing produces them today.
  */
 function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
     if (data instanceof ArrayBuffer) {
@@ -76,11 +69,6 @@ function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
         logger.debug('toUint8Array: Received ArrayBuffer view');
         const view = new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
         return Uint8Array.from(view);
-    }
-
-    if (Array.isArray(data)) {
-        logger.debug('toUint8Array: Received Array');
-        return copyByteValues(data);
     }
 
     if (typeof data === 'object' && data !== null) {
