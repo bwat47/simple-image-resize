@@ -24,13 +24,13 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/contentScripts/cursorContentScript.ts` runs inside the CodeMirror editor context.
 - It is the source of truth for cursor-based image detection, editor text replacement, dimension lookup in editor context, and editor-origin context menu checks.
 - Detection is syntax-tree based, not regex-first. It recognizes Markdown image nodes plus HTML `img` tags, including nested HTML blocks.
-- Once a node is validated as an image, lightweight regex extraction pulls out source, alt text, and title.
+- `src/imageSyntaxParser.ts` owns the lightweight regex extraction that pulls source, alt text, and title from syntax-tree-validated image nodes.
 - Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
 - `src/cursorDetection.ts` is the thin plugin-side wrapper around these content script commands.
 
 ### Resize Pipeline
 
-- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion.
+- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns external-image timeout and fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion.
 - `src/dialogHandler.ts` builds and runs the resize dialog.
 - `src/dialogLock.ts` prevents overlapping dialogs.
 - `src/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output.
@@ -38,11 +38,11 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 ### Shared Utilities
 
-- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement logic.
+- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement logic and the resource-loading timeout used by both execution contexts.
 - `src/utils/resourceUtils.ts` handles resource-specific helpers.
 - `src/utils/stringUtils.ts` handles HTML entity decoding and output escaping.
 - `src/utils/toastUtils.ts` centralizes toast messaging.
-- `src/logger.ts`, `src/constants.ts`, and `src/types.ts` provide logging, shared constants, and core types.
+- `src/logger.ts` and `src/types.ts` provide logging and core types.
 
 ## Detection Model
 
@@ -83,6 +83,7 @@ The project is organized around a few boundaries:
 
 - Editor-specific logic lives in the content script.
 - Plugin orchestration stays in the main plugin context.
+- Image syntax extraction lives in a pure parser module shared with its tests.
 - Syntax generation is separate from detection.
 - Platform-specific dimension lookup is isolated behind a shared calculator.
 

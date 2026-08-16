@@ -13,10 +13,14 @@ vi.mock('../src/utils/resourceUtils', () => ({
     validateResourceId: vi.fn((id: string) => /^[a-f0-9]{32}$/i.test(id)),
 }));
 
-vi.mock('../src/utils/imageDimensionUtils', () => ({
-    measureBlobImageDimensions: vi.fn(),
-    measureImageDimensions: vi.fn(),
-}));
+vi.mock('../src/utils/imageDimensionUtils', async (importOriginal) => {
+    const actual = await importOriginal<typeof import('../src/utils/imageDimensionUtils')>();
+    return {
+        ...actual,
+        measureBlobImageDimensions: vi.fn(),
+        measureImageDimensions: vi.fn(),
+    };
+});
 
 const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
 const resourcePathMock = joplin.data.resourcePath as Mock;

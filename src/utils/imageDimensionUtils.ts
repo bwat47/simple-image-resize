@@ -8,6 +8,8 @@ export interface ImageDimensions {
     height: number;
 }
 
+export const RESOURCE_IMAGE_LOAD_TIMEOUT_MS = 5000;
+
 export interface MeasureImageOptions {
     timeoutMs: number;
     usePrivacySettings?: boolean; // For external URLs: sets crossOrigin and referrerPolicy

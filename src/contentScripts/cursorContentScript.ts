@@ -16,10 +16,9 @@ import { EditorView } from '@codemirror/view';
 import { Text } from '@codemirror/state';
 import type { CodeMirrorControl } from 'api/types';
 import type { EditorImageAtCursorResult, EditorPosition } from '../types';
-import { REGEX_PATTERNS, CONSTANTS } from '../constants';
-import { decodeHtmlEntities } from '../utils/stringUtils';
 import { logger } from '../logger';
-import { measureImageDimensions, ImageDimensions } from '../utils/imageDimensionUtils';
+import { extractImageDetails } from '../imageSyntaxParser';
+import { measureImageDimensions, ImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../utils/imageDimensionUtils';
 
 // Command names - exported for use by other modules
 export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
@@ -42,8 +41,6 @@ interface ImageNodeRange {
     from: number;
     to: number;
 }
-
-type ImageSourceInfo = Pick<EditorImageAtCursorResult, 'source' | 'sourceType'>;
 
 /**
  * Validates that range positions are logically correct (from <= to) and finite.
@@ -72,54 +69,6 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
     }
 
     return true;
-}
-
-function resolveImageSource(src: string): ImageSourceInfo {
-    const resourceMatch = src.match(REGEX_PATTERNS.RESOURCE_ID);
-    if (resourceMatch) return { source: resourceMatch[1], sourceType: 'resource' };
-
-    const urlMatch = src.match(REGEX_PATTERNS.EXTERNAL_URL);
-    if (urlMatch) return { source: urlMatch[1], sourceType: 'external' };
-
-    return { source: src, sourceType: 'external' };
-}
-
-/**
- * Extract details from a Markdown image using simplified regex.
- */
-function extractMarkdownDetails(imageText: string): Omit<EditorImageAtCursorResult, 'range'> | null {
-    const match = imageText.match(REGEX_PATTERNS.MARKDOWN_EXTRACT);
-    if (!match?.groups) return null;
-
-    const { altText, src, title } = match.groups;
-
-    return {
-        type: 'markdown',
-        syntax: imageText,
-        ...resolveImageSource(src),
-        altText: altText || '',
-        title: title || '',
-    };
-}
-
-/**
- * Extract details from HTML <img> tag using simplified regex.
- */
-function extractHtmlDetails(imageText: string): Omit<EditorImageAtCursorResult, 'range'> | null {
-    const srcMatch = imageText.match(REGEX_PATTERNS.HTML_SRC);
-    if (!srcMatch) return null;
-
-    const src = srcMatch[2]; // Group 2 contains the actual value (group 1 is the quote)
-    const altMatch = imageText.match(REGEX_PATTERNS.HTML_ALT);
-    const titleMatch = imageText.match(REGEX_PATTERNS.HTML_TITLE);
-
-    return {
-        type: 'html',
-        syntax: imageText,
-        ...resolveImageSource(src),
-        altText: altMatch ? decodeHtmlEntities(altMatch[2]) : '', // Group 2 contains the value
-        title: titleMatch ? decodeHtmlEntities(titleMatch[2]) : '', // Group 2 contains the value
-    };
 }
 
 /**
@@ -222,8 +171,7 @@ function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
 
         if (isCursorInImageActivationRange(lineTextBeforeImage, cursor, imageNode)) {
             const imageText = state.doc.sliceString(imageNode.from, imageNode.to);
-            const details =
-                imageNode.type === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);
+            const details = extractImageDetails(imageText, imageNode.type);
 
             if (details) {
                 // Convert absolute positions to line/ch format
@@ -382,7 +330,7 @@ export default function () {
                         }
 
                         return await measureImageDimensions(imagePath, {
-                            timeoutMs: CONSTANTS.RESOURCE_IMAGE_TIMEOUT_MS,
+                            timeoutMs: RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
                             usePrivacySettings: false,
                         });
                     } catch {
