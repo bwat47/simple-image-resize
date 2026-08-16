@@ -12,10 +12,9 @@
 import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import { showResizeDialog } from './dialogHandler';
-import { getOriginalImageDimensions } from './imageSizeCalculator';
+import { FALLBACK_IMAGE_DIMENSIONS, getOriginalImageDimensions } from './imageSizeCalculator';
 import { detectImageAtCursor } from './cursorDetection';
 import { ImageContext, EditorRange } from './types';
-import { CONSTANTS } from './constants';
 import { logger } from './logger';
 import { resizeDialogLock } from './dialogLock';
 import { settingsCache } from './settings';
@@ -52,12 +51,9 @@ async function detectAndPrepareImage() {
         logger.warn('Dimension fetch failed:', error);
 
         if (partialContext.sourceType === 'external') {
-            originalDimensions = {
-                width: CONSTANTS.DEFAULT_EXTERNAL_WIDTH,
-                height: CONSTANTS.DEFAULT_EXTERNAL_HEIGHT,
-            };
+            originalDimensions = { ...FALLBACK_IMAGE_DIMENSIONS };
             await showToast(
-                `Using default dimensions for external image (${CONSTANTS.DEFAULT_EXTERNAL_WIDTH}×${CONSTANTS.DEFAULT_EXTERNAL_HEIGHT}).`
+                `Using default dimensions for external image (${FALLBACK_IMAGE_DIMENSIONS.width}×${FALLBACK_IMAGE_DIMENSIONS.height}).`
             );
         } else {
             throw error;

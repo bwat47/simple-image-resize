@@ -1,10 +1,19 @@
 import joplin from 'api';
-import { CONSTANTS } from './constants';
 import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
 import { ImageDimensions } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
-import { measureBlobImageDimensions, measureImageDimensions } from './utils/imageDimensionUtils';
+import {
+    measureBlobImageDimensions,
+    measureImageDimensions,
+    EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
+    RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
+} from './utils/imageDimensionUtils';
+
+export const FALLBACK_IMAGE_DIMENSIONS = {
+    width: 400,
+    height: 300,
+} as const;
 
 //TODO: Look into simplifying image dimension retrieval if https://github.com/laurent22/joplin/issues/12099 is addressed
 
@@ -64,7 +73,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
         logger.debug(`Trying resource Blob for: ${resourceId}`);
         const blob = await getResourceBlob(resourceId);
         const blobResult = await measureBlobImageDimensions(blob, {
-            timeoutMs: CONSTANTS.RESOURCE_IMAGE_TIMEOUT_MS,
+            timeoutMs: RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
         });
         logger.debug(`Resource Blob returned dimensions: ${blobResult.width}x${blobResult.height}`);
         return blobResult;
@@ -74,10 +83,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
 
     // Strategy 3: Return default dimensions as last resort
     logger.warn(`All dimension strategies failed for resource ${resourceId}, using defaults`);
-    return {
-        width: CONSTANTS.DEFAULT_EXTERNAL_WIDTH,
-        height: CONSTANTS.DEFAULT_EXTERNAL_HEIGHT,
-    };
+    return { ...FALLBACK_IMAGE_DIMENSIONS };
 }
 
 /**
@@ -111,7 +117,7 @@ async function getExternalImageDimensions(url: string): Promise<ImageDimensions>
 
     try {
         return await measureImageDimensions(url, {
-            timeoutMs: CONSTANTS.EXTERNAL_IMAGE_TIMEOUT_MS,
+            timeoutMs: EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
             usePrivacySettings: true,
         });
     } catch (err: unknown) {
