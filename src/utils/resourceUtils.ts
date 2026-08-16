@@ -23,11 +23,47 @@ function copyByteValues(values: ArrayLike<unknown>): Uint8Array<ArrayBuffer> {
     return bytes;
 }
 
+function failUnknownFormat(shape: string): never {
+    logger.debug(`toUint8Array: Unknown data type: ${shape}`);
+    throw new Error(`Unknown resource data format: ${shape}`);
+}
+
+/**
+ * Reads the two shapes a Buffer arrives in from the web app: index properties
+ * carried on the object itself, or the Buffer#toJSON form with a nested array.
+ */
+function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<ArrayBuffer> {
+    // Buffer#toJSON form: { type: 'Buffer', data: [137, 80, ...] }. Checked before
+    // Object.keys(), which allocates a string per byte on the numeric-key form.
+    if (Array.isArray(object.data)) {
+        logger.debug(`toUint8Array: Received nested data array (${object.data.length} bytes)`);
+        return copyByteValues(object.data);
+    }
+
+    const keys = Object.keys(object);
+    const numericKeys = keys.filter((key) => /^\d+$/.test(key));
+    logger.debug(`toUint8Array: Object with ${keys.length} total keys, ${numericKeys.length} numeric keys`);
+
+    if (numericKeys.length === 0) {
+        failUnknownFormat(`object with keys [${keys.slice(0, 5).join(', ')}]`);
+    }
+
+    const bytes = new Uint8Array(numericKeys.length);
+    for (let index = 0; index < numericKeys.length; index++) {
+        if (!Object.prototype.hasOwnProperty.call(object, index)) {
+            throw new Error(`Sparse resource data at missing index ${index}`);
+        }
+        bytes[index] = validateByte(object[index], index);
+    }
+    return bytes;
+}
+
 /**
  * Normalizes the binary formats returned by Joplin into a byte array:
  * - Desktop: ArrayBuffer or an ArrayBuffer view
- * - Web app: Array or object with contiguous numeric keys (for example, {0: 137, 1: 80, ...}).
- *   Nonnumeric serialization metadata is ignored.
+ * - Web app: Array, or a Buffer in either of its two serialized forms - carrying
+ *   contiguous numeric keys ({0: 137, 1: 80, ...}, nonnumeric metadata ignored),
+ *   or the Buffer#toJSON form ({type: 'Buffer', data: [137, 80, ...]}).
  */
 function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
     if (data instanceof ArrayBuffer) {
@@ -47,25 +83,10 @@ function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
     }
 
     if (typeof data === 'object' && data !== null) {
-        const object = data as Record<string | number, unknown>;
-        const keys = Object.keys(object);
-        const numericKeys = keys.filter((key) => /^\d+$/.test(key));
-        logger.debug(`toUint8Array: Object with ${keys.length} total keys, ${numericKeys.length} numeric keys`);
-
-        if (numericKeys.length > 0) {
-            const bytes = new Uint8Array(numericKeys.length);
-            for (let index = 0; index < numericKeys.length; index++) {
-                if (!Object.prototype.hasOwnProperty.call(object, index)) {
-                    throw new Error(`Sparse resource data at missing index ${index}`);
-                }
-                bytes[index] = validateByte(object[index], index);
-            }
-            return bytes;
-        }
+        return bytesFromObject(data as Record<string | number, unknown>);
     }
 
-    logger.debug(`toUint8Array: Unknown data type: ${typeof data}`);
-    throw new Error(`Unknown resource data format: ${typeof data}`);
+    failUnknownFormat(typeof data);
 }
 
 /**

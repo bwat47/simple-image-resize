@@ -24,6 +24,7 @@ describe('getResourceBlob', () => {
         ['Buffer-compatible view', () => Buffer.from([137, 80, 78, 71])],
         ['number array', () => [137, 80, 78, 71]],
         ['numeric-key object', () => ({ 0: 137, 1: 80, 2: 78, 3: 71 })],
+        ['Buffer#toJSON object', () => ({ type: 'Buffer', data: [137, 80, 78, 71] })],
     ])('normalizes a %s response', async (_label, createData) => {
         mockResource(createData());
 
@@ -57,6 +58,12 @@ describe('getResourceBlob', () => {
         await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Sparse resource data at missing index 1');
     });
 
+    it('rejects invalid byte values inside a Buffer#toJSON data array', async () => {
+        mockResource({ type: 'Buffer', data: [256] });
+
+        await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Invalid byte value at index 0');
+    });
+
     it.each([[[256]], [[-1]], [[1.5]], [['1']]])('rejects invalid byte values in %j', async (data) => {
         mockResource(data);
 
@@ -73,6 +80,14 @@ describe('getResourceBlob', () => {
         mockResource('not binary data');
 
         await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Unknown resource data format: string');
+    });
+
+    it('names the keys of an unrecognized object so a format change is diagnosable', async () => {
+        mockResource({ payload: 'x', encoding: 'base64' });
+
+        await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow(
+            'Unknown resource data format: object with keys [payload, encoding]'
+        );
     });
 
     it('rejects missing resources', async () => {
