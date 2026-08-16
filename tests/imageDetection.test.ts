@@ -86,4 +86,8 @@ describe('Image Extraction Patterns', () => {
     test('returns null for non-image text', () => {
         expect(extractImageDetails('Some text without image', 'markdown')).toBeNull();
     });
+
+    test('returns null for html img without a src attribute', () => {
+        expect(extractImageDetails('<img alt="Sample" width="800" />', 'html')).toBeNull();
+    });
 });
