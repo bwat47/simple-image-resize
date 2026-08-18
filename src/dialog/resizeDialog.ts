@@ -4,6 +4,12 @@
 
 import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
 
+// Webpack emits extra scripts as CommonJS libraries, even though Joplin loads dialog scripts
+// in a browser context. Preserve any existing CommonJS global and provide a fallback so the
+// generated wrapper's final `exports.default` assignment does not throw.
+const dialogGlobal = globalThis as typeof globalThis & { exports?: Record<string, unknown> };
+dialogGlobal.exports ??= {};
+
 const SYNTAX_TYPES = {
     HTML: 'html',
     MARKDOWN: 'markdown',
