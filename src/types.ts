@@ -1,10 +1,14 @@
+export type ImageSyntax = 'markdown' | 'html';
+
+export type ResizeMode = 'percentage' | 'absolute';
+
 export interface ImageDimensions {
     width: number;
     height: number;
 }
 
 export interface ImageContext {
-    type: 'markdown' | 'html';
+    type: ImageSyntax;
     syntax: string;
     source: string; // Can be resourceId or external URL
     sourceType: 'resource' | 'external';
@@ -15,13 +19,20 @@ export interface ImageContext {
 }
 
 export interface ResizeDialogResult {
-    targetSyntax: 'markdown' | 'html';
+    targetSyntax: ImageSyntax;
     altText: string;
     // Resize options
-    resizeMode: 'percentage' | 'absolute';
+    resizeMode: ResizeMode;
     percentage?: number;
     absoluteWidth?: number;
     absoluteHeight?: number;
+}
+
+export interface ResizeDialogConfig {
+    defaultResizeMode: ResizeMode;
+    defaultPercentage: number;
+    originalWidth: number;
+    originalHeight: number;
 }
 
 // New types for cursor-based detection
@@ -36,7 +47,7 @@ export interface EditorRange {
 }
 
 export interface EditorImageAtCursorResult {
-    type: 'markdown' | 'html';
+    type: ImageSyntax;
     syntax: string;
     source: string;
     sourceType: 'resource' | 'external';

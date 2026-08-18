@@ -2,6 +2,8 @@
  * Dialog script for image resize functionality.
  */
 
+import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
+
 const SYNTAX_TYPES = {
     HTML: 'html',
     MARKDOWN: 'markdown',
@@ -12,22 +14,12 @@ const RESIZE_MODES = {
     ABSOLUTE: 'absolute',
 } as const;
 
-type SyntaxType = 'html' | 'markdown';
-type ResizeMode = 'percentage' | 'absolute';
-
-interface DialogConfig {
-    defaultResizeMode: ResizeMode;
-    defaultPercentage: number;
-    originalWidth: number;
-    originalHeight: number;
-}
-
 (() => {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root) return;
 
     // Parse configuration from single JSON attribute
-    const config: DialogConfig = JSON.parse(root.dataset.config || '{}');
+    const config: ResizeDialogConfig = JSON.parse(root.dataset.config || '{}');
 
     const form = document.forms.namedItem('resizeForm');
     if (!form) return;
@@ -53,7 +45,7 @@ interface DialogConfig {
     }
 
     const defaultResizeMode = config.defaultResizeMode || RESIZE_MODES.PERCENTAGE;
-    const initialSyntax: SyntaxType = SYNTAX_TYPES.HTML;
+    const initialSyntax: ImageSyntax = SYNTAX_TYPES.HTML;
     const defaultWidth = config.originalWidth ? String(config.originalWidth) : '';
     const defaultHeight = config.originalHeight ? String(config.originalHeight) : '';
     const originalWidthValue = Number.parseFloat(defaultWidth);
@@ -64,7 +56,7 @@ interface DialogConfig {
         originalWidthValue > 0 &&
         originalHeightValue > 0;
 
-    let currentSyntax: SyntaxType = initialSyntax;
+    let currentSyntax: ImageSyntax = initialSyntax;
     let currentResizeMode: ResizeMode = defaultResizeMode;
 
     const shouldSyncDimensions = (): boolean =>
@@ -167,7 +159,7 @@ interface DialogConfig {
         }
     };
 
-    const applySyntaxMode = (syntax: SyntaxType): void => {
+    const applySyntaxMode = (syntax: ImageSyntax): void => {
         currentSyntax = syntax;
         const htmlActive = syntax === SYNTAX_TYPES.HTML;
 
@@ -186,7 +178,7 @@ interface DialogConfig {
 
     syntaxRadios.forEach((radio) => {
         if (radio.value === initialSyntax) radio.checked = true;
-        radio.addEventListener('change', () => applySyntaxMode(radio.value as SyntaxType));
+        radio.addEventListener('change', () => applySyntaxMode(radio.value as ImageSyntax));
     });
 
     absoluteWidthInput.addEventListener('input', syncHeightFromWidth);

@@ -12,13 +12,14 @@ import joplin from 'api';
 import { SettingItem, SettingItemType } from 'api/types';
 import { logger } from './logger';
 import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
+import type { ResizeMode } from './types';
 
 const SECTION_ID = 'imageResize';
 
 const SETTINGS_CONFIG = {
     defaultResizeMode: {
         key: `${SECTION_ID}.defaultResizeMode`,
-        defaultValue: 'percentage' as 'percentage' | 'absolute',
+        defaultValue: 'percentage' as ResizeMode,
         type: SettingItemType.String,
         label: 'Default resize mode',
         description: 'The resize mode that will be selected by default when opening the resize dialog',
@@ -75,7 +76,7 @@ const SETTINGS_CONFIG = {
 } as const;
 
 export type SettingsCache = {
-    defaultResizeMode: 'percentage' | 'absolute';
+    defaultResizeMode: ResizeMode;
     defaultPercentage: number;
     htmlSyntaxStyle: 'widthAndHeight' | 'widthOnly';
     showQuickResizeInContextMenu: boolean;
