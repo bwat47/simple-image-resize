@@ -1,16 +1,14 @@
 /**
  * Dialog script for image resize functionality.
  *
- * This runs in Joplin's dialog webview, not in the plugin host, so only type-only imports
- * from plugin-side modules are safe here. A runtime import would bundle that module (and
- * anything it pulls in, such as the `api` module) into this script, where it would fail.
+ * This runs in Joplin's dialog webview, not in the plugin host.
+ * So runtime imports are only safe when the imported module is browser-compatible.
  */
 
 import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
 
-// Webpack emits extra scripts as CommonJS libraries, even though Joplin loads dialog scripts
-// in a browser context. Preserve any existing CommonJS global and provide a fallback so the
-// generated wrapper's final `exports.default` assignment does not throw.
+// The generated bundle ends with `exports.default = ...`, but Joplin executes
+// dialog scripts as browser scripts without providing `exports`.
 const dialogGlobal = globalThis as typeof globalThis & { exports?: Record<string, unknown> };
 dialogGlobal.exports ??= {};
 
