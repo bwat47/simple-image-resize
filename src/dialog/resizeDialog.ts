@@ -1,5 +1,9 @@
 /**
  * Dialog script for image resize functionality.
+ *
+ * This runs in Joplin's dialog webview, not in the plugin host, so only type-only imports
+ * from plugin-side modules are safe here. A runtime import would bundle that module (and
+ * anything it pulls in, such as the `api` module) into this script, where it would fail.
  */
 
 import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
