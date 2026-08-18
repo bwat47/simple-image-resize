@@ -26,8 +26,12 @@ const RESIZE_MODES = {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root) return;
 
-    // Parse configuration from single JSON attribute
-    const config: ResizeDialogConfig = JSON.parse(root.dataset.config || '{}');
+    // Parse configuration from single JSON attribute. The plugin host always writes
+    // this attribute before opening the dialog, so a missing value means there is no
+    // dialog to wire up; past that point the payload is a trusted internal contract.
+    const rawConfig = root.dataset.config;
+    if (!rawConfig) return;
+    const config: ResizeDialogConfig = JSON.parse(rawConfig);
 
     const form = document.forms.namedItem('resizeForm');
     if (!form) return;
@@ -52,26 +56,21 @@ const RESIZE_MODES = {
         return;
     }
 
-    const defaultResizeMode = config.defaultResizeMode || RESIZE_MODES.PERCENTAGE;
+    const defaultResizeMode = config.defaultResizeMode;
     const initialSyntax: ImageSyntax = SYNTAX_TYPES.HTML;
-    const defaultWidth = config.originalWidth ? String(config.originalWidth) : '';
-    const defaultHeight = config.originalHeight ? String(config.originalHeight) : '';
-    const originalWidthValue = Number.parseFloat(defaultWidth);
-    const originalHeightValue = Number.parseFloat(defaultHeight);
-    const hasOriginalDimensions =
-        Number.isFinite(originalWidthValue) &&
-        Number.isFinite(originalHeightValue) &&
-        originalWidthValue > 0 &&
-        originalHeightValue > 0;
+    const originalWidthValue = config.originalWidth;
+    const originalHeightValue = config.originalHeight;
+    const defaultWidth = String(originalWidthValue);
+    const defaultHeight = String(originalHeightValue);
 
     let currentSyntax: ImageSyntax = initialSyntax;
     let currentResizeMode: ResizeMode = defaultResizeMode;
 
     const shouldSyncDimensions = (): boolean =>
-        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.ABSOLUTE && hasOriginalDimensions;
+        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.ABSOLUTE;
 
     const shouldPreviewPercentage = (): boolean =>
-        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.PERCENTAGE && hasOriginalDimensions;
+        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.PERCENTAGE;
 
     /**
      * Syncs target dimension from source dimension while preserving aspect ratio.
@@ -158,8 +157,8 @@ const RESIZE_MODES = {
         }
 
         if (htmlActive && !isPercentage) {
-            if (!absoluteWidthInput.value && defaultWidth) absoluteWidthInput.value = defaultWidth;
-            if (!absoluteHeightInput.value && defaultHeight) absoluteHeightInput.value = defaultHeight;
+            if (!absoluteWidthInput.value) absoluteWidthInput.value = defaultWidth;
+            if (!absoluteHeightInput.value) absoluteHeightInput.value = defaultHeight;
         }
 
         if (htmlActive && isPercentage) {
