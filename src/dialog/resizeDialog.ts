@@ -12,16 +12,6 @@ import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
 const dialogGlobal = globalThis as typeof globalThis & { exports?: Record<string, unknown> };
 dialogGlobal.exports ??= {};
 
-const SYNTAX_TYPES = {
-    HTML: 'html',
-    MARKDOWN: 'markdown',
-} as const;
-
-const RESIZE_MODES = {
-    PERCENTAGE: 'percentage',
-    ABSOLUTE: 'absolute',
-} as const;
-
 (() => {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root) return;
@@ -57,7 +47,7 @@ const RESIZE_MODES = {
     }
 
     const defaultResizeMode = config.defaultResizeMode;
-    const initialSyntax: ImageSyntax = SYNTAX_TYPES.HTML;
+    const initialSyntax: ImageSyntax = 'html';
     const originalWidthValue = config.originalWidth;
     const originalHeightValue = config.originalHeight;
     const defaultWidth = String(originalWidthValue);
@@ -66,11 +56,9 @@ const RESIZE_MODES = {
     let currentSyntax: ImageSyntax = initialSyntax;
     let currentResizeMode: ResizeMode = defaultResizeMode;
 
-    const shouldSyncDimensions = (): boolean =>
-        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.ABSOLUTE;
+    const shouldSyncDimensions = (): boolean => currentSyntax === 'html' && currentResizeMode === 'absolute';
 
-    const shouldPreviewPercentage = (): boolean =>
-        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.PERCENTAGE;
+    const shouldPreviewPercentage = (): boolean => currentSyntax === 'html' && currentResizeMode === 'percentage';
 
     /**
      * Syncs target dimension from source dimension while preserving aspect ratio.
@@ -143,8 +131,8 @@ const RESIZE_MODES = {
 
     const applyResizeMode = (mode: ResizeMode): void => {
         currentResizeMode = mode;
-        const htmlActive = currentSyntax === SYNTAX_TYPES.HTML;
-        const isPercentage = mode === RESIZE_MODES.PERCENTAGE;
+        const htmlActive = currentSyntax === 'html';
+        const isPercentage = mode === 'percentage';
 
         const percentageDisabled = !htmlActive || !isPercentage;
         const absoluteDisabled = !htmlActive || isPercentage;
@@ -168,7 +156,7 @@ const RESIZE_MODES = {
 
     const applySyntaxMode = (syntax: ImageSyntax): void => {
         currentSyntax = syntax;
-        const htmlActive = syntax === SYNTAX_TYPES.HTML;
+        const htmlActive = syntax === 'html';
 
         resizeFieldset.classList.toggle('is-locked', !htmlActive);
 
@@ -176,8 +164,8 @@ const RESIZE_MODES = {
             setRowDisabled(percentageRow, true);
             setRowDisabled(absoluteGroup, true);
         } else {
-            setRowDisabled(percentageRow, currentResizeMode !== RESIZE_MODES.PERCENTAGE);
-            setRowDisabled(absoluteGroup, currentResizeMode === RESIZE_MODES.PERCENTAGE);
+            setRowDisabled(percentageRow, currentResizeMode !== 'percentage');
+            setRowDisabled(absoluteGroup, currentResizeMode === 'percentage');
         }
 
         applyResizeMode(currentResizeMode);
