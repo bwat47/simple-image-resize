@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { ImageContext, ResizeDialogResult } from './types';
+import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from './types';
 import { escapeHtmlAttribute } from './utils/stringUtils';
 import { settingsCache } from './settings';
 
@@ -7,10 +7,7 @@ import { settingsCache } from './settings';
  * Calculates the initial state for the dialog based on default syntax and resize mode.
  * Centralizes all state calculation logic to avoid duplication and improve maintainability.
  */
-export function getInitialDialogState(
-    defaultSyntax: 'html' | 'markdown',
-    defaultResizeMode: 'percentage' | 'absolute'
-) {
+export function getInitialDialogState(defaultSyntax: ImageSyntax, defaultResizeMode: ResizeMode) {
     const htmlSyntaxSelected = defaultSyntax === 'html';
     const percentageModeDefault = defaultResizeMode === 'percentage';
     const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
@@ -41,7 +38,7 @@ export function getInitialDialogState(
  */
 export async function showResizeDialog(
     context: ImageContext,
-    defaultResizeMode: 'percentage' | 'absolute' = 'percentage'
+    defaultResizeMode: ResizeMode = 'percentage'
 ): Promise<ResizeDialogResult | null> {
     // We create a new dialog instance for each call to ensure a clean and predictable state.
     const dialogHandle = await joplin.views.dialogs.create(`imageResizeDialog_${Date.now()}`);
@@ -51,7 +48,7 @@ export async function showResizeDialog(
 
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
-    const defaultSyntax: 'html' | 'markdown' = 'html';
+    const defaultSyntax: ImageSyntax = 'html';
     const defaultPercentage = settingsCache.defaultPercentage;
 
     const {
@@ -67,7 +64,7 @@ export async function showResizeDialog(
     } = getInitialDialogState(defaultSyntax, defaultResizeMode);
 
     // Dialog configuration passed as single JSON attribute for cleaner extensibility
-    const dialogConfig = {
+    const dialogConfig: ResizeDialogConfig = {
         defaultResizeMode,
         defaultPercentage,
         originalWidth,
@@ -158,9 +155,9 @@ export async function showResizeDialog(
         if (!form) {
             return null;
         }
-        const targetSyntax = (form.targetSyntax as 'markdown' | 'html') || 'html';
+        const targetSyntax = (form.targetSyntax as ImageSyntax) || 'html';
         const altText = typeof form.altText === 'string' ? form.altText : '';
-        const resizeMode = (form.resizeMode as 'percentage' | 'absolute') || 'percentage';
+        const resizeMode = (form.resizeMode as ResizeMode) || 'percentage';
 
         return {
             targetSyntax,

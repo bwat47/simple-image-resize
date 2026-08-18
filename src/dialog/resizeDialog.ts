@@ -1,41 +1,27 @@
 /**
  * Dialog script for image resize functionality.
  *
- * This TypeScript file is compiled to JavaScript during the build process.
- * The compiled .js file is auto-generated - do not edit it directly.
- *
- * To make changes: Edit this .ts file and run `npm run dist` or `npm run compile:dialog`
- *
- * Dialog-specific values are inlined because this script runs in a plain browser context
- * without module support.
+ * This runs in Joplin's dialog webview, not in the plugin host.
+ * So runtime imports are only safe when the imported module is browser-compatible.
  */
 
-const SYNTAX_TYPES = {
-    HTML: 'html',
-    MARKDOWN: 'markdown',
-} as const;
+import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
 
-const RESIZE_MODES = {
-    PERCENTAGE: 'percentage',
-    ABSOLUTE: 'absolute',
-} as const;
-
-type SyntaxType = 'html' | 'markdown';
-type ResizeMode = 'percentage' | 'absolute';
-
-interface DialogConfig {
-    defaultResizeMode: ResizeMode;
-    defaultPercentage: number;
-    originalWidth: number;
-    originalHeight: number;
-}
+// The generated bundle ends with `exports.default = ...`, but Joplin executes
+// dialog scripts as browser scripts without providing `exports`.
+const dialogGlobal = globalThis as typeof globalThis & { exports?: Record<string, unknown> };
+dialogGlobal.exports ??= {};
 
 (() => {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root) return;
 
-    // Parse configuration from single JSON attribute
-    const config: DialogConfig = JSON.parse(root.dataset.config || '{}');
+    // Parse configuration from single JSON attribute. The plugin host always writes
+    // this attribute before opening the dialog, so a missing value means there is no
+    // dialog to wire up; past that point the payload is a trusted internal contract.
+    const rawConfig = root.dataset.config;
+    if (!rawConfig) return;
+    const config: ResizeDialogConfig = JSON.parse(rawConfig);
 
     const form = document.forms.namedItem('resizeForm');
     if (!form) return;
@@ -60,26 +46,19 @@ interface DialogConfig {
         return;
     }
 
-    const defaultResizeMode = config.defaultResizeMode || RESIZE_MODES.PERCENTAGE;
-    const initialSyntax: SyntaxType = SYNTAX_TYPES.HTML;
-    const defaultWidth = config.originalWidth ? String(config.originalWidth) : '';
-    const defaultHeight = config.originalHeight ? String(config.originalHeight) : '';
-    const originalWidthValue = Number.parseFloat(defaultWidth);
-    const originalHeightValue = Number.parseFloat(defaultHeight);
-    const hasOriginalDimensions =
-        Number.isFinite(originalWidthValue) &&
-        Number.isFinite(originalHeightValue) &&
-        originalWidthValue > 0 &&
-        originalHeightValue > 0;
+    const defaultResizeMode = config.defaultResizeMode;
+    const initialSyntax: ImageSyntax = 'html';
+    const originalWidthValue = config.originalWidth;
+    const originalHeightValue = config.originalHeight;
+    const defaultWidth = String(originalWidthValue);
+    const defaultHeight = String(originalHeightValue);
 
-    let currentSyntax: SyntaxType = initialSyntax;
+    let currentSyntax: ImageSyntax = initialSyntax;
     let currentResizeMode: ResizeMode = defaultResizeMode;
 
-    const shouldSyncDimensions = (): boolean =>
-        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.ABSOLUTE && hasOriginalDimensions;
+    const shouldSyncDimensions = (): boolean => currentSyntax === 'html' && currentResizeMode === 'absolute';
 
-    const shouldPreviewPercentage = (): boolean =>
-        currentSyntax === SYNTAX_TYPES.HTML && currentResizeMode === RESIZE_MODES.PERCENTAGE && hasOriginalDimensions;
+    const shouldPreviewPercentage = (): boolean => currentSyntax === 'html' && currentResizeMode === 'percentage';
 
     /**
      * Syncs target dimension from source dimension while preserving aspect ratio.
@@ -152,8 +131,8 @@ interface DialogConfig {
 
     const applyResizeMode = (mode: ResizeMode): void => {
         currentResizeMode = mode;
-        const htmlActive = currentSyntax === SYNTAX_TYPES.HTML;
-        const isPercentage = mode === RESIZE_MODES.PERCENTAGE;
+        const htmlActive = currentSyntax === 'html';
+        const isPercentage = mode === 'percentage';
 
         const percentageDisabled = !htmlActive || !isPercentage;
         const absoluteDisabled = !htmlActive || isPercentage;
@@ -166,8 +145,8 @@ interface DialogConfig {
         }
 
         if (htmlActive && !isPercentage) {
-            if (!absoluteWidthInput.value && defaultWidth) absoluteWidthInput.value = defaultWidth;
-            if (!absoluteHeightInput.value && defaultHeight) absoluteHeightInput.value = defaultHeight;
+            if (!absoluteWidthInput.value) absoluteWidthInput.value = defaultWidth;
+            if (!absoluteHeightInput.value) absoluteHeightInput.value = defaultHeight;
         }
 
         if (htmlActive && isPercentage) {
@@ -175,9 +154,9 @@ interface DialogConfig {
         }
     };
 
-    const applySyntaxMode = (syntax: SyntaxType): void => {
+    const applySyntaxMode = (syntax: ImageSyntax): void => {
         currentSyntax = syntax;
-        const htmlActive = syntax === SYNTAX_TYPES.HTML;
+        const htmlActive = syntax === 'html';
 
         resizeFieldset.classList.toggle('is-locked', !htmlActive);
 
@@ -185,8 +164,8 @@ interface DialogConfig {
             setRowDisabled(percentageRow, true);
             setRowDisabled(absoluteGroup, true);
         } else {
-            setRowDisabled(percentageRow, currentResizeMode !== RESIZE_MODES.PERCENTAGE);
-            setRowDisabled(absoluteGroup, currentResizeMode === RESIZE_MODES.PERCENTAGE);
+            setRowDisabled(percentageRow, currentResizeMode !== 'percentage');
+            setRowDisabled(absoluteGroup, currentResizeMode === 'percentage');
         }
 
         applyResizeMode(currentResizeMode);
@@ -194,7 +173,7 @@ interface DialogConfig {
 
     syntaxRadios.forEach((radio) => {
         if (radio.value === initialSyntax) radio.checked = true;
-        radio.addEventListener('change', () => applySyntaxMode(radio.value as SyntaxType));
+        radio.addEventListener('change', () => applySyntaxMode(radio.value as ImageSyntax));
     });
 
     absoluteWidthInput.addEventListener('input', syncHeightFromWidth);
