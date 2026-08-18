@@ -1,13 +1,5 @@
 /**
  * Dialog script for image resize functionality.
- *
- * This TypeScript file is compiled to JavaScript during the build process.
- * The compiled .js file is auto-generated - do not edit it directly.
- *
- * To make changes: Edit this .ts file and run `npm run dist` or `npm run compile:dialog`
- *
- * Dialog-specific values are inlined because this script runs in a plain browser context
- * without module support.
  */
 
 const SYNTAX_TYPES = {
