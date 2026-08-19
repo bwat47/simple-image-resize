@@ -13,7 +13,7 @@
 
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
-import { Text } from '@codemirror/state';
+import { EditorState, Text } from '@codemirror/state';
 import type { CodeMirrorControl } from 'api/types';
 import type { EditorImageAtCursorResult, EditorPosition, ImageDimensions, ImageSyntax } from '../types';
 import { logger } from '../logger';
@@ -29,14 +29,14 @@ export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditor
 // Time window to consider a context menu event as originating from the editor (in milliseconds)
 const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
 
-interface ReplaceRangeArgs {
+export interface ReplaceRangeArgs {
     text: string;
     from: EditorPosition;
     to: EditorPosition;
     expectedText: string;
 }
 
-interface ImageNodeRange {
+export interface ImageNodeRange {
     type: ImageSyntax;
     from: number;
     to: number;
@@ -80,8 +80,7 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
  * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
  * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
  */
-function findImagesOnLine(view: EditorView): ImageNodeRange[] {
-    const state = view.state;
+export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
     const cursor = state.selection.main.head;
     const currentLine = state.doc.lineAt(cursor);
     const images: ImageNodeRange[] = [];
@@ -159,10 +158,9 @@ export function isCursorInImageActivationRange(
  * Get the image at cursor position using syntax tree.
  * This is the main detection function that replaces regex-based detection.
  */
-function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
-    const state = view.state;
+export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult | null {
     const cursor = state.selection.main.head;
-    const images = findImagesOnLine(view);
+    const images = findImagesOnLine(state);
 
     // Find the image that contains the cursor
     for (const imageNode of images) {
@@ -203,12 +201,79 @@ function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
  * CM6 doc.line() expects 1-indexed line numbers, so we convert
  * from our 0-indexed EditorPosition before calling it.
  */
-function posToOffset(doc: Text, pos: EditorPosition): number {
+export function posToOffset(doc: Text, pos: EditorPosition): number {
     // CM6 line() uses 1-indexed line numbers
     const lineNum = Math.max(1, Math.min(pos.line + 1, doc.lines));
     const lineInfo = doc.line(lineNum);
     const ch = Math.max(0, Math.min(pos.ch, lineInfo.to - lineInfo.from));
     return lineInfo.from + ch;
+}
+
+/**
+ * Normalize the arguments accepted by REPLACE_RANGE_COMMAND.
+ * Joplin passes command arguments either positionally as
+ * (text, from, to, expectedText) or as a single options object.
+ * @returns the normalized arguments, or null if the shape is unusable
+ */
+export function parseReplaceRangeArgs(args: unknown[]): ReplaceRangeArgs | null {
+    if (args.length === 4) {
+        // Called as (text, from, to, expectedText)
+        return {
+            text: args[0] as string,
+            from: args[1] as EditorPosition,
+            to: args[2] as EditorPosition,
+            expectedText: args[3] as string,
+        };
+    }
+
+    if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
+        // Called as ({ text, from, to, expectedText })
+        return args[0] as ReplaceRangeArgs;
+    }
+
+    logger.error('REPLACE_RANGE_COMMAND: invalid arguments format - expectedText is required');
+    return null;
+}
+
+/**
+ * Resolve REPLACE_RANGE_COMMAND arguments into a CodeMirror change spec.
+ *
+ * Performs every check that guards the user's document: argument shape,
+ * position validity, and optimistic concurrency (the text still at the range
+ * must match what the caller saw when it detected the image).
+ *
+ * @returns the change to dispatch, or null if the replacement must be aborted
+ */
+export function resolveReplaceChange(doc: Text, args: unknown[]): { from: number; to: number; insert: string } | null {
+    const replaceArgs = parseReplaceRangeArgs(args);
+    if (!replaceArgs) {
+        return null;
+    }
+
+    // Validate arguments to prevent document corruption
+    if (!validateRangePositions(replaceArgs)) {
+        return null;
+    }
+
+    const { text, from, to, expectedText } = replaceArgs;
+
+    const fromOffset = posToOffset(doc, from);
+    const toOffset = posToOffset(doc, to);
+
+    // Optimistic concurrency control: Verify text hasn't changed
+    const currentText = doc.sliceString(fromOffset, toOffset);
+    if (currentText !== expectedText) {
+        logger.warn(
+            'replaceRange: Content changed since detection; aborting replacement.',
+            '\nExpected:',
+            expectedText,
+            '\nFound:',
+            currentText
+        );
+        return null;
+    }
+
+    return { from: fromOffset, to: toOffset, insert: text };
 }
 
 export default function () {
@@ -248,7 +313,7 @@ export default function () {
             // Command: Get image at cursor using syntax tree (primary method)
             editorControl.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
-                    return getImageAtCursor(view);
+                    return getImageAtCursor(view.state);
                 } catch (error) {
                     logger.error('getImageAtCursor failed:', error);
                     return null;
@@ -258,52 +323,12 @@ export default function () {
             // Command: Replace text in a range
             editorControl.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
                 try {
-                    // Args can come as [text, from, to, expectedText] or as a single object
-                    let replaceArgs: ReplaceRangeArgs;
-
-                    if (args.length === 4) {
-                        // Called as (text, from, to, expectedText)
-                        replaceArgs = {
-                            text: args[0] as string,
-                            from: args[1] as EditorPosition,
-                            to: args[2] as EditorPosition,
-                            expectedText: args[3] as string,
-                        };
-                    } else if (args.length === 1 && typeof args[0] === 'object') {
-                        // Called as ({ text, from, to, expectedText })
-                        replaceArgs = args[0] as ReplaceRangeArgs;
-                    } else {
-                        logger.error('REPLACE_RANGE_COMMAND: invalid arguments format - expectedText is required');
+                    const change = resolveReplaceChange(view.state.doc, args);
+                    if (!change) {
                         return false;
                     }
 
-                    // Validate arguments to prevent document corruption
-                    if (!validateRangePositions(replaceArgs)) {
-                        return false;
-                    }
-
-                    const { text, from, to, expectedText } = replaceArgs;
-                    const doc = view.state.doc;
-
-                    const fromOffset = posToOffset(doc, from);
-                    const toOffset = posToOffset(doc, to);
-
-                    // Optimistic concurrency control: Verify text hasn't changed
-                    const currentText = doc.sliceString(fromOffset, toOffset);
-                    if (currentText !== expectedText) {
-                        logger.warn(
-                            'replaceRange: Content changed since detection; aborting replacement.',
-                            '\nExpected:',
-                            expectedText,
-                            '\nFound:',
-                            currentText
-                        );
-                        return false;
-                    }
-
-                    view.dispatch({
-                        changes: { from: fromOffset, to: toOffset, insert: text },
-                    });
+                    view.dispatch({ changes: change });
 
                     return true;
                 } catch (err) {

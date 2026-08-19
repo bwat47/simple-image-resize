@@ -27,6 +27,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/imageSyntaxParser.ts` owns the lightweight regex extraction that pulls source, alt text, and title from syntax-tree-validated image nodes.
 - Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
 - `src/cursorDetection.ts` is the thin plugin-side wrapper around these content script commands.
+- The detection and document-mutation logic is split from the Joplin/CodeMirror wiring: `findImagesOnLine`, `getImageAtCursor`, `isCursorInImageActivationRange`, `posToOffset`, `parseReplaceRangeArgs`, and `resolveReplaceChange` are named exports that take an `EditorState` or `Text` instead of an `EditorView`. Only the registered command handlers in the default export need the view (for `dispatch` and DOM events). Tests build a real `EditorState` with `@codemirror/lang-markdown` and drive these directly.
 
 ### Resize Pipeline
 
@@ -84,6 +85,7 @@ The project is organized around a few boundaries:
 - Editor-specific logic lives in the content script.
 - Plugin orchestration stays in the main plugin context.
 - Image syntax extraction lives in a pure parser module shared with its tests.
+- Inside the content script, parsing and range resolution are view-independent functions; the view is only touched at the command boundary. That keeps the code that mutates a user's note unit-testable.
 - Syntax generation is separate from detection.
 - Platform-specific dimension lookup is isolated behind a shared calculator.
 
