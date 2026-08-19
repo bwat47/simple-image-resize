@@ -28,7 +28,9 @@ describe('initializeSettingsCache', () => {
             settingsValues.set(`imageResize.${settingName}`, value);
         }
 
-        (joplin.settings.value as Mock).mockImplementation(async (key: string) => settingsValues.get(key));
+        (joplin.settings.values as Mock).mockImplementation(async (keys: string[]) =>
+            Object.fromEntries(keys.map((key) => [key, settingsValues.get(key)]))
+        );
         (joplin.settings.onChange as Mock).mockImplementation(async (handler) => {
             onChangeHandler = handler;
         });
@@ -68,5 +70,35 @@ describe('initializeSettingsCache', () => {
 
         expect(settingsCache.quickResizeOptions).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
         expect(joplin.settings.setValue).not.toHaveBeenCalled();
+    });
+
+    it('stores valid setting values in the cache', async () => {
+        settingsValues.set(getSettingKey('defaultResizeMode'), 'absolute');
+        settingsValues.set(getSettingKey('defaultPercentage'), 25);
+        settingsValues.set(getSettingKey('htmlSyntaxStyle'), 'widthOnly');
+        settingsValues.set(getSettingKey('showToastMessages'), false);
+
+        await initializeSettingsCache();
+
+        expect(settingsCache.defaultResizeMode).toBe('absolute');
+        expect(settingsCache.defaultPercentage).toBe(25);
+        expect(settingsCache.htmlSyntaxStyle).toBe('widthOnly');
+        expect(settingsCache.showToastMessages).toBe(false);
+    });
+
+    it('falls back to defaults when stored values fail validation', async () => {
+        settingsValues.set(getSettingKey('defaultResizeMode'), 'sideways');
+        settingsValues.set(getSettingKey('defaultPercentage'), 5000);
+        settingsValues.set(getSettingKey('htmlSyntaxStyle'), undefined);
+        settingsValues.set(getSettingKey('showQuickResizeInContextMenu'), 'yes');
+        settingsValues.set(getSettingKey('showToastMessages'), 1);
+
+        await initializeSettingsCache();
+
+        expect(settingsCache.defaultResizeMode).toBe('percentage');
+        expect(settingsCache.defaultPercentage).toBe(50);
+        expect(settingsCache.htmlSyntaxStyle).toBe('widthAndHeight');
+        expect(settingsCache.showQuickResizeInContextMenu).toBe(false);
+        expect(settingsCache.showToastMessages).toBe(true);
     });
 });

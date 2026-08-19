@@ -97,30 +97,77 @@ export const settingsCache: SettingsCache = {
 };
 
 /**
- * Updates the settings cache by reading all values from Joplin settings
+ * Narrows a stored setting to one of its registered enum options.
+ *
+ * `options` comes straight from SETTINGS_CONFIG, so the accepted values can
+ * never drift from what the settings UI offers.
+ */
+function readEnum<T extends string>(value: unknown, options: Record<T, string>, fallback: T): T {
+    return typeof value === 'string' && value in options ? (value as T) : fallback;
+}
+
+function readBool(value: unknown, fallback: boolean): boolean {
+    return typeof value === 'boolean' ? value : fallback;
+}
+
+function readInt(value: unknown, fallback: number, min: number, max: number): number {
+    return typeof value === 'number' && Number.isInteger(value) && value >= min && value <= max ? value : fallback;
+}
+
+/**
+ * Updates the settings cache by reading all values from Joplin settings.
+ *
+ * Uses `settings.values()` rather than the deprecated `settings.value()`: it reads
+ * every key in one call, and it returns `unknown` instead of `any`, so each value
+ * has to be narrowed before it reaches the cache.
  */
 async function updateSettingsCache(): Promise<void> {
-    for (const [key, config] of Object.entries(SETTINGS_CONFIG)) {
-        const value = await joplin.settings.value(config.key);
+    const config = SETTINGS_CONFIG;
+    const raw = await joplin.settings.values(Object.values(config).map((setting) => setting.key));
 
-        if (key === 'quickResizeOptions') {
-            const rawValue = typeof value === 'string' ? value : '';
-            const normalizedValue = normalizeQuickResizeOptionsSetting(rawValue);
-            settingsCache.quickResizeOptions = normalizedValue;
+    const rawQuickResizeOptions = raw[config.quickResizeOptions.key];
+    const normalizedQuickResizeOptions = normalizeQuickResizeOptionsSetting(
+        typeof rawQuickResizeOptions === 'string' ? rawQuickResizeOptions : ''
+    );
 
-            if (normalizedValue !== value) {
-                // This setValue re-fires onChange, which re-runs updateSettingsCache.
-                // Normalization must stay idempotent so the second pass finds an
-                // already-normalized value and doesn't write again (infinite loop).
-                await joplin.settings.setValue(config.key, normalizedValue);
-                logger.info('Quick resize options setting normalized:', normalizedValue);
-            }
+    // Typing the literal as SettingsCache makes a forgotten setting a compile error,
+    // which a per-field assignment would not catch (the cache is pre-seeded with defaults).
+    const next: SettingsCache = {
+        defaultResizeMode: readEnum(
+            raw[config.defaultResizeMode.key],
+            config.defaultResizeMode.options,
+            config.defaultResizeMode.defaultValue
+        ),
+        defaultPercentage: readInt(
+            raw[config.defaultPercentage.key],
+            config.defaultPercentage.defaultValue,
+            config.defaultPercentage.minimum,
+            config.defaultPercentage.maximum
+        ),
+        htmlSyntaxStyle: readEnum(
+            raw[config.htmlSyntaxStyle.key],
+            config.htmlSyntaxStyle.options,
+            config.htmlSyntaxStyle.defaultValue
+        ),
+        showQuickResizeInContextMenu: readBool(
+            raw[config.showQuickResizeInContextMenu.key],
+            config.showQuickResizeInContextMenu.defaultValue
+        ),
+        quickResizeOptions: normalizedQuickResizeOptions,
+        showToastMessages: readBool(raw[config.showToastMessages.key], config.showToastMessages.defaultValue),
+    };
 
-            continue;
-        }
+    // Assign in place: other modules import settingsCache by reference.
+    Object.assign(settingsCache, next);
 
-        (settingsCache as Record<string, unknown>)[key] = value;
+    if (normalizedQuickResizeOptions !== rawQuickResizeOptions) {
+        // This setValue re-fires onChange, which re-runs updateSettingsCache.
+        // Normalization must stay idempotent so the second pass finds an
+        // already-normalized value and doesn't write again (infinite loop).
+        await joplin.settings.setValue(config.quickResizeOptions.key, normalizedQuickResizeOptions);
+        logger.info('Quick resize options setting normalized:', normalizedQuickResizeOptions);
     }
+
     logger.debug('Settings cache updated:', settingsCache);
 }
 
