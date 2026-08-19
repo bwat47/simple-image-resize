@@ -15,10 +15,10 @@ import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { Text } from '@codemirror/state';
 import type { CodeMirrorControl } from 'api/types';
-import type { EditorImageAtCursorResult, EditorPosition, ImageSyntax } from '../types';
+import type { EditorImageAtCursorResult, EditorPosition, ImageDimensions, ImageSyntax } from '../types';
 import { logger } from '../logger';
 import { extractImageDetails } from '../imageSyntaxParser';
-import { measureImageDimensions, ImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../utils/imageDimensionUtils';
+import { measureImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../utils/imageDimensionUtils';
 
 // Command names - exported for use by other modules
 export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
