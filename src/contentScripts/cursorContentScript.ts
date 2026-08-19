@@ -43,24 +43,30 @@ export interface ImageNodeRange {
 }
 
 /**
- * Validates that range positions are logically correct (from <= to) and finite.
- * Checks for NaN, Infinity, and -Infinity which TypeScript's type system permits
- * but would break document operations.
- * @returns true if valid, false otherwise
+ * Validate arguments received across the plugin/editor boundary before using
+ * them in document operations.
  */
-function validateRangePositions(args: ReplaceRangeArgs): boolean {
-    const { from, to } = args;
+function validateReplaceRangeArgs(args: ReplaceRangeArgs): boolean {
+    const isValidPosition = (position: unknown): position is EditorPosition => {
+        if (typeof position !== 'object' || position === null) {
+            return false;
+        }
 
-    // Validate all position values are finite numbers (not NaN, Infinity, or -Infinity)
+        const candidate = position as Partial<EditorPosition>;
+        return Number.isFinite(candidate.line) && Number.isFinite(candidate.ch);
+    };
+
     if (
-        !Number.isFinite(from.line) ||
-        !Number.isFinite(from.ch) ||
-        !Number.isFinite(to.line) ||
-        !Number.isFinite(to.ch)
+        typeof args.text !== 'string' ||
+        typeof args.expectedText !== 'string' ||
+        !isValidPosition(args.from) ||
+        !isValidPosition(args.to)
     ) {
-        logger.error('REPLACE_RANGE_COMMAND: position values must be finite numbers', { from, to });
+        logger.error('REPLACE_RANGE_COMMAND: invalid replacement arguments', args);
         return false;
     }
+
+    const { from, to } = args;
 
     // Validate from <= to
     if (from.line > to.line || (from.line === to.line && from.ch > to.ch)) {
@@ -210,52 +216,22 @@ export function posToOffset(doc: Text, pos: EditorPosition): number {
 }
 
 /**
- * Normalize the arguments accepted by REPLACE_RANGE_COMMAND.
- * Joplin passes command arguments either positionally as
- * (text, from, to, expectedText) or as a single options object.
- * @returns the normalized arguments, or null if the shape is unusable
- */
-export function parseReplaceRangeArgs(args: unknown[]): ReplaceRangeArgs | null {
-    if (args.length === 4) {
-        // Called as (text, from, to, expectedText)
-        return {
-            text: args[0] as string,
-            from: args[1] as EditorPosition,
-            to: args[2] as EditorPosition,
-            expectedText: args[3] as string,
-        };
-    }
-
-    if (args.length === 1 && typeof args[0] === 'object' && args[0] !== null) {
-        // Called as ({ text, from, to, expectedText })
-        return args[0] as ReplaceRangeArgs;
-    }
-
-    logger.error('REPLACE_RANGE_COMMAND: invalid arguments format - expectedText is required');
-    return null;
-}
-
-/**
- * Resolve REPLACE_RANGE_COMMAND arguments into a CodeMirror change spec.
+ * Resolve replacement arguments into a CodeMirror change spec.
  *
- * Performs every check that guards the user's document: argument shape,
- * position validity, and optimistic concurrency (the text still at the range
- * must match what the caller saw when it detected the image).
+ * Validates values received across the editor boundary and uses optimistic
+ * concurrency to ensure the text has not changed since image detection.
  *
  * @returns the change to dispatch, or null if the replacement must be aborted
  */
-export function resolveReplaceChange(doc: Text, args: unknown[]): { from: number; to: number; insert: string } | null {
-    const replaceArgs = parseReplaceRangeArgs(args);
-    if (!replaceArgs) {
+export function resolveReplaceChange(
+    doc: Text,
+    args: ReplaceRangeArgs
+): { from: number; to: number; insert: string } | null {
+    if (!validateReplaceRangeArgs(args)) {
         return null;
     }
 
-    // Validate arguments to prevent document corruption
-    if (!validateRangePositions(replaceArgs)) {
-        return null;
-    }
-
-    const { text, from, to, expectedText } = replaceArgs;
+    const { text, from, to, expectedText } = args;
 
     const fromOffset = posToOffset(doc, from);
     const toOffset = posToOffset(doc, to);
@@ -321,21 +297,24 @@ export default function () {
             });
 
             // Command: Replace text in a range
-            editorControl.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
-                try {
-                    const change = resolveReplaceChange(view.state.doc, args);
-                    if (!change) {
+            editorControl.registerCommand(
+                REPLACE_RANGE_COMMAND,
+                (text: string, from: EditorPosition, to: EditorPosition, expectedText: string): boolean => {
+                    try {
+                        const change = resolveReplaceChange(view.state.doc, { text, from, to, expectedText });
+                        if (!change) {
+                            return false;
+                        }
+
+                        view.dispatch({ changes: change });
+
+                        return true;
+                    } catch (err) {
+                        logger.error('REPLACE_RANGE_COMMAND: failed to replace text', err);
                         return false;
                     }
-
-                    view.dispatch({ changes: change });
-
-                    return true;
-                } catch (err) {
-                    logger.error('REPLACE_RANGE_COMMAND: failed to replace text', err);
-                    return false;
                 }
-            });
+            );
 
             // Command: Get image dimensions by loading it in the editor context
             // This runs inside the editor webview which has access to local files

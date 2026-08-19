@@ -4,7 +4,6 @@ import {
     findImagesOnLine,
     getImageAtCursor,
     isCursorInImageActivationRange,
-    parseReplaceRangeArgs,
     posToOffset,
     resolveReplaceChange,
 } from '../src/contentScripts/cursorContentScript';
@@ -238,68 +237,97 @@ describe('posToOffset', () => {
     });
 });
 
-describe('parseReplaceRangeArgs', () => {
-    const from: EditorPosition = { line: 0, ch: 0 };
-    const to: EditorPosition = { line: 0, ch: 5 };
-
-    test('accepts positional arguments', () => {
-        expect(parseReplaceRangeArgs(['new', from, to, 'old'])).toEqual({
-            text: 'new',
-            from,
-            to,
-            expectedText: 'old',
-        });
-    });
-
-    test('accepts a single options object', () => {
-        const args = { text: 'new', from, to, expectedText: 'old' };
-
-        expect(parseReplaceRangeArgs([args])).toEqual(args);
-    });
-
-    test('rejects unusable argument shapes', () => {
-        expect(parseReplaceRangeArgs([])).toBeNull();
-        expect(parseReplaceRangeArgs(['new', from, to])).toBeNull();
-        expect(parseReplaceRangeArgs(['new'])).toBeNull();
-        expect(parseReplaceRangeArgs([null])).toBeNull();
-        expect(parseReplaceRangeArgs(['new', from, to, 'old', 'extra'])).toBeNull();
-    });
-});
-
 describe('resolveReplaceChange', () => {
     const doc = Text.of(['hello world', 'second line']);
 
     test('resolves a change when the expected text still matches', () => {
-        const change = resolveReplaceChange(doc, ['HELLO', { line: 0, ch: 0 }, { line: 0, ch: 5 }, 'hello']);
+        const change = resolveReplaceChange(doc, {
+            text: 'HELLO',
+            from: { line: 0, ch: 0 },
+            to: { line: 0, ch: 5 },
+            expectedText: 'hello',
+        });
 
         expect(change).toEqual({ from: 0, to: 5, insert: 'HELLO' });
     });
 
     test('resolves a change spanning multiple lines', () => {
-        const change = resolveReplaceChange(doc, ['x', { line: 0, ch: 6 }, { line: 1, ch: 6 }, 'world\nsecond']);
+        const change = resolveReplaceChange(doc, {
+            text: 'x',
+            from: { line: 0, ch: 6 },
+            to: { line: 1, ch: 6 },
+            expectedText: 'world\nsecond',
+        });
 
         expect(change).toEqual({ from: 6, to: 18, insert: 'x' });
     });
 
     test('aborts when the document changed since detection', () => {
-        const change = resolveReplaceChange(doc, ['HELLO', { line: 0, ch: 0 }, { line: 0, ch: 5 }, 'stale']);
+        const change = resolveReplaceChange(doc, {
+            text: 'HELLO',
+            from: { line: 0, ch: 0 },
+            to: { line: 0, ch: 5 },
+            expectedText: 'stale',
+        });
 
         expect(change).toBeNull();
     });
 
-    test('aborts when arguments are malformed', () => {
-        expect(resolveReplaceChange(doc, ['HELLO'])).toBeNull();
+    test('aborts when values received across the editor boundary are malformed', () => {
+        expect(
+            resolveReplaceChange(doc, {
+                text: undefined as unknown as string,
+                from: null as unknown as EditorPosition,
+                to: { line: 0, ch: 5 },
+                expectedText: 'hello',
+            })
+        ).toBeNull();
     });
 
     test('aborts when from is after to', () => {
-        expect(resolveReplaceChange(doc, ['x', { line: 0, ch: 5 }, { line: 0, ch: 1 }, 'ello'])).toBeNull();
-        expect(resolveReplaceChange(doc, ['x', { line: 1, ch: 0 }, { line: 0, ch: 0 }, ''])).toBeNull();
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'x',
+                from: { line: 0, ch: 5 },
+                to: { line: 0, ch: 1 },
+                expectedText: 'ello',
+            })
+        ).toBeNull();
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'x',
+                from: { line: 1, ch: 0 },
+                to: { line: 0, ch: 0 },
+                expectedText: '',
+            })
+        ).toBeNull();
     });
 
     test('aborts on non-finite positions', () => {
-        expect(resolveReplaceChange(doc, ['x', { line: NaN, ch: 0 }, { line: 0, ch: 5 }, 'hello'])).toBeNull();
-        expect(resolveReplaceChange(doc, ['x', { line: 0, ch: 0 }, { line: Infinity, ch: 5 }, 'hello'])).toBeNull();
-        expect(resolveReplaceChange(doc, ['x', { line: 0, ch: -Infinity }, { line: 0, ch: 5 }, 'hello'])).toBeNull();
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'x',
+                from: { line: NaN, ch: 0 },
+                to: { line: 0, ch: 5 },
+                expectedText: 'hello',
+            })
+        ).toBeNull();
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'x',
+                from: { line: 0, ch: 0 },
+                to: { line: Infinity, ch: 5 },
+                expectedText: 'hello',
+            })
+        ).toBeNull();
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'x',
+                from: { line: 0, ch: -Infinity },
+                to: { line: 0, ch: 5 },
+                expectedText: 'hello',
+            })
+        ).toBeNull();
     });
 
     test('applies the resolved change to produce the expected document', () => {
@@ -307,12 +335,12 @@ describe('resolveReplaceChange', () => {
         const replacement = `<img src=":/${RESOURCE_ID}" width="100">`;
         const imageDoc = Text.of(['intro', source]);
 
-        const change = resolveReplaceChange(imageDoc, [
-            replacement,
-            { line: 1, ch: 0 },
-            { line: 1, ch: source.length },
-            source,
-        ]);
+        const change = resolveReplaceChange(imageDoc, {
+            text: replacement,
+            from: { line: 1, ch: 0 },
+            to: { line: 1, ch: source.length },
+            expectedText: source,
+        });
 
         const updated = EditorState.create({ doc: imageDoc }).update({ changes: change! }).state.doc.toString();
 
@@ -323,12 +351,12 @@ describe('resolveReplaceChange', () => {
         const state = stateWithCursor('Text <img src="a.png" wid|th="100"> more text');
         const detected = getImageAtCursor(state)!;
 
-        const change = resolveReplaceChange(state.doc, [
-            '<img src="a.png" width="200">',
-            detected.range.from,
-            detected.range.to,
-            detected.syntax,
-        ]);
+        const change = resolveReplaceChange(state.doc, {
+            text: '<img src="a.png" width="200">',
+            from: detected.range.from,
+            to: detected.range.to,
+            expectedText: detected.syntax,
+        });
 
         expect(state.update({ changes: change! }).state.doc.toString()).toBe(
             'Text <img src="a.png" width="200"> more text'
