@@ -87,9 +87,9 @@ describe('initializeSettingsCache', () => {
     });
 
     it('falls back to defaults when stored values fail validation', async () => {
-        settingsValues.set(getSettingKey('defaultResizeMode'), 'sideways');
+        settingsValues.set(getSettingKey('defaultResizeMode'), 'constructor');
         settingsValues.set(getSettingKey('defaultPercentage'), 5000);
-        settingsValues.set(getSettingKey('htmlSyntaxStyle'), undefined);
+        settingsValues.set(getSettingKey('htmlSyntaxStyle'), 'toString');
         settingsValues.set(getSettingKey('showQuickResizeInContextMenu'), 'yes');
         settingsValues.set(getSettingKey('showToastMessages'), 1);
 

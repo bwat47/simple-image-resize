@@ -103,7 +103,7 @@ export const settingsCache: SettingsCache = {
  * never drift from what the settings UI offers.
  */
 function readEnum<T extends string>(value: unknown, options: Record<T, string>, fallback: T): T {
-    return typeof value === 'string' && value in options ? (value as T) : fallback;
+    return typeof value === 'string' && Object.prototype.hasOwnProperty.call(options, value) ? (value as T) : fallback;
 }
 
 function readBool(value: unknown, fallback: boolean): boolean {
