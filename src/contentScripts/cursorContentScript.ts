@@ -248,12 +248,6 @@ export default function () {
             // Command: Get image at cursor using syntax tree (primary method)
             editorControl.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
-                    // Force view to sync/measure before reading cursor position
-                    // This works around a timing issue where the view might not
-                    // have synced with the cursor position update from the right-click event
-                    // See: https://codemirror.net/docs/ref/#view.EditorView.requestMeasure
-                    view.requestMeasure();
-
                     return getImageAtCursor(view);
                 } catch (error) {
                     logger.error('getImageAtCursor failed:', error);

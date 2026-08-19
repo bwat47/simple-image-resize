@@ -69,10 +69,6 @@ export function registerContextMenu(): void {
                 return contextMenu;
             }
 
-            // Small delay to work around timing issue where cursor position
-            // may not have updated yet when context menu filter is called
-            await new Promise((resolve) => setTimeout(resolve, 10));
-
             // Get image context directly from editor (pull architecture)
             // This is guaranteed to match the current cursor position
             const shouldShowResize = await isOnImageInMarkdownEditor();
