@@ -3,10 +3,7 @@
  * Used by both main plugin context and content script context.
  */
 
-export interface ImageDimensions {
-    width: number;
-    height: number;
-}
+import type { ImageDimensions } from '../types';
 
 export interface MeasureImageOptions {
     timeoutMs: number;
