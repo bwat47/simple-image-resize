@@ -8,7 +8,7 @@ export default {
         execute: vi.fn(),
     },
     settings: {
-        value: vi.fn().mockResolvedValue('widthAndHeight'),
+        values: vi.fn().mockResolvedValue({}),
         setValue: vi.fn().mockResolvedValue(undefined),
         onChange: vi.fn().mockResolvedValue(undefined),
         registerSection: vi.fn().mockResolvedValue(undefined),

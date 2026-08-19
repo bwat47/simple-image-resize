@@ -96,7 +96,7 @@ async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
         const { fullContext, replacementRange } = prepared;
 
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
-        const newSyntax = await buildNewSyntax(fullContext, resizeResult);
+        const newSyntax = buildNewSyntax(fullContext, resizeResult);
 
         await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
@@ -150,7 +150,7 @@ export async function registerCommands(): Promise<void> {
                 const result = await showResizeDialog(fullContext, defaultResizeMode);
 
                 if (result) {
-                    const newSyntax = await buildNewSyntax(fullContext, result);
+                    const newSyntax = buildNewSyntax(fullContext, result);
                     await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
                     await showToast('Image resized successfully!', ToastType.Success);
