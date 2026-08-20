@@ -12,7 +12,7 @@
 import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import { showResizeDialog } from './dialogHandler';
-import { FALLBACK_IMAGE_DIMENSIONS, getOriginalImageDimensions } from './imageSizeCalculator';
+import { getOriginalImageDimensions } from './imageSizeCalculator';
 import { detectImageAtCursor } from './cursorDetection';
 import { ImageContext, EditorRange } from './types';
 import { logger } from './logger';
@@ -46,22 +46,8 @@ async function detectAndPrepareImage() {
     // Get original dimensions
     logger.debug(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
-    let originalDimensions;
-    let originalDimensionsDetermined: boolean;
-    try {
-        const dimensionResult = await getOriginalImageDimensions(partialContext.source, partialContext.sourceType);
-        originalDimensions = dimensionResult.dimensions;
-        originalDimensionsDetermined = dimensionResult.determined;
-    } catch (error) {
-        logger.warn('Dimension fetch failed:', error);
-
-        if (partialContext.sourceType === 'external') {
-            originalDimensions = { ...FALLBACK_IMAGE_DIMENSIONS };
-            originalDimensionsDetermined = false;
-        } else {
-            throw error;
-        }
-    }
+    const { dimensions: originalDimensions, determined: originalDimensionsDetermined } =
+        await getOriginalImageDimensions(partialContext.source, partialContext.sourceType);
 
     const fullContext: ImageContext = { ...partialContext, originalDimensions, originalDimensionsDetermined };
     return { fullContext, replacementRange };

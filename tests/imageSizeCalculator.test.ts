@@ -81,7 +81,7 @@ describe('getOriginalImageDimensions', () => {
         expect(consoleWarnSpy).toHaveBeenCalledOnce();
     });
 
-    it('leaves external URL measurement unchanged', async () => {
+    it('returns measured dimensions for an external URL', async () => {
         measureImageMock.mockResolvedValue({ width: 320, height: 200 });
 
         await expect(getOriginalImageDimensions('https://example.com/image.png', 'external')).resolves.toEqual({
@@ -92,6 +92,33 @@ describe('getOriginalImageDimensions', () => {
             timeoutMs: 10000,
             useNoReferrer: true,
         });
+        expect(getResourceBlobMock).not.toHaveBeenCalled();
+    });
+
+    it('uses default dimensions when external URL measurement fails', async () => {
+        measureImageMock.mockRejectedValue(new Error('Image unavailable'));
+
+        await expect(getOriginalImageDimensions('https://example.com/missing.png', 'external')).resolves.toEqual({
+            dimensions: { width: 400, height: 300 },
+            determined: false,
+        });
+        expect(consoleWarnSpy).toHaveBeenCalledOnce();
+    });
+
+    it('uses default dimensions for a non-http(s) external source', async () => {
+        await expect(getOriginalImageDimensions('images/photo.png', 'external')).resolves.toEqual({
+            dimensions: { width: 400, height: 300 },
+            determined: false,
+        });
+        expect(measureImageMock).not.toHaveBeenCalled();
+        expect(consoleWarnSpy).toHaveBeenCalledOnce();
+    });
+
+    it('rejects an invalid resource ID instead of masking the validation error', async () => {
+        await expect(getOriginalImageDimensions('not-a-resource-id', 'resource')).rejects.toThrow(
+            'Invalid resource ID'
+        );
+        expect(resourcePathMock).not.toHaveBeenCalled();
         expect(getResourceBlobMock).not.toHaveBeenCalled();
     });
 });
