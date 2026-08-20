@@ -17,7 +17,7 @@ import { settingsCache } from './settings';
 export function getInitialDialogState(
     defaultSyntax: ImageSyntax,
     defaultResizeMode: ResizeMode,
-    originalDimensionsDetermined = true
+    originalDimensionsDetermined: boolean
 ): InitialDialogState {
     const htmlSyntaxSelected = defaultSyntax === 'html';
     const percentageModeDefault = originalDimensionsDetermined && defaultResizeMode === 'percentage';
