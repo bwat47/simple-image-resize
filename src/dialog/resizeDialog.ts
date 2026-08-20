@@ -51,7 +51,7 @@ dialogGlobal.exports ??= {};
     }
 
     const defaultResizeMode = config.defaultResizeMode;
-    const percentageAvailable = config.originalDimensionsDetermined;
+    const originalDimensionsDetermined = config.originalDimensionsDetermined;
     const initialSyntax: ImageSyntax = 'html';
     const originalWidthValue = config.originalWidth;
     const originalHeightValue = config.originalHeight;
@@ -62,7 +62,7 @@ dialogGlobal.exports ??= {};
     let currentResizeMode: ResizeMode = defaultResizeMode;
 
     const shouldSyncDimensions = (): boolean =>
-        config.originalDimensionsDetermined && currentSyntax === 'html' && currentResizeMode === 'absolute';
+        originalDimensionsDetermined && currentSyntax === 'html' && currentResizeMode === 'absolute';
 
     const shouldPreviewPercentage = (): boolean => currentSyntax === 'html' && currentResizeMode === 'percentage';
 
@@ -137,7 +137,7 @@ dialogGlobal.exports ??= {};
 
     const applyResizeMode = (mode: ResizeMode): void => {
         // Percentage resizing has nothing to scale from when the original size is unknown.
-        const effectiveMode: ResizeMode = mode === 'percentage' && !percentageAvailable ? 'absolute' : mode;
+        const effectiveMode: ResizeMode = mode === 'percentage' && !originalDimensionsDetermined ? 'absolute' : mode;
         currentResizeMode = effectiveMode;
         const htmlActive = currentSyntax === 'html';
         const isPercentage = effectiveMode === 'percentage';
@@ -145,10 +145,10 @@ dialogGlobal.exports ??= {};
         const percentageDisabled = !htmlActive || !isPercentage;
         const absoluteDisabled = !htmlActive || isPercentage;
 
-        setRowDisabled(percentageModeRow, !percentageAvailable);
+        setRowDisabled(percentageModeRow, !originalDimensionsDetermined);
         setRowDisabled(percentageRow, percentageDisabled);
         setRowDisabled(absoluteGroup, absoluteDisabled);
-        setRowDisabled(heightRow, absoluteDisabled || !config.originalDimensionsDetermined);
+        setRowDisabled(heightRow, absoluteDisabled || !originalDimensionsDetermined);
 
         if (htmlActive && isPercentage && !percentageInput.value) {
             percentageInput.value = String(config.defaultPercentage);
@@ -156,7 +156,7 @@ dialogGlobal.exports ??= {};
 
         if (htmlActive && !isPercentage) {
             if (!absoluteWidthInput.value) absoluteWidthInput.value = defaultWidth;
-            if (config.originalDimensionsDetermined && !absoluteHeightInput.value) {
+            if (originalDimensionsDetermined && !absoluteHeightInput.value) {
                 absoluteHeightInput.value = defaultHeight;
             }
         }
@@ -177,10 +177,10 @@ dialogGlobal.exports ??= {};
             setRowDisabled(absoluteGroup, true);
             setRowDisabled(heightRow, true);
         } else {
-            setRowDisabled(percentageModeRow, !percentageAvailable);
+            setRowDisabled(percentageModeRow, !originalDimensionsDetermined);
             setRowDisabled(percentageRow, currentResizeMode !== 'percentage');
             setRowDisabled(absoluteGroup, currentResizeMode === 'percentage');
-            setRowDisabled(heightRow, currentResizeMode === 'percentage' || !config.originalDimensionsDetermined);
+            setRowDisabled(heightRow, currentResizeMode === 'percentage' || !originalDimensionsDetermined);
         }
 
         applyResizeMode(currentResizeMode);
