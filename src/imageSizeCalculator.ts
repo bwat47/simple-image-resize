@@ -27,7 +27,7 @@ export const FALLBACK_IMAGE_DIMENSIONS = {
  * @param source - Resource ID (32-char hex) or external URL
  * @param sourceType - Whether source is a Joplin resource or external URL
  * @returns Image dimensions and whether they were successfully determined
- * @throws Error if the source is invalid
+ * @throws Error if the resource ID is invalid
  */
 export async function getOriginalImageDimensions(
     source: string,
@@ -38,7 +38,8 @@ export async function getOriginalImageDimensions(
     }
 
     if (!isValidHttpUrl(source)) {
-        throw new Error('Invalid external image URL');
+        logger.warn(`External source ${source} is not an http(s) URL, using defaults`);
+        return { dimensions: { ...FALLBACK_IMAGE_DIMENSIONS }, determined: false };
     }
 
     try {

@@ -105,11 +105,13 @@ describe('getOriginalImageDimensions', () => {
         expect(consoleWarnSpy).toHaveBeenCalledOnce();
     });
 
-    it('rejects an invalid external URL instead of masking the validation error', async () => {
-        await expect(getOriginalImageDimensions('not-a-url', 'external')).rejects.toThrow(
-            'Invalid external image URL'
-        );
+    it('uses default dimensions for a non-http(s) external source', async () => {
+        await expect(getOriginalImageDimensions('images/photo.png', 'external')).resolves.toEqual({
+            dimensions: { width: 400, height: 300 },
+            determined: false,
+        });
         expect(measureImageMock).not.toHaveBeenCalled();
+        expect(consoleWarnSpy).toHaveBeenCalledOnce();
     });
 
     it('rejects an invalid resource ID instead of masking the validation error', async () => {
