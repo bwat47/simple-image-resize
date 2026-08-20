@@ -96,6 +96,19 @@ export function buildQuickResizeResult(option: QuickResizeOption, altText: strin
     };
 }
 
+/**
+ * Percentage slots scale the image's original dimensions, so they produce a meaningless
+ * size when those dimensions could not be determined. The 100% slot is exempt: it converts
+ * the image to Markdown syntax and drops the explicit size instead of computing one.
+ */
+export function requiresOriginalDimensions(option: QuickResizeOption): boolean {
+    return option.kind === 'percentage' && option.value !== 100;
+}
+
+export function getQuickResizeSkippedMessage(option: QuickResizeOption): string {
+    return `Cannot resize to ${option.label}: the image's original dimensions are unknown. Use a pixel value such as 300px, or the resize dialog.`;
+}
+
 export function getQuickResizeSuccessMessage(option: QuickResizeOption): string {
     if (option.kind === 'percentage' && option.value === 100) {
         return 'Custom size removed - converted to Markdown syntax.';

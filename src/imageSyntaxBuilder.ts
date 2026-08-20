@@ -36,7 +36,8 @@ function buildHtmlSyntax(context: ImageContext, result: ResizeDialogResult, srcP
 
     // Guard against division by zero (edge case with malformed image dimensions)
     const newHeight = originalWidth > 0 ? Math.round(newWidth * (originalHeight / originalWidth)) : originalHeight;
-    const heightAttr = settingsCache.htmlSyntaxStyle === 'widthAndHeight' ? ` height="${newHeight}"` : '';
+    const includeHeight = settingsCache.htmlSyntaxStyle === 'widthAndHeight' && context.originalDimensionsDetermined;
+    const heightAttr = includeHeight ? ` height="${newHeight}"` : '';
     const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
     const safeAlt = escapeHtmlAttribute(result.altText);
 

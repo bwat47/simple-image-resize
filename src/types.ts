@@ -7,6 +7,11 @@ export interface ImageDimensions {
     height: number;
 }
 
+export interface OriginalImageDimensionsResult {
+    dimensions: ImageDimensions;
+    determined: boolean;
+}
+
 export interface ImageContext {
     type: ImageSyntax;
     syntax: string;
@@ -16,6 +21,7 @@ export interface ImageContext {
     title?: string;
     // The original, detected dimensions of the image
     originalDimensions: ImageDimensions;
+    originalDimensionsDetermined: boolean;
 }
 
 export interface ResizeDialogResult {
@@ -33,14 +39,17 @@ export interface ResizeDialogConfig {
     defaultPercentage: number;
     originalWidth: number;
     originalHeight: number;
+    originalDimensionsDetermined: boolean;
 }
 
 /** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
 export interface InitialDialogState {
     // CSS classes
     resizeFieldsetClass: string;
+    percentageModeRowClass: string;
     percentageRowClass: string;
     absoluteGroupClass: string;
+    heightRowClass: string;
     // HTML checked attributes
     htmlCheckedAttr: string;
     markdownCheckedAttr: string;
@@ -48,7 +57,9 @@ export interface InitialDialogState {
     absoluteModeCheckedAttr: string;
     // HTML disabled attributes
     percentageDisabledAttr: string;
+    percentageModeDisabledAttr: string;
     absoluteDisabledAttr: string;
+    heightDisabledAttr: string;
 }
 
 // New types for cursor-based detection

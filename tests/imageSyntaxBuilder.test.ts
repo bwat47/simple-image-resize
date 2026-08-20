@@ -20,6 +20,7 @@ describe('buildNewSyntax', () => {
         altText: 'Alt',
         title: undefined,
         originalDimensions: { width: 800, height: 600 },
+        originalDimensionsDetermined: true,
     };
 
     test('returns markdown syntax when targetSyntax=markdown', async () => {
@@ -84,6 +85,22 @@ describe('buildNewSyntax', () => {
             absoluteHeight: 240,
         };
         const syntax = buildNewSyntax(baseContext, result);
+        expect(syntax).toContain('width="320"');
+        expect(syntax).not.toContain('height=');
+    });
+
+    test('omits height when original dimensions could not be determined', async () => {
+        const context: ImageContext = { ...baseContext, originalDimensionsDetermined: false };
+        const result: ResizeDialogResult = {
+            targetSyntax: 'html',
+            altText: 'X',
+            resizeMode: 'absolute',
+            absoluteWidth: 320,
+            absoluteHeight: 240,
+        };
+
+        const syntax = buildNewSyntax(context, result);
+
         expect(syntax).toContain('width="320"');
         expect(syntax).not.toContain('height=');
     });
@@ -224,6 +241,7 @@ describe('buildNewSyntax', () => {
             sourceType: 'external',
             altText: 'Logo',
             originalDimensions: { width: 1024, height: 512 },
+            originalDimensionsDetermined: true,
         };
         const result: ResizeDialogResult = {
             targetSyntax: 'html',

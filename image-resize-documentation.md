@@ -31,7 +31,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 ### Resize Pipeline
 
-- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion.
+- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion. External images are loaded without a referrer and without requiring CORS, since only their intrinsic dimensions are read.
 - `src/dialogHandler.ts` builds and runs the resize dialog.
 - `src/dialogLock.ts` prevents overlapping dialogs.
 - `src/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output.
@@ -67,7 +67,8 @@ This keeps the user-facing behavior consistent without forcing the rest of the p
 ## Output Rules
 
 - Markdown output preserves standard Markdown image syntax and does not encode explicit size.
-- HTML output is used for resized images and can emit width only or width plus height, depending on settings.
+- HTML output is used for resized images and can emit width only or width plus height, depending on settings. When original dimensions cannot be determined, HTML output always emits width only so the browser can preserve the image's natural aspect ratio.
+- When original dimensions could not be determined, the resize dialog shows that status instead of the fallback dimensions, disables percentage resizing, selects absolute sizing, and disables the height field.
 - Alt text and title are preserved across conversions, with escaping rules handled centrally in the string utilities.
 
 ## Quick Resize Slots
@@ -75,6 +76,8 @@ This keeps the user-facing behavior consistent without forcing the rest of the p
 Quick resize options are configured through a comma-separated setting. Each option must be a positive whole-number percentage from `1%` through `500%` or a positive whole-number pixel width such as `300px`.
 
 The plugin supports one to five configured quick resize slots. The default slots are `100%, 75%, 50%, 33%, 25%`, mapped to `CmdOrCtrl+Shift+1` through `CmdOrCtrl+Shift+5`. The command IDs remain stable for compatibility, while each command reads the current setting at execution time. A `100%` slot converts the image back to Markdown syntax to remove custom sizing; other percentage and pixel slots emit HTML image syntax.
+
+Scaling percentage slots need the image's original dimensions, so they are skipped with an explanatory toast when those dimensions could not be determined. The `100%` slot and pixel slots stay available, since neither derives a size from the original dimensions.
 
 When settings load or change, recoverable quick resize setting errors are normalized before commands or menus use them. Invalid entries are dropped, entries beyond the five-slot limit are removed, valid entries are canonicalized, and an empty or fully invalid list is reset to the default slots.
 

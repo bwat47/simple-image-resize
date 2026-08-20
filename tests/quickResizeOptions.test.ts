@@ -1,8 +1,10 @@
 import {
     buildQuickResizeResult,
+    getQuickResizeSkippedMessage,
     normalizeQuickResizeOptionsSetting,
     parseQuickResizeOptions,
     QUICK_RESIZE_OPTIONS_DEFAULT,
+    requiresOriginalDimensions,
 } from '../src/quickResizeOptions';
 
 describe('parseQuickResizeOptions', () => {
@@ -99,5 +101,33 @@ describe('buildQuickResizeResult', () => {
             resizeMode: 'absolute',
             absoluteWidth: 300,
         });
+    });
+});
+
+describe('requiresOriginalDimensions', () => {
+    it('requires original dimensions for scaling percentages', () => {
+        const [seventyFive] = parseQuickResizeOptions('75%');
+
+        expect(requiresOriginalDimensions(seventyFive)).toBe(true);
+    });
+
+    it('does not require original dimensions for 100%, which converts to Markdown', () => {
+        const [hundred] = parseQuickResizeOptions('100%');
+
+        expect(requiresOriginalDimensions(hundred)).toBe(false);
+    });
+
+    it('does not require original dimensions for pixel values', () => {
+        const [pixels] = parseQuickResizeOptions('300px');
+
+        expect(requiresOriginalDimensions(pixels)).toBe(false);
+    });
+
+    it('names the skipped option and suggests an alternative', () => {
+        const [seventyFive] = parseQuickResizeOptions('75%');
+
+        expect(getQuickResizeSkippedMessage(seventyFive)).toBe(
+            "Cannot resize to 75%: the image's original dimensions are unknown. Use a pixel value such as 300px, or the resize dialog."
+        );
     });
 });

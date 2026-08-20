@@ -7,7 +7,7 @@ import {
 } from './contentScripts/cursorContentScript';
 
 interface CursorDetectionResult {
-    context: Omit<ImageContext, 'originalDimensions'>;
+    context: Omit<ImageContext, 'originalDimensions' | 'originalDimensionsDetermined'>;
     range: EditorRange;
 }
 

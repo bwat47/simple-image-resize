@@ -7,7 +7,7 @@ import type { ImageDimensions } from '../types';
 
 export interface MeasureImageOptions {
     timeoutMs: number;
-    usePrivacySettings?: boolean; // For external URLs: sets crossOrigin and referrerPolicy
+    useNoReferrer?: boolean;
 }
 
 /**
@@ -22,11 +22,11 @@ export const EXTERNAL_IMAGE_LOAD_TIMEOUT_MS = 10000;
  * Works with local file paths, file:// URLs, blob: object URLs, and external URLs.
  *
  * @param src - Image source (path or URL)
- * @param options - Configuration options for timeout and privacy settings
+ * @param options - Configuration options for timeout and referrer privacy
  * @returns Promise that resolves with dimensions or rejects on error
  */
 export async function measureImageDimensions(src: string, options: MeasureImageOptions): Promise<ImageDimensions> {
-    const { timeoutMs, usePrivacySettings = false } = options;
+    const { timeoutMs, useNoReferrer = false } = options;
 
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -52,9 +52,8 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
             reject(new Error('Failed to load image for dimension measurement.'));
         };
 
-        // Privacy-friendly defaults for external URLs to minimize tracking
-        if (usePrivacySettings) {
-            img.crossOrigin = 'anonymous';
+        // Avoid disclosing the note's origin when measuring external images.
+        if (useNoReferrer) {
             (img as unknown as { referrerPolicy?: string }).referrerPolicy = 'no-referrer';
         }
 

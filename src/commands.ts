@@ -22,9 +22,11 @@ import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast, ToastType } from './utils/toastUtils';
 import {
     buildQuickResizeResult,
+    getQuickResizeSkippedMessage,
     getQuickResizeSuccessMessage,
     parseQuickResizeOptions,
     QUICK_RESIZE_SLOTS,
+    requiresOriginalDimensions,
 } from './quickResizeOptions';
 
 /**
@@ -45,22 +47,23 @@ async function detectAndPrepareImage() {
     logger.debug(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
     let originalDimensions;
+    let originalDimensionsDetermined: boolean;
     try {
-        originalDimensions = await getOriginalImageDimensions(partialContext.source, partialContext.sourceType);
+        const dimensionResult = await getOriginalImageDimensions(partialContext.source, partialContext.sourceType);
+        originalDimensions = dimensionResult.dimensions;
+        originalDimensionsDetermined = dimensionResult.determined;
     } catch (error) {
         logger.warn('Dimension fetch failed:', error);
 
         if (partialContext.sourceType === 'external') {
             originalDimensions = { ...FALLBACK_IMAGE_DIMENSIONS };
-            await showToast(
-                `Using default dimensions for external image (${FALLBACK_IMAGE_DIMENSIONS.width}×${FALLBACK_IMAGE_DIMENSIONS.height}).`
-            );
+            originalDimensionsDetermined = false;
         } else {
             throw error;
         }
     }
 
-    const fullContext: ImageContext = { ...partialContext, originalDimensions };
+    const fullContext: ImageContext = { ...partialContext, originalDimensions, originalDimensionsDetermined };
     return { fullContext, replacementRange };
 }
 
@@ -94,6 +97,11 @@ async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
         if (!prepared) return;
 
         const { fullContext, replacementRange } = prepared;
+
+        if (requiresOriginalDimensions(option) && !fullContext.originalDimensionsDetermined) {
+            await showToast(getQuickResizeSkippedMessage(option), ToastType.Info);
+            return;
+        }
 
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
         const newSyntax = buildNewSyntax(fullContext, resizeResult);

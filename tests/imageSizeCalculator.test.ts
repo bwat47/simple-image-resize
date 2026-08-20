@@ -46,8 +46,8 @@ describe('getOriginalImageDimensions', () => {
         executeMock.mockResolvedValue({ width: 800, height: 600 });
 
         await expect(getOriginalImageDimensions(RESOURCE_ID, 'resource')).resolves.toEqual({
-            width: 800,
-            height: 600,
+            dimensions: { width: 800, height: 600 },
+            determined: true,
         });
         expect(executeMock).toHaveBeenCalledWith('editor.execCommand', {
             name: 'simpleImageResize-getImageDimensions',
@@ -64,8 +64,8 @@ describe('getOriginalImageDimensions', () => {
         measureBlobMock.mockResolvedValue({ width: 1024, height: 768 });
 
         await expect(getOriginalImageDimensions(RESOURCE_ID, 'resource')).resolves.toEqual({
-            width: 1024,
-            height: 768,
+            dimensions: { width: 1024, height: 768 },
+            determined: true,
         });
         expect(measureBlobMock).toHaveBeenCalledWith(blob, { timeoutMs: 5000 });
     });
@@ -75,8 +75,8 @@ describe('getOriginalImageDimensions', () => {
         getResourceBlobMock.mockRejectedValue(new Error('Bytes unavailable'));
 
         await expect(getOriginalImageDimensions(RESOURCE_ID, 'resource')).resolves.toEqual({
-            width: 400,
-            height: 300,
+            dimensions: { width: 400, height: 300 },
+            determined: false,
         });
         expect(consoleWarnSpy).toHaveBeenCalledOnce();
     });
@@ -85,12 +85,12 @@ describe('getOriginalImageDimensions', () => {
         measureImageMock.mockResolvedValue({ width: 320, height: 200 });
 
         await expect(getOriginalImageDimensions('https://example.com/image.png', 'external')).resolves.toEqual({
-            width: 320,
-            height: 200,
+            dimensions: { width: 320, height: 200 },
+            determined: true,
         });
         expect(measureImageMock).toHaveBeenCalledWith('https://example.com/image.png', {
             timeoutMs: 10000,
-            usePrivacySettings: true,
+            useNoReferrer: true,
         });
         expect(getResourceBlobMock).not.toHaveBeenCalled();
     });
