@@ -45,8 +45,11 @@ export interface ImageNodeRange {
 /**
  * Validate arguments received across the plugin/editor boundary before using
  * them in document operations.
+ *
+ * Takes `unknown` because these values cross a runtime boundary: the editor
+ * hands them over as plain data, so nothing has checked their shape yet.
  */
-function validateReplaceRangeArgs(args: ReplaceRangeArgs): boolean {
+function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
     const isValidPosition = (position: unknown): position is EditorPosition => {
         if (typeof position !== 'object' || position === null) {
             return false;
@@ -56,17 +59,20 @@ function validateReplaceRangeArgs(args: ReplaceRangeArgs): boolean {
         return Number.isFinite(candidate.line) && Number.isFinite(candidate.ch);
     };
 
+    // A non-object (null, undefined, a bare string) fails the field checks below.
+    const candidate = (typeof args === 'object' && args !== null ? args : {}) as Partial<ReplaceRangeArgs>;
+
     if (
-        typeof args.text !== 'string' ||
-        typeof args.expectedText !== 'string' ||
-        !isValidPosition(args.from) ||
-        !isValidPosition(args.to)
+        typeof candidate.text !== 'string' ||
+        typeof candidate.expectedText !== 'string' ||
+        !isValidPosition(candidate.from) ||
+        !isValidPosition(candidate.to)
     ) {
         logger.error('REPLACE_RANGE_COMMAND: invalid replacement arguments', args);
         return false;
     }
 
-    const { from, to } = args;
+    const { from, to } = candidate;
 
     // Validate from <= to
     if (from.line > to.line || (from.line === to.line && from.ch > to.ch)) {
@@ -223,11 +229,8 @@ export function posToOffset(doc: Text, pos: EditorPosition): number {
  *
  * @returns the change to dispatch, or null if the replacement must be aborted
  */
-export function resolveReplaceChange(
-    doc: Text,
-    args: ReplaceRangeArgs
-): { from: number; to: number; insert: string } | null {
-    if (!validateReplaceRangeArgs(args)) {
+export function resolveReplaceChange(doc: Text, args: unknown): { from: number; to: number; insert: string } | null {
+    if (!isValidReplaceRangeArgs(args)) {
         return null;
     }
 
@@ -299,7 +302,7 @@ export default function () {
             // Command: Replace text in a range
             editorControl.registerCommand(
                 REPLACE_RANGE_COMMAND,
-                (text: string, from: EditorPosition, to: EditorPosition, expectedText: string): boolean => {
+                (text: unknown, from: unknown, to: unknown, expectedText: unknown): boolean => {
                     try {
                         const change = resolveReplaceChange(view.state.doc, { text, from, to, expectedText });
                         if (!change) {

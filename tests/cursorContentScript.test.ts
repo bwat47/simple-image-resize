@@ -7,7 +7,6 @@ import {
     posToOffset,
     resolveReplaceChange,
 } from '../src/contentScripts/cursorContentScript';
-import type { EditorPosition } from '../src/types';
 
 vi.mock('../src/logger', () => ({
     logger: {
@@ -276,12 +275,29 @@ describe('resolveReplaceChange', () => {
     test('aborts when values received across the editor boundary are malformed', () => {
         expect(
             resolveReplaceChange(doc, {
-                text: undefined as unknown as string,
-                from: null as unknown as EditorPosition,
+                text: undefined,
+                from: null,
                 to: { line: 0, ch: 5 },
                 expectedText: 'hello',
             })
         ).toBeNull();
+    });
+
+    test('aborts when a position is not an object at all', () => {
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'x',
+                from: 0,
+                to: { line: 0, ch: 5 },
+                expectedText: 'hello',
+            })
+        ).toBeNull();
+    });
+
+    test('aborts without throwing when the arguments are not an object', () => {
+        expect(resolveReplaceChange(doc, null)).toBeNull();
+        expect(resolveReplaceChange(doc, undefined)).toBeNull();
+        expect(resolveReplaceChange(doc, 'hello')).toBeNull();
     });
 
     test('aborts when from is after to', () => {
