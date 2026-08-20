@@ -19,6 +19,9 @@ vi.mock('../src/logger', () => ({
 
 const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
 
+/** Cursor marker for test fixtures; not a character Markdown gives meaning to. */
+const CURSOR = '‸';
+
 /**
  * Build an EditorState with the same Markdown grammar Joplin's CM6 editor uses,
  * so the syntax-tree node names (Image / HTMLTag / HTMLBlock) are the real ones.
@@ -26,12 +29,14 @@ const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
  * `markdownLanguage` is the GFM-extended grammar; bare `markdown()` would parse
  * plain CommonMark, which is not what the editor runs.
  *
- * The cursor is marked in `doc` with `|`, which is stripped before parsing.
+ * The cursor is marked in `doc` with CURSOR, which is stripped before parsing.
+ * The marker is a character Markdown never uses, so table pipes and the like
+ * stay usable in fixtures.
  */
 function stateWithCursor(doc: string): EditorState {
-    const cursor = doc.indexOf('|');
-    if (cursor === -1) throw new Error('Test document must contain a `|` cursor marker');
-    const text = doc.slice(0, cursor) + doc.slice(cursor + 1);
+    const cursor = doc.indexOf(CURSOR);
+    if (cursor === -1) throw new Error(`Test document must contain a ${CURSOR} cursor marker`);
+    const text = doc.slice(0, cursor) + doc.slice(cursor + CURSOR.length);
 
     return EditorState.create({
         doc: text,
@@ -70,7 +75,7 @@ describe('isCursorInImageActivationRange', () => {
 
 describe('findImagesOnLine', () => {
     test('finds a Markdown image (Image node)', () => {
-        const state = stateWithCursor(`![alt|](:/${RESOURCE_ID} "title")`);
+        const state = stateWithCursor(`![alt‸](:/${RESOURCE_ID} "title")`);
         const images = findImagesOnLine(state);
 
         expect(images).toHaveLength(1);
@@ -79,7 +84,7 @@ describe('findImagesOnLine', () => {
     });
 
     test('finds an inline HTML img tag (HTMLTag node) surrounded by prose', () => {
-        const state = stateWithCursor('Before <img src="a.png" width="100"> af|ter');
+        const state = stateWithCursor('Before <img src="a.png" width="100"> af‸ter');
         const images = findImagesOnLine(state);
 
         expect(images).toHaveLength(1);
@@ -88,13 +93,13 @@ describe('findImagesOnLine', () => {
     });
 
     test('ignores non-img HTML tags', () => {
-        const state = stateWithCursor('Before <span class="x">te|xt</span> after');
+        const state = stateWithCursor('Before <span class="x">te‸xt</span> after');
 
         expect(findImagesOnLine(state)).toEqual([]);
     });
 
     test('finds an img nested inside an HTML block (HTMLBlock node)', () => {
-        const state = stateWithCursor('<div><img src="a.png" wid|th="100"></div>');
+        const state = stateWithCursor('<div><img src="a.png" wid‸th="100"></div>');
         const images = findImagesOnLine(state);
 
         expect(images).toHaveLength(1);
@@ -103,25 +108,25 @@ describe('findImagesOnLine', () => {
     });
 
     test('finds multiple imgs in one HTML block on the same line', () => {
-        const state = stateWithCursor('<div><img src="a.png"><img src="b.png"></d|iv>');
+        const state = stateWithCursor('<div><img src="a.png"><img src="b.png"></d‸iv>');
 
         expect(sliceAll(state, findImagesOnLine(state))).toEqual(['<img src="a.png">', '<img src="b.png">']);
     });
 
     test('returns only the imgs intersecting the cursor line of a multi-line HTML block', () => {
-        const state = stateWithCursor('<div>\n<img src="a.png">\n<img src="b|.png">\n</div>');
+        const state = stateWithCursor('<div>\n<img src="a.png">\n<img src="b‸.png">\n</div>');
 
         expect(sliceAll(state, findImagesOnLine(state))).toEqual(['<img src="b.png">']);
     });
 
     test('returns an empty list when the cursor line has no image', () => {
-        const state = stateWithCursor('Just some pro|se here.');
+        const state = stateWithCursor('Just some pro‸se here.');
 
         expect(findImagesOnLine(state)).toEqual([]);
     });
 
     test('does not return images from other lines', () => {
-        const state = stateWithCursor(`![a](:/${RESOURCE_ID})\n\nplain te|xt\n\n![b](:/${RESOURCE_ID})`);
+        const state = stateWithCursor(`![a](:/${RESOURCE_ID})\n\nplain te‸xt\n\n![b](:/${RESOURCE_ID})`);
 
         expect(findImagesOnLine(state)).toEqual([]);
     });
@@ -129,7 +134,7 @@ describe('findImagesOnLine', () => {
 
 describe('getImageAtCursor', () => {
     test('returns Markdown image details with a 0-indexed range', () => {
-        const state = stateWithCursor(`intro\n![Al|t](:/${RESOURCE_ID} "My title")`);
+        const state = stateWithCursor(`intro\n![Al‸t](:/${RESOURCE_ID} "My title")`);
         const result = getImageAtCursor(state);
 
         expect(result).toEqual({
@@ -149,7 +154,7 @@ describe('getImageAtCursor', () => {
     test('range maps back to exactly the image syntax', () => {
         const prefix = 'text before ';
         const image = '<img src="a.png" width="100">';
-        const state = stateWithCursor(`${prefix}<img src="a.png" wi|dth="100"> text after`);
+        const state = stateWithCursor(`${prefix}<img src="a.png" wi‸dth="100"> text after`);
         const result = getImageAtCursor(state);
 
         expect(result?.range.from.ch).toBe(prefix.length);
@@ -159,7 +164,7 @@ describe('getImageAtCursor', () => {
 
     test('detects an external HTML image nested in a div', () => {
         const state = stateWithCursor(
-            '<div align="center"><img src="https://example.com/a.png" alt="Ext" width="50|0"></div>'
+            '<div align="center"><img src="https://example.com/a.png" alt="Ext" width="50‸0"></div>'
         );
 
         expect(getImageAtCursor(state)).toMatchObject({
@@ -173,7 +178,7 @@ describe('getImageAtCursor', () => {
 
     test('activates when the cursor sits in indentation before the image', () => {
         // Two spaces keeps this a paragraph (four would make it an indented code block).
-        const state = stateWithCursor(`|  ![Alt](:/${RESOURCE_ID})`);
+        const state = stateWithCursor(`‸  ![Alt](:/${RESOURCE_ID})`);
 
         expect(getImageAtCursor(state)).toMatchObject({
             type: 'markdown',
@@ -182,30 +187,41 @@ describe('getImageAtCursor', () => {
     });
 
     test('does not activate when non-whitespace text precedes the cursor and the image', () => {
-        const state = stateWithCursor(`Some| text ![Alt](:/${RESOURCE_ID})`);
+        const state = stateWithCursor(`Some‸ text ![Alt](:/${RESOURCE_ID})`);
 
         expect(getImageAtCursor(state)).toBeNull();
     });
 
     test('picks the image the cursor is inside when a line has two', () => {
-        const state = stateWithCursor(`![a](:/${RESOURCE_ID}) ![b|](:/${RESOURCE_ID})`);
+        const state = stateWithCursor(`![a](:/${RESOURCE_ID}) ![b‸](:/${RESOURCE_ID})`);
 
         expect(getImageAtCursor(state)).toMatchObject({ altText: 'b' });
     });
 
+    test('detects an image inside a GFM table cell', () => {
+        const state = stateWithCursor(`| col |\n| --- |\n| ![Al‸t](:/${RESOURCE_ID}) |`);
+
+        expect(getImageAtCursor(state)).toMatchObject({
+            type: 'markdown',
+            altText: 'Alt',
+            syntax: `![Alt](:/${RESOURCE_ID})`,
+            range: { from: { line: 2, ch: 2 } },
+        });
+    });
+
     test('returns null when the cursor line has no image', () => {
-        expect(getImageAtCursor(stateWithCursor('nothing to see| here'))).toBeNull();
+        expect(getImageAtCursor(stateWithCursor('nothing to see‸ here'))).toBeNull();
     });
 
     test('returns null when the img tag has no src the parser can extract', () => {
-        const state = stateWithCursor('Before <img alt="bro|ken"> after');
+        const state = stateWithCursor('Before <img alt="bro‸ken"> after');
 
         expect(findImagesOnLine(state)).toHaveLength(1);
         expect(getImageAtCursor(state)).toBeNull();
     });
 
     test('spans a multi-line range for an image whose HTML block wraps lines', () => {
-        const state = stateWithCursor('line one\n<div>\n<img src="a|.png">\n</div>');
+        const state = stateWithCursor('line one\n<div>\n<img src="a‸.png">\n</div>');
         const result = getImageAtCursor(state);
 
         expect(result?.range).toEqual({
@@ -367,7 +383,7 @@ describe('resolveReplaceChange', () => {
     });
 
     test('round-trips a detected image: getImageAtCursor range replaces exactly the image', () => {
-        const state = stateWithCursor('Text <img src="a.png" wid|th="100"> more text');
+        const state = stateWithCursor('Text <img src="a.png" wid‸th="100"> more text');
         const detected = getImageAtCursor(state)!;
 
         const change = resolveReplaceChange(state.doc, {
