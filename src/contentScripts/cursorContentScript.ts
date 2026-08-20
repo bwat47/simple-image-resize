@@ -14,7 +14,7 @@
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { EditorState, Text } from '@codemirror/state';
-import type { CodeMirrorControl } from 'api/types';
+import type { CodeMirrorControl, MarkdownEditorContentScriptModule } from 'api/types';
 import type { EditorImageAtCursorResult, EditorPosition, ImageDimensions, ImageSyntax } from '../types';
 import { logger } from '../logger';
 import { extractImageDetails } from '../imageSyntaxParser';
@@ -255,7 +255,7 @@ export function resolveReplaceChange(doc: Text, args: unknown): { from: number; 
     return { from: fromOffset, to: toOffset, insert: text };
 }
 
-export default function () {
+export default function (): MarkdownEditorContentScriptModule {
     return {
         plugin: function (editorControl: CodeMirrorControl) {
             if (!editorControl?.cm6) {
