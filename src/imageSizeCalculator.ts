@@ -22,12 +22,12 @@ export const FALLBACK_IMAGE_DIMENSIONS = {
  *
  * Uses platform-appropriate strategies for dimension detection:
  * - Resources: content script (works on Android/Desktop) → Blob URL (less efficient fallback that works on all platforms) → defaults
- * - External: DOM Image with the referrer suppressed (no CORS request; only intrinsic dimensions are read)
+ * - External: DOM Image with the referrer suppressed (no CORS request; only intrinsic dimensions are read) → defaults
  *
  * @param source - Resource ID (32-char hex) or external URL
  * @param sourceType - Whether source is a Joplin resource or external URL
  * @returns Image dimensions and whether they were successfully determined
- * @throws Error if dimensions cannot be determined (external only)
+ * @throws Error if the source is invalid
  */
 export async function getOriginalImageDimensions(
     source: string,
@@ -35,11 +35,20 @@ export async function getOriginalImageDimensions(
 ): Promise<OriginalImageDimensionsResult> {
     if (sourceType === 'resource') {
         return getJoplinResourceDimensions(source);
-    } else {
+    }
+
+    if (!isValidHttpUrl(source)) {
+        throw new Error('Invalid external image URL');
+    }
+
+    try {
         return {
             dimensions: await getExternalImageDimensions(source),
             determined: true,
         };
+    } catch (err) {
+        logger.warn(`Could not determine dimensions for external URL ${source}, using defaults:`, err);
+        return { dimensions: { ...FALLBACK_IMAGE_DIMENSIONS }, determined: false };
     }
 }
 
@@ -114,20 +123,10 @@ async function getImageDimensionsViaContentScript(imagePath: string): Promise<Im
  * Get dimensions for an external image URL using a DOM Image with the referrer suppressed.
  */
 async function getExternalImageDimensions(url: string): Promise<ImageDimensions> {
-    if (!isValidHttpUrl(url)) {
-        throw new Error('Invalid external image URL');
-    }
-
-    try {
-        return await measureImageDimensions(url, {
-            timeoutMs: EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
-            useNoReferrer: true,
-        });
-    } catch (err: unknown) {
-        logger.error(`Failed to get dimensions for external URL ${url}:`, err);
-        const message = err instanceof Error ? err.message : String(err);
-        throw Object.assign(new Error(`Could not determine external image dimensions: ${message}`), { cause: err });
-    }
+    return measureImageDimensions(url, {
+        timeoutMs: EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
+        useNoReferrer: true,
+    });
 }
 
 function isValidHttpUrl(string: string): boolean {
