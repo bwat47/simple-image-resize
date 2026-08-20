@@ -1,5 +1,12 @@
 import joplin from 'api';
-import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from './types';
+import type {
+    ImageContext,
+    ImageSyntax,
+    InitialDialogState,
+    ResizeDialogConfig,
+    ResizeDialogResult,
+    ResizeMode,
+} from './types';
 import { escapeHtmlAttribute } from './utils/stringUtils';
 import { settingsCache } from './settings';
 
@@ -7,7 +14,7 @@ import { settingsCache } from './settings';
  * Calculates the initial state for the dialog based on default syntax and resize mode.
  * Centralizes all state calculation logic to avoid duplication and improve maintainability.
  */
-export function getInitialDialogState(defaultSyntax: ImageSyntax, defaultResizeMode: ResizeMode) {
+export function getInitialDialogState(defaultSyntax: ImageSyntax, defaultResizeMode: ResizeMode): InitialDialogState {
     const htmlSyntaxSelected = defaultSyntax === 'html';
     const percentageModeDefault = defaultResizeMode === 'percentage';
     const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;

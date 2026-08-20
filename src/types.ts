@@ -35,6 +35,22 @@ export interface ResizeDialogConfig {
     originalHeight: number;
 }
 
+/** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
+export interface InitialDialogState {
+    // CSS classes
+    resizeFieldsetClass: string;
+    percentageRowClass: string;
+    absoluteGroupClass: string;
+    // HTML checked attributes
+    htmlCheckedAttr: string;
+    markdownCheckedAttr: string;
+    percentageModeCheckedAttr: string;
+    absoluteModeCheckedAttr: string;
+    // HTML disabled attributes
+    percentageDisabledAttr: string;
+    absoluteDisabledAttr: string;
+}
+
 // New types for cursor-based detection
 export interface EditorPosition {
     line: number;
