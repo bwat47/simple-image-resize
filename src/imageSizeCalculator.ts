@@ -121,7 +121,7 @@ async function getExternalImageDimensions(url: string): Promise<ImageDimensions>
     try {
         return await measureImageDimensions(url, {
             timeoutMs: EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
-            usePrivacySettings: true,
+            useNoReferrer: true,
         });
     } catch (err: unknown) {
         logger.error(`Failed to get dimensions for external URL ${url}:`, err);

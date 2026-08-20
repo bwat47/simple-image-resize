@@ -332,7 +332,6 @@ export default function (): MarkdownEditorContentScriptModule {
 
                         return await measureImageDimensions(imagePath, {
                             timeoutMs: RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
-                            usePrivacySettings: false,
                         });
                     } catch {
                         return null;

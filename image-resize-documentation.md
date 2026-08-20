@@ -31,7 +31,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 ### Resize Pipeline
 
-- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion.
+- `src/imageSizeCalculator.ts` resolves dimensions using layered strategies so the plugin works across desktop, Android, and the web app. It owns fallback-dimension policy. Resource bytes from the Data API are normalized into a `Uint8Array`, wrapped in a `Blob`, and measured through a temporary object URL without base64 conversion. External images are loaded without a referrer and without requiring CORS, since only their intrinsic dimensions are read.
 - `src/dialogHandler.ts` builds and runs the resize dialog.
 - `src/dialogLock.ts` prevents overlapping dialogs.
 - `src/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output.

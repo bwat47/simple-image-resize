@@ -90,7 +90,7 @@ describe('getOriginalImageDimensions', () => {
         });
         expect(measureImageMock).toHaveBeenCalledWith('https://example.com/image.png', {
             timeoutMs: 10000,
-            usePrivacySettings: true,
+            useNoReferrer: true,
         });
         expect(getResourceBlobMock).not.toHaveBeenCalled();
     });

@@ -1,4 +1,4 @@
-import { measureBlobImageDimensions } from '../src/utils/imageDimensionUtils';
+import { measureBlobImageDimensions, measureImageDimensions } from '../src/utils/imageDimensionUtils';
 
 class FakeImage {
     private static latestInstance: FakeImage;
@@ -6,7 +6,7 @@ class FakeImage {
     public onerror: (() => void) | null = null;
     public naturalWidth = 640;
     public naturalHeight = 480;
-    public crossOrigin = '';
+    public crossOrigin = 'unchanged';
     public referrerPolicy = '';
     private source = '';
 
@@ -76,5 +76,29 @@ describe('measureBlobImageDimensions', () => {
         await rejection;
         expect(FakeImage.latest.src).toBe('');
         expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
+    });
+});
+
+describe('measureImageDimensions', () => {
+    beforeEach(() => {
+        vi.stubGlobal('Image', FakeImage);
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+    });
+
+    it('suppresses the referrer without requiring CORS for external images', async () => {
+        const resultPromise = measureImageDimensions('https://example.com/image.png', {
+            timeoutMs: 1000,
+            useNoReferrer: true,
+        });
+
+        expect(FakeImage.latest.referrerPolicy).toBe('no-referrer');
+        expect(FakeImage.latest.crossOrigin).toBe('unchanged');
+        FakeImage.latest.onload?.();
+
+        await expect(resultPromise).resolves.toEqual({ width: 640, height: 480 });
     });
 });
