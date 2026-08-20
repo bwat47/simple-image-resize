@@ -77,6 +77,8 @@ Quick resize options are configured through a comma-separated setting. Each opti
 
 The plugin supports one to five configured quick resize slots. The default slots are `100%, 75%, 50%, 33%, 25%`, mapped to `CmdOrCtrl+Shift+1` through `CmdOrCtrl+Shift+5`. The command IDs remain stable for compatibility, while each command reads the current setting at execution time. A `100%` slot converts the image back to Markdown syntax to remove custom sizing; other percentage and pixel slots emit HTML image syntax.
 
+Scaling percentage slots need the image's original dimensions, so they are skipped with an explanatory toast when those dimensions could not be determined. The `100%` slot and pixel slots stay available, since neither derives a size from the original dimensions.
+
 When settings load or change, recoverable quick resize setting errors are normalized before commands or menus use them. Invalid entries are dropped, entries beyond the five-slot limit are removed, valid entries are canonicalized, and an empty or fully invalid list is reset to the default slots.
 
 ## Design Intent

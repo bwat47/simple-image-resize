@@ -22,9 +22,11 @@ import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast, ToastType } from './utils/toastUtils';
 import {
     buildQuickResizeResult,
+    getQuickResizeSkippedMessage,
     getQuickResizeSuccessMessage,
     parseQuickResizeOptions,
     QUICK_RESIZE_SLOTS,
+    requiresOriginalDimensions,
 } from './quickResizeOptions';
 
 /**
@@ -56,9 +58,6 @@ async function detectAndPrepareImage() {
         if (partialContext.sourceType === 'external') {
             originalDimensions = { ...FALLBACK_IMAGE_DIMENSIONS };
             originalDimensionsDetermined = false;
-            await showToast(
-                `Using default dimensions for external image (${FALLBACK_IMAGE_DIMENSIONS.width}×${FALLBACK_IMAGE_DIMENSIONS.height}).`
-            );
         } else {
             throw error;
         }
@@ -98,6 +97,11 @@ async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
         if (!prepared) return;
 
         const { fullContext, replacementRange } = prepared;
+
+        if (requiresOriginalDimensions(option) && !fullContext.originalDimensionsDetermined) {
+            await showToast(getQuickResizeSkippedMessage(option), ToastType.Info);
+            return;
+        }
 
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
         const newSyntax = buildNewSyntax(fullContext, resizeResult);
