@@ -43,10 +43,11 @@ export async function getOriginalImageDimensions(
     }
 
     try {
-        return {
-            dimensions: await getExternalImageDimensions(source),
-            determined: true,
-        };
+        const dimensions = await measureImageDimensions(source, {
+            timeoutMs: EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
+            useNoReferrer: true,
+        });
+        return { dimensions, determined: true };
     } catch (err) {
         logger.warn(`Could not determine dimensions for external URL ${source}, using defaults:`, err);
         return { dimensions: { ...FALLBACK_IMAGE_DIMENSIONS }, determined: false };
@@ -118,16 +119,6 @@ async function getImageDimensionsViaContentScript(imagePath: string): Promise<Im
         logger.debug('Content script dimension fetch failed:', error);
         return null;
     }
-}
-
-/**
- * Get dimensions for an external image URL using a DOM Image with the referrer suppressed.
- */
-async function getExternalImageDimensions(url: string): Promise<ImageDimensions> {
-    return measureImageDimensions(url, {
-        timeoutMs: EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
-        useNoReferrer: true,
-    });
 }
 
 function isValidHttpUrl(string: string): boolean {
