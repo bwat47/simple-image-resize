@@ -45,13 +45,17 @@ async function detectAndPrepareImage() {
     logger.debug(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
     let originalDimensions;
+    let originalDimensionsDetermined: boolean;
     try {
-        originalDimensions = await getOriginalImageDimensions(partialContext.source, partialContext.sourceType);
+        const dimensionResult = await getOriginalImageDimensions(partialContext.source, partialContext.sourceType);
+        originalDimensions = dimensionResult.dimensions;
+        originalDimensionsDetermined = dimensionResult.determined;
     } catch (error) {
         logger.warn('Dimension fetch failed:', error);
 
         if (partialContext.sourceType === 'external') {
             originalDimensions = { ...FALLBACK_IMAGE_DIMENSIONS };
+            originalDimensionsDetermined = false;
             await showToast(
                 `Using default dimensions for external image (${FALLBACK_IMAGE_DIMENSIONS.width}×${FALLBACK_IMAGE_DIMENSIONS.height}).`
             );
@@ -60,7 +64,7 @@ async function detectAndPrepareImage() {
         }
     }
 
-    const fullContext: ImageContext = { ...partialContext, originalDimensions };
+    const fullContext: ImageContext = { ...partialContext, originalDimensions, originalDimensionsDetermined };
     return { fullContext, replacementRange };
 }
 

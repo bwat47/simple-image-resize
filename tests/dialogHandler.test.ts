@@ -1,4 +1,4 @@
-import { getInitialDialogState } from '../src/dialogHandler';
+import { getInitialDialogState, getOriginalDimensionsSummaryHtml } from '../src/dialogHandler';
 
 describe('getInitialDialogState', () => {
     describe('HTML syntax with percentage mode', () => {
@@ -7,8 +7,10 @@ describe('getInitialDialogState', () => {
 
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset');
+            expect(state.percentageModeRowClass).toBe('row');
             expect(state.percentageRowClass).toBe('row');
             expect(state.absoluteGroupClass).toBe('stack absolute-size-group is-disabled');
+            expect(state.heightRowClass).toBe('row is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
@@ -18,7 +20,9 @@ describe('getInitialDialogState', () => {
 
             // Disabled attributes
             expect(state.percentageDisabledAttr).toBe('');
+            expect(state.percentageModeDisabledAttr).toBe('');
             expect(state.absoluteDisabledAttr).toBe(' disabled');
+            expect(state.heightDisabledAttr).toBe(' disabled');
         });
     });
 
@@ -30,6 +34,7 @@ describe('getInitialDialogState', () => {
             expect(state.resizeFieldsetClass).toBe('resize-fieldset');
             expect(state.percentageRowClass).toBe('row is-disabled');
             expect(state.absoluteGroupClass).toBe('stack absolute-size-group');
+            expect(state.heightRowClass).toBe('row');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
@@ -40,6 +45,7 @@ describe('getInitialDialogState', () => {
             // Disabled attributes
             expect(state.percentageDisabledAttr).toBe(' disabled');
             expect(state.absoluteDisabledAttr).toBe('');
+            expect(state.heightDisabledAttr).toBe('');
         });
     });
 
@@ -86,6 +92,20 @@ describe('getInitialDialogState', () => {
     });
 
     describe('Edge cases and invariants', () => {
+        it('disables percentage mode and defaults to absolute when dimensions are unknown', () => {
+            const state = getInitialDialogState('html', 'percentage', false);
+
+            expect(state.percentageModeRowClass).toBe('row is-disabled');
+            expect(state.percentageModeCheckedAttr).toBe('');
+            expect(state.percentageModeDisabledAttr).toBe(' disabled');
+            expect(state.percentageRowClass).toBe('row is-disabled');
+            expect(state.absoluteModeCheckedAttr).toBe(' checked');
+            expect(state.absoluteGroupClass).toBe('stack absolute-size-group');
+            expect(state.absoluteDisabledAttr).toBe('');
+            expect(state.heightRowClass).toBe('row is-disabled');
+            expect(state.heightDisabledAttr).toBe(' disabled');
+        });
+
         it('should ensure only one syntax is checked at a time', () => {
             const htmlState = getInitialDialogState('html', 'percentage');
             const markdownState = getInitialDialogState('markdown', 'percentage');
@@ -139,6 +159,28 @@ describe('getInitialDialogState', () => {
 
             expect(htmlPercentage.resizeFieldsetClass).not.toContain('is-locked');
             expect(htmlAbsolute.resizeFieldsetClass).not.toContain('is-locked');
+        });
+    });
+
+    describe('original dimensions summary', () => {
+        const context = {
+            type: 'markdown' as const,
+            syntax: '![Alt](https://example.com/image.png)',
+            source: 'https://example.com/image.png',
+            sourceType: 'external' as const,
+            altText: 'Alt',
+            originalDimensions: { width: 400, height: 300 },
+            originalDimensionsDetermined: true,
+        };
+
+        it('displays detected dimensions', () => {
+            expect(getOriginalDimensionsSummaryHtml(context)).toBe('Original: <strong>400px × 300px</strong>');
+        });
+
+        it('does not display fallback values when dimensions are unknown', () => {
+            expect(getOriginalDimensionsSummaryHtml({ ...context, originalDimensionsDetermined: false })).toBe(
+                'Original dimensions could not be determined.'
+            );
         });
     });
 });

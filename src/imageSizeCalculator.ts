@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
-import { ImageDimensions } from './types';
+import { ImageDimensions, OriginalImageDimensionsResult } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
 import {
     measureBlobImageDimensions,
@@ -26,17 +26,20 @@ export const FALLBACK_IMAGE_DIMENSIONS = {
  *
  * @param source - Resource ID (32-char hex) or external URL
  * @param sourceType - Whether source is a Joplin resource or external URL
- * @returns Image width and height in pixels
+ * @returns Image dimensions and whether they were successfully determined
  * @throws Error if dimensions cannot be determined (external only)
  */
 export async function getOriginalImageDimensions(
     source: string,
     sourceType: 'resource' | 'external'
-): Promise<ImageDimensions> {
+): Promise<OriginalImageDimensionsResult> {
     if (sourceType === 'resource') {
         return getJoplinResourceDimensions(source);
     } else {
-        return getExternalImageDimensions(source);
+        return {
+            dimensions: await getExternalImageDimensions(source),
+            determined: true,
+        };
     }
 }
 
@@ -46,7 +49,7 @@ export async function getOriginalImageDimensions(
  * 2. Blob URL created from resource bytes (works on all platforms)
  * 3. Default dimensions (last resort)
  */
-async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDimensions> {
+async function getJoplinResourceDimensions(resourceId: string): Promise<OriginalImageDimensionsResult> {
     if (!validateResourceId(resourceId)) {
         throw new Error('Invalid resource ID');
     }
@@ -61,7 +64,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
                 logger.debug(
                     `Content script returned dimensions: ${contentScriptResult.width}x${contentScriptResult.height}`
                 );
-                return contentScriptResult;
+                return { dimensions: contentScriptResult, determined: true };
             }
         }
     } catch (err) {
@@ -76,14 +79,14 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<ImageDim
             timeoutMs: RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
         });
         logger.debug(`Resource Blob returned dimensions: ${blobResult.width}x${blobResult.height}`);
-        return blobResult;
+        return { dimensions: blobResult, determined: true };
     } catch (err) {
         logger.debug('Resource Blob approach failed:', err);
     }
 
     // Strategy 3: Return default dimensions as last resort
     logger.warn(`All dimension strategies failed for resource ${resourceId}, using defaults`);
-    return { ...FALLBACK_IMAGE_DIMENSIONS };
+    return { dimensions: { ...FALLBACK_IMAGE_DIMENSIONS }, determined: false };
 }
 
 /**

@@ -14,17 +14,24 @@ import { settingsCache } from './settings';
  * Calculates the initial state for the dialog based on default syntax and resize mode.
  * Centralizes all state calculation logic to avoid duplication and improve maintainability.
  */
-export function getInitialDialogState(defaultSyntax: ImageSyntax, defaultResizeMode: ResizeMode): InitialDialogState {
+export function getInitialDialogState(
+    defaultSyntax: ImageSyntax,
+    defaultResizeMode: ResizeMode,
+    originalDimensionsDetermined = true
+): InitialDialogState {
     const htmlSyntaxSelected = defaultSyntax === 'html';
-    const percentageModeDefault = defaultResizeMode === 'percentage';
+    const percentageModeDefault = originalDimensionsDetermined && defaultResizeMode === 'percentage';
     const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
     const absoluteInitiallyDisabled = !htmlSyntaxSelected || percentageModeDefault;
+    const heightInitiallyDisabled = absoluteInitiallyDisabled || !originalDimensionsDetermined;
 
     return {
         // CSS classes
         resizeFieldsetClass: `resize-fieldset${htmlSyntaxSelected ? '' : ' is-locked'}`,
+        percentageModeRowClass: `row${originalDimensionsDetermined ? '' : ' is-disabled'}`,
         percentageRowClass: `row${percentageInitiallyDisabled ? ' is-disabled' : ''}`,
         absoluteGroupClass: `stack absolute-size-group${absoluteInitiallyDisabled ? ' is-disabled' : ''}`,
+        heightRowClass: `row${heightInitiallyDisabled ? ' is-disabled' : ''}`,
         // HTML checked attributes
         htmlCheckedAttr: htmlSyntaxSelected ? ' checked' : '',
         markdownCheckedAttr: htmlSyntaxSelected ? '' : ' checked',
@@ -32,8 +39,22 @@ export function getInitialDialogState(defaultSyntax: ImageSyntax, defaultResizeM
         absoluteModeCheckedAttr: percentageModeDefault ? '' : ' checked',
         // HTML disabled attributes
         percentageDisabledAttr: percentageInitiallyDisabled ? ' disabled' : '',
+        percentageModeDisabledAttr: originalDimensionsDetermined ? '' : ' disabled',
         absoluteDisabledAttr: absoluteInitiallyDisabled ? ' disabled' : '',
+        heightDisabledAttr: heightInitiallyDisabled ? ' disabled' : '',
     };
+}
+
+export function getOriginalDimensionsSummaryHtml(context: ImageContext): string {
+    if (!context.originalDimensionsDetermined) {
+        return 'Original dimensions could not be determined.';
+    }
+
+    return `Original: <strong>${context.originalDimensions.width}px × ${context.originalDimensions.height}px</strong>`;
+}
+
+function getHeightPlaceholderAttribute(context: ImageContext): string {
+    return context.originalDimensionsDetermined ? ` placeholder="${context.originalDimensions.height}"` : '';
 }
 
 /**
@@ -61,21 +82,28 @@ export async function showResizeDialog(
     const {
         resizeFieldsetClass,
         percentageRowClass,
+        percentageModeRowClass,
         absoluteGroupClass,
+        heightRowClass,
         htmlCheckedAttr,
         markdownCheckedAttr,
         percentageModeCheckedAttr,
         absoluteModeCheckedAttr,
         percentageDisabledAttr,
+        percentageModeDisabledAttr,
         absoluteDisabledAttr,
-    } = getInitialDialogState(defaultSyntax, defaultResizeMode);
+        heightDisabledAttr,
+    } = getInitialDialogState(defaultSyntax, defaultResizeMode, context.originalDimensionsDetermined);
+    const originalDimensionsSummaryHtml = getOriginalDimensionsSummaryHtml(context);
+    const heightPlaceholderAttr = getHeightPlaceholderAttribute(context);
 
     // Dialog configuration passed as single JSON attribute for cleaner extensibility
     const dialogConfig: ResizeDialogConfig = {
-        defaultResizeMode,
+        defaultResizeMode: context.originalDimensionsDetermined ? defaultResizeMode : 'absolute',
         defaultPercentage,
         originalWidth,
         originalHeight,
+        originalDimensionsDetermined: context.originalDimensionsDetermined,
     };
 
     // Always update the HTML and scripts before opening
@@ -89,7 +117,7 @@ export async function showResizeDialog(
       <div class="container">
         <div>
           <h4>Resize Image</h4>
-          <p style="margin:0 0 4px;">Original: <strong>${originalWidth}px × ${originalHeight}px</strong></p>
+          <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
         </div>
         <form name="resizeForm" autocomplete="off">
           <fieldset>
@@ -120,8 +148,8 @@ export async function showResizeDialog(
           <fieldset class="${resizeFieldsetClass}" data-resize-fieldset>
             <legend>Resizing</legend>
             <div class="grid">
-              <div class="row">
-                <input type="radio" id="percentageMode" name="resizeMode" value="percentage"${percentageModeCheckedAttr}>
+              <div class="${percentageModeRowClass}" data-percentage-mode-row>
+                <input type="radio" id="percentageMode" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
                 <label for="percentageMode">Percentage</label>
               </div>
               <div class="${percentageRowClass}" data-percentage-row>
@@ -138,9 +166,9 @@ export async function showResizeDialog(
                   <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
                   <span>px</span>
                 </div>
-                <div class="row">
+                <div class="${heightRowClass}" data-height-row>
                   <label for="absoluteHeight" class="label-fixed">Height</label>
-                  <input type="number" name="absoluteHeight" id="absoluteHeight" placeholder="${originalHeight}"${absoluteDisabledAttr}>
+                  <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
                   <span>px</span>
                 </div>
               </div>
@@ -164,7 +192,8 @@ export async function showResizeDialog(
         }
         const targetSyntax = (form.targetSyntax as ImageSyntax) || 'html';
         const altText = typeof form.altText === 'string' ? form.altText : '';
-        const resizeMode = (form.resizeMode as ResizeMode) || 'percentage';
+        const resizeMode =
+            (form.resizeMode as ResizeMode) || (context.originalDimensionsDetermined ? defaultResizeMode : 'absolute');
 
         return {
             targetSyntax,

@@ -67,7 +67,8 @@ This keeps the user-facing behavior consistent without forcing the rest of the p
 ## Output Rules
 
 - Markdown output preserves standard Markdown image syntax and does not encode explicit size.
-- HTML output is used for resized images and can emit width only or width plus height, depending on settings.
+- HTML output is used for resized images and can emit width only or width plus height, depending on settings. When original dimensions cannot be determined, HTML output always emits width only so the browser can preserve the image's natural aspect ratio.
+- When original dimensions could not be determined, the resize dialog shows that status instead of the fallback dimensions, disables percentage resizing, selects absolute sizing, and disables the height field.
 - Alt text and title are preserved across conversions, with escaping rules handled centrally in the string utilities.
 
 ## Quick Resize Slots
