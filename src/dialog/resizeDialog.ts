@@ -136,12 +136,11 @@ dialogGlobal.exports ??= {};
     };
 
     const applyResizeMode = (mode: ResizeMode): void => {
-        if (mode === 'percentage' && !percentageAvailable) {
-            mode = 'absolute';
-        }
-        currentResizeMode = mode;
+        // Percentage resizing has nothing to scale from when the original size is unknown.
+        const effectiveMode: ResizeMode = mode === 'percentage' && !percentageAvailable ? 'absolute' : mode;
+        currentResizeMode = effectiveMode;
         const htmlActive = currentSyntax === 'html';
-        const isPercentage = mode === 'percentage';
+        const isPercentage = effectiveMode === 'percentage';
 
         const percentageDisabled = !htmlActive || !isPercentage;
         const absoluteDisabled = !htmlActive || isPercentage;
