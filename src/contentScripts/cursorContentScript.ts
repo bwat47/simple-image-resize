@@ -13,7 +13,7 @@
 
 import { syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
-import { Text } from '@codemirror/state';
+import { EditorState, Text } from '@codemirror/state';
 import type { CodeMirrorControl } from 'api/types';
 import type { EditorImageAtCursorResult, EditorPosition, ImageDimensions, ImageSyntax } from '../types';
 import { logger } from '../logger';
@@ -29,38 +29,50 @@ export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditor
 // Time window to consider a context menu event as originating from the editor (in milliseconds)
 const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
 
-interface ReplaceRangeArgs {
+export interface ReplaceRangeArgs {
     text: string;
     from: EditorPosition;
     to: EditorPosition;
     expectedText: string;
 }
 
-interface ImageNodeRange {
+export interface ImageNodeRange {
     type: ImageSyntax;
     from: number;
     to: number;
 }
 
 /**
- * Validates that range positions are logically correct (from <= to) and finite.
- * Checks for NaN, Infinity, and -Infinity which TypeScript's type system permits
- * but would break document operations.
- * @returns true if valid, false otherwise
+ * Validate arguments received across the plugin/editor boundary before using
+ * them in document operations.
+ *
+ * Takes `unknown` because these values cross a runtime boundary: the editor
+ * hands them over as plain data, so nothing has checked their shape yet.
  */
-function validateRangePositions(args: ReplaceRangeArgs): boolean {
-    const { from, to } = args;
+function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
+    const isValidPosition = (position: unknown): position is EditorPosition => {
+        if (typeof position !== 'object' || position === null) {
+            return false;
+        }
 
-    // Validate all position values are finite numbers (not NaN, Infinity, or -Infinity)
+        const candidate = position as Partial<EditorPosition>;
+        return Number.isFinite(candidate.line) && Number.isFinite(candidate.ch);
+    };
+
+    // A non-object (null, undefined, a bare string) fails the field checks below.
+    const candidate = (typeof args === 'object' && args !== null ? args : {}) as Partial<ReplaceRangeArgs>;
+
     if (
-        !Number.isFinite(from.line) ||
-        !Number.isFinite(from.ch) ||
-        !Number.isFinite(to.line) ||
-        !Number.isFinite(to.ch)
+        typeof candidate.text !== 'string' ||
+        typeof candidate.expectedText !== 'string' ||
+        !isValidPosition(candidate.from) ||
+        !isValidPosition(candidate.to)
     ) {
-        logger.error('REPLACE_RANGE_COMMAND: position values must be finite numbers', { from, to });
+        logger.error('REPLACE_RANGE_COMMAND: invalid replacement arguments', args);
         return false;
     }
+
+    const { from, to } = candidate;
 
     // Validate from <= to
     if (from.line > to.line || (from.line === to.line && from.ch > to.ch)) {
@@ -80,8 +92,7 @@ function validateRangePositions(args: ReplaceRangeArgs): boolean {
  * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
  * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
  */
-function findImagesOnLine(view: EditorView): ImageNodeRange[] {
-    const state = view.state;
+export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
     const cursor = state.selection.main.head;
     const currentLine = state.doc.lineAt(cursor);
     const images: ImageNodeRange[] = [];
@@ -159,10 +170,9 @@ export function isCursorInImageActivationRange(
  * Get the image at cursor position using syntax tree.
  * This is the main detection function that replaces regex-based detection.
  */
-function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
-    const state = view.state;
+export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult | null {
     const cursor = state.selection.main.head;
-    const images = findImagesOnLine(view);
+    const images = findImagesOnLine(state);
 
     // Find the image that contains the cursor
     for (const imageNode of images) {
@@ -203,12 +213,46 @@ function getImageAtCursor(view: EditorView): EditorImageAtCursorResult | null {
  * CM6 doc.line() expects 1-indexed line numbers, so we convert
  * from our 0-indexed EditorPosition before calling it.
  */
-function posToOffset(doc: Text, pos: EditorPosition): number {
+export function posToOffset(doc: Text, pos: EditorPosition): number {
     // CM6 line() uses 1-indexed line numbers
     const lineNum = Math.max(1, Math.min(pos.line + 1, doc.lines));
     const lineInfo = doc.line(lineNum);
     const ch = Math.max(0, Math.min(pos.ch, lineInfo.to - lineInfo.from));
     return lineInfo.from + ch;
+}
+
+/**
+ * Resolve replacement arguments into a CodeMirror change spec.
+ *
+ * Validates values received across the editor boundary and uses optimistic
+ * concurrency to ensure the text has not changed since image detection.
+ *
+ * @returns the change to dispatch, or null if the replacement must be aborted
+ */
+export function resolveReplaceChange(doc: Text, args: unknown): { from: number; to: number; insert: string } | null {
+    if (!isValidReplaceRangeArgs(args)) {
+        return null;
+    }
+
+    const { text, from, to, expectedText } = args;
+
+    const fromOffset = posToOffset(doc, from);
+    const toOffset = posToOffset(doc, to);
+
+    // Optimistic concurrency control: Verify text hasn't changed
+    const currentText = doc.sliceString(fromOffset, toOffset);
+    if (currentText !== expectedText) {
+        logger.warn(
+            'replaceRange: Content changed since detection; aborting replacement.',
+            '\nExpected:',
+            expectedText,
+            '\nFound:',
+            currentText
+        );
+        return null;
+    }
+
+    return { from: fromOffset, to: toOffset, insert: text };
 }
 
 export default function () {
@@ -248,7 +292,7 @@ export default function () {
             // Command: Get image at cursor using syntax tree (primary method)
             editorControl.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
-                    return getImageAtCursor(view);
+                    return getImageAtCursor(view.state);
                 } catch (error) {
                     logger.error('getImageAtCursor failed:', error);
                     return null;
@@ -256,61 +300,24 @@ export default function () {
             });
 
             // Command: Replace text in a range
-            editorControl.registerCommand(REPLACE_RANGE_COMMAND, (...args: unknown[]): boolean => {
-                try {
-                    // Args can come as [text, from, to, expectedText] or as a single object
-                    let replaceArgs: ReplaceRangeArgs;
+            editorControl.registerCommand(
+                REPLACE_RANGE_COMMAND,
+                (text: unknown, from: unknown, to: unknown, expectedText: unknown): boolean => {
+                    try {
+                        const change = resolveReplaceChange(view.state.doc, { text, from, to, expectedText });
+                        if (!change) {
+                            return false;
+                        }
 
-                    if (args.length === 4) {
-                        // Called as (text, from, to, expectedText)
-                        replaceArgs = {
-                            text: args[0] as string,
-                            from: args[1] as EditorPosition,
-                            to: args[2] as EditorPosition,
-                            expectedText: args[3] as string,
-                        };
-                    } else if (args.length === 1 && typeof args[0] === 'object') {
-                        // Called as ({ text, from, to, expectedText })
-                        replaceArgs = args[0] as ReplaceRangeArgs;
-                    } else {
-                        logger.error('REPLACE_RANGE_COMMAND: invalid arguments format - expectedText is required');
+                        view.dispatch({ changes: change });
+
+                        return true;
+                    } catch (err) {
+                        logger.error('REPLACE_RANGE_COMMAND: failed to replace text', err);
                         return false;
                     }
-
-                    // Validate arguments to prevent document corruption
-                    if (!validateRangePositions(replaceArgs)) {
-                        return false;
-                    }
-
-                    const { text, from, to, expectedText } = replaceArgs;
-                    const doc = view.state.doc;
-
-                    const fromOffset = posToOffset(doc, from);
-                    const toOffset = posToOffset(doc, to);
-
-                    // Optimistic concurrency control: Verify text hasn't changed
-                    const currentText = doc.sliceString(fromOffset, toOffset);
-                    if (currentText !== expectedText) {
-                        logger.warn(
-                            'replaceRange: Content changed since detection; aborting replacement.',
-                            '\nExpected:',
-                            expectedText,
-                            '\nFound:',
-                            currentText
-                        );
-                        return false;
-                    }
-
-                    view.dispatch({
-                        changes: { from: fromOffset, to: toOffset, insert: text },
-                    });
-
-                    return true;
-                } catch (err) {
-                    logger.error('REPLACE_RANGE_COMMAND: failed to replace text', err);
-                    return false;
                 }
-            });
+            );
 
             // Command: Get image dimensions by loading it in the editor context
             // This runs inside the editor webview which has access to local files

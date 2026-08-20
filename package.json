@@ -21,14 +21,15 @@
         "publish"
     ],
     "devDependencies": {
+        "@codemirror/lang-markdown": "^6.5.2",
         "@codemirror/language": "^6.12.3",
         "@codemirror/state": "^6.6.0",
         "@codemirror/view": "^6.42.1",
         "@eslint/js": "^10.0.1",
-        "@vitest/coverage-v8": "^4.0.9",
         "@types/node": "^25.9.4",
         "@typescript-eslint/eslint-plugin": "^8.59.2",
         "@typescript-eslint/parser": "^8.59.2",
+        "@vitest/coverage-v8": "^4.0.9",
         "chalk": "^4.1.0",
         "copy-webpack-plugin": "^14.0.0",
         "eslint": "^10.3.0",
