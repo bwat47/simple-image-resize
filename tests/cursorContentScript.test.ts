@@ -154,12 +154,16 @@ describe('getImageAtCursor', () => {
     test('range maps back to exactly the image syntax', () => {
         const prefix = 'text before ';
         const image = '<img src="a.png" width="100">';
-        const state = stateWithCursor(`${prefix}<img src="a.png" wi‸dth="100"> text after`);
-        const result = getImageAtCursor(state);
+        // A leading line keeps this honest: ch is a column, not a document offset.
+        const state = stateWithCursor(`line one\n${prefix}<img src="a.png" wi‸dth="100"> text after`);
+        const result = getImageAtCursor(state)!;
 
-        expect(result?.range.from.ch).toBe(prefix.length);
-        expect(result?.range.to.ch).toBe(prefix.length + image.length);
-        expect(state.doc.sliceString(result!.range.from.ch, result!.range.to.ch)).toBe(image);
+        expect(result.range.from).toEqual({ line: 1, ch: prefix.length });
+        expect(result.range.to).toEqual({ line: 1, ch: prefix.length + image.length });
+
+        const from = posToOffset(state.doc, result.range.from);
+        const to = posToOffset(state.doc, result.range.to);
+        expect(state.doc.sliceString(from, to)).toBe(image);
     });
 
     test('detects an external HTML image nested in a div', () => {
