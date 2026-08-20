@@ -10,7 +10,7 @@ import {
     RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
 } from './utils/imageDimensionUtils';
 
-export const FALLBACK_IMAGE_DIMENSIONS = {
+const FALLBACK_IMAGE_DIMENSIONS = {
     width: 400,
     height: 300,
 } as const;
