@@ -1,5 +1,5 @@
 import { EditorState, Text } from '@codemirror/state';
-import { markdown } from '@codemirror/lang-markdown';
+import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import {
     findImagesOnLine,
     getImageAtCursor,
@@ -23,6 +23,9 @@ const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
  * Build an EditorState with the same Markdown grammar Joplin's CM6 editor uses,
  * so the syntax-tree node names (Image / HTMLTag / HTMLBlock) are the real ones.
  *
+ * `markdownLanguage` is the GFM-extended grammar; bare `markdown()` would parse
+ * plain CommonMark, which is not what the editor runs.
+ *
  * The cursor is marked in `doc` with `|`, which is stripped before parsing.
  */
 function stateWithCursor(doc: string): EditorState {
@@ -33,7 +36,7 @@ function stateWithCursor(doc: string): EditorState {
     return EditorState.create({
         doc: text,
         selection: { anchor: cursor },
-        extensions: [markdown()],
+        extensions: [markdown({ base: markdownLanguage })],
     });
 }
 
