@@ -6,22 +6,33 @@
  */
 
 import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
+import { logger } from '../logger';
 
 // The generated bundle ends with `exports.default = ...`, but Joplin executes
 // dialog scripts as browser scripts without providing `exports`.
 const dialogGlobal = globalThis as typeof globalThis & { exports?: Record<string, unknown> };
 dialogGlobal.exports ??= {};
 
-(() => {
+function initializeResizeDialog(): void {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
-    if (!root) return;
+    if (!root || root.dataset.initialized === 'true') return;
 
     // Parse configuration from single JSON attribute. The plugin host always writes
     // this attribute before opening the dialog, so a missing value means there is no
     // dialog to wire up; past that point the payload is a trusted internal contract.
     const rawConfig = root.dataset.config;
     if (!rawConfig) return;
-    const config: ResizeDialogConfig = JSON.parse(rawConfig);
+
+    let config: ResizeDialogConfig;
+    try {
+        config = JSON.parse(rawConfig);
+    } catch (error) {
+        // Unlike the checks above, a malformed payload never becomes valid, so mark the
+        // root done rather than let a second entry log the same failure again.
+        root.dataset.initialized = 'true';
+        logger.error('Invalid dialog config.', error);
+        return;
+    }
 
     const form = document.forms.namedItem('resizeForm');
     if (!form) return;
@@ -49,6 +60,7 @@ dialogGlobal.exports ??= {};
     ) {
         return;
     }
+    root.dataset.initialized = 'true';
 
     const defaultResizeMode = config.defaultResizeMode;
     const originalDimensionsDetermined = config.originalDimensionsDetermined;
@@ -204,4 +216,13 @@ dialogGlobal.exports ??= {};
 
     applySyntaxMode(initialSyntax);
     applyResizeMode(defaultResizeMode);
-})();
+}
+
+// Joplin remounts the dialog webview on every open and applies the new HTML before
+// loading the scripts, so this runs once against markup that is already in place. The
+// guard is only so the module can be imported outside a DOM.
+if (typeof document !== 'undefined') {
+    initializeResizeDialog();
+}
+
+export default initializeResizeDialog;
