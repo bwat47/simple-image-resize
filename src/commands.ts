@@ -11,12 +11,11 @@
 
 import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
-import { showResizeDialog } from './dialogHandler';
+import type { ResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
 import { detectImageAtCursor } from './cursorDetection';
 import { ImageContext, EditorRange } from './types';
 import { logger } from './logger';
-import { resizeDialogLock } from './dialogLock';
 import { settingsCache } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast, ToastType } from './utils/toastUtils';
@@ -115,15 +114,13 @@ async function registerQuickResizeCommand(slotIndex: number, commandName: string
     });
 }
 
-export async function registerCommands(): Promise<void> {
+export async function registerCommands(resizeDialog: ResizeDialog): Promise<void> {
     // Enhanced resize command with intelligent detection
     await joplin.commands.register({
         name: 'resizeImage',
         label: 'Resize Image',
         iconName: 'fas fa-expand-alt',
         execute: async () => {
-            let dialogLockAcquired = false;
-
             try {
                 const prepared = await detectAndPrepareImage();
                 if (!prepared) return;
@@ -131,17 +128,10 @@ export async function registerCommands(): Promise<void> {
                 const { fullContext, replacementRange } = prepared;
 
                 // Show dialog
-                const defaultResizeMode = settingsCache.defaultResizeMode;
-
-                if (!resizeDialogLock.tryAcquire()) {
-                    await showToast('Resize dialog is already open.');
-                    logger.info('Resize dialog invocation skipped because another instance is open.');
-                    return;
-                }
-
-                dialogLockAcquired = true;
-
-                const result = await showResizeDialog(fullContext, defaultResizeMode);
+                const result = await resizeDialog.open(fullContext, {
+                    defaultResizeMode: settingsCache.defaultResizeMode,
+                    defaultPercentage: settingsCache.defaultPercentage,
+                });
 
                 if (result) {
                     const newSyntax = buildNewSyntax(fullContext, result);
@@ -153,10 +143,6 @@ export async function registerCommands(): Promise<void> {
                 logger.error('Error:', err);
                 const message = err instanceof Error ? err.message : 'Unknown error occurred';
                 await showToast(`Operation failed: ${message}`, ToastType.Error);
-            } finally {
-                if (dialogLockAcquired) {
-                    resizeDialogLock.release();
-                }
             }
         },
     });

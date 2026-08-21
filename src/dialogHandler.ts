@@ -1,4 +1,4 @@
-import joplin from 'api';
+import type { ButtonSpec, DialogResult, ViewHandle } from 'api/types';
 import type {
     ImageContext,
     ImageSyntax,
@@ -8,7 +8,23 @@ import type {
     ResizeMode,
 } from './types';
 import { escapeHtmlAttribute } from './utils/stringUtils';
-import { settingsCache } from './settings';
+
+const DIALOG_ID = 'image-resize-dialog';
+
+/** The subset of Joplin's dialog API needed by the resize dialog. */
+export interface JoplinDialogApi {
+    create(id: string): Promise<ViewHandle>;
+    setFitToContent(handle: ViewHandle, status: boolean): Promise<unknown>;
+    addScript(handle: ViewHandle, scriptPath: string): Promise<void>;
+    setButtons(handle: ViewHandle, buttons: ButtonSpec[]): Promise<unknown>;
+    setHtml(handle: ViewHandle, html: string): Promise<unknown>;
+    open(handle: ViewHandle): Promise<DialogResult | null>;
+}
+
+export interface ResizeDialogDefaults {
+    defaultResizeMode: ResizeMode;
+    defaultPercentage: number;
+}
 
 /**
  * Calculates the initial state for the dialog based on default syntax and resize mode.
@@ -58,26 +74,14 @@ function getHeightPlaceholderAttribute(context: ImageContext): string {
 }
 
 /**
- * Shows the image resize dialog and returns the user's selections.
- *
- * @param context - Image metadata including dimensions, source, and alt text
- * @param defaultResizeMode - Default resize mode to preselect in the dialog
- * @returns User's dialog selections, or null if canceled
+ * Renders the dialog markup for one image. Exported so webview tests can drive the
+ * real markup instead of a hand-maintained copy of it.
  */
-export async function showResizeDialog(
-    context: ImageContext,
-    defaultResizeMode: ResizeMode = 'percentage'
-): Promise<ResizeDialogResult | null> {
-    // We create a new dialog instance for each call to ensure a clean and predictable state.
-    const dialogHandle = await joplin.views.dialogs.create(`imageResizeDialog_${Date.now()}`);
-    await joplin.views.dialogs.setFitToContent(dialogHandle, true);
-    await joplin.views.dialogs.addScript(dialogHandle, './dialog/resizeDialog.css');
-    await joplin.views.dialogs.addScript(dialogHandle, './dialog/resizeDialog.js');
-
+export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDefaults): string {
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
     const defaultSyntax: ImageSyntax = 'html';
-    const defaultPercentage = settingsCache.defaultPercentage;
+    const { defaultResizeMode, defaultPercentage } = defaults;
 
     const {
         resizeFieldsetClass,
@@ -106,10 +110,7 @@ export async function showResizeDialog(
         originalDimensionsDetermined: context.originalDimensionsDetermined,
     };
 
-    // Always update the HTML and scripts before opening
-    await joplin.views.dialogs.setHtml(
-        dialogHandle,
-        `
+    return `
     <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
       <!-- Workaround for Joplin dialog focus issue (https://github.com/laurent22/joplin/issues/4474)
            Uses style tag onload since autofocus and inline scripts don't work reliably -->
@@ -177,33 +178,88 @@ export async function showResizeDialog(
         </form>
       </div>
     </div>
-        `
-    );
-    await joplin.views.dialogs.setButtons(dialogHandle, [
-        { id: 'ok', title: 'Resize image' },
-        { id: 'cancel', title: 'Cancel' },
-    ]);
-    const result = await joplin.views.dialogs.open(dialogHandle);
+        `;
+}
 
-    if (result?.id === 'ok' && result.formData) {
-        const form = result.formData.resizeForm;
-        if (!form) {
-            return null;
-        }
-        const targetSyntax = (form.targetSyntax as ImageSyntax) || 'html';
-        const altText = typeof form.altText === 'string' ? form.altText : '';
-        const resizeMode =
-            (form.resizeMode as ResizeMode) || (context.originalDimensionsDetermined ? defaultResizeMode : 'absolute');
+/** Owns the reusable Joplin dialog handle and prevents overlapping opens. */
+export class ResizeDialog {
+    private handle: Promise<ViewHandle> | null = null;
+    private configured: Promise<void> | null = null;
+    private isOpen = false;
 
-        return {
-            targetSyntax,
-            altText,
-            resizeMode,
-            percentage: form.percentage ? parseInt(form.percentage, 10) : undefined,
-            absoluteWidth: form.absoluteWidth ? parseInt(form.absoluteWidth, 10) : undefined,
-            absoluteHeight: form.absoluteHeight ? parseInt(form.absoluteHeight, 10) : undefined,
-        };
+    public constructor(private readonly dialogs: JoplinDialogApi) {}
+
+    /**
+     * Creates the dialog once and shares it with every caller.
+     *
+     * The handle only exists after an await, so caching the resolved value would let
+     * a second caller pass the "already created?" check before the first finished,
+     * creating a duplicate view. Caching the promises makes concurrent callers share
+     * one dialog.
+     *
+     * Creation is never retried: Joplin derives the view handle from the dialog id and
+     * throws "View already added" when that id is registered twice, so a second
+     * create() would break the dialog for the rest of the session. Only the
+     * configuration steps are discarded on failure, so a later open re-applies them to
+     * the handle that already exists.
+     */
+    private async ensureHandle(): Promise<ViewHandle> {
+        this.handle ??= this.dialogs.create(DIALOG_ID);
+        const handle = await this.handle;
+
+        this.configured ??= this.configureHandle(handle).catch((error: unknown) => {
+            this.configured = null;
+            throw error;
+        });
+        await this.configured;
+
+        return handle;
     }
 
-    return null;
+    private async configureHandle(handle: ViewHandle): Promise<void> {
+        await this.dialogs.setFitToContent(handle, true);
+        await this.dialogs.addScript(handle, './dialog/resizeDialog.css');
+        await this.dialogs.addScript(handle, './dialog/resizeDialog.js');
+        await this.dialogs.setButtons(handle, [
+            { id: 'ok', title: 'Resize image' },
+            { id: 'cancel', title: 'Cancel' },
+        ]);
+    }
+
+    /** Renders current image data and waits for the user to dismiss the dialog. */
+    public async open(context: ImageContext, defaults: ResizeDialogDefaults): Promise<ResizeDialogResult | null> {
+        // A second open() makes Joplin resolve the *pending* first one with null and hand
+        // the dialog to the new caller, so an unguarded repeat would cancel the request
+        // the user is looking at. Set before the first await so none can slip through.
+        if (this.isOpen) return null;
+        this.isOpen = true;
+
+        try {
+            const handle = await this.ensureHandle();
+            await this.dialogs.setHtml(handle, renderDialogHtml(context, defaults));
+            const result = await this.dialogs.open(handle);
+
+            if (result?.id !== 'ok' || !result.formData) return null;
+
+            const form = result.formData.resizeForm;
+            if (!form) return null;
+
+            const targetSyntax = (form.targetSyntax as ImageSyntax) || 'html';
+            const altText = typeof form.altText === 'string' ? form.altText : '';
+            const resizeMode =
+                (form.resizeMode as ResizeMode) ||
+                (context.originalDimensionsDetermined ? defaults.defaultResizeMode : 'absolute');
+
+            return {
+                targetSyntax,
+                altText,
+                resizeMode,
+                percentage: form.percentage ? parseInt(form.percentage, 10) : undefined,
+                absoluteWidth: form.absoluteWidth ? parseInt(form.absoluteWidth, 10) : undefined,
+                absoluteHeight: form.absoluteHeight ? parseInt(form.absoluteHeight, 10) : undefined,
+            };
+        } finally {
+            this.isOpen = false;
+        }
+    }
 }
