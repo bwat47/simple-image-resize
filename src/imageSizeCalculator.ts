@@ -4,6 +4,7 @@ import { logger } from './logger';
 import { ImageDimensions, OriginalImageDimensionsResult } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
 import {
+    isValidImageDimensions,
     measureBlobImageDimensions,
     measureImageDimensions,
     EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
@@ -106,12 +107,12 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<Original
  */
 async function getImageDimensionsViaContentScript(imagePath: string): Promise<ImageDimensions | null> {
     try {
-        const result = (await joplin.commands.execute('editor.execCommand', {
+        const result: unknown = await joplin.commands.execute('editor.execCommand', {
             name: GET_IMAGE_DIMENSIONS_COMMAND,
             args: [imagePath],
-        })) as ImageDimensions | null;
+        });
 
-        if (result && typeof result.width === 'number' && typeof result.height === 'number') {
+        if (isValidImageDimensions(result)) {
             return result;
         }
         return null;

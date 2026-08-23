@@ -18,6 +18,25 @@ export const RESOURCE_IMAGE_LOAD_TIMEOUT_MS = 5000;
 export const EXTERNAL_IMAGE_LOAD_TIMEOUT_MS = 10000;
 
 /**
+ * Check that a value contains finite, positive image dimensions.
+ */
+export function isValidImageDimensions(value: unknown): value is ImageDimensions {
+    if (typeof value !== 'object' || value === null) {
+        return false;
+    }
+
+    const dimensions = value as Partial<ImageDimensions>;
+    return (
+        typeof dimensions.width === 'number' &&
+        Number.isFinite(dimensions.width) &&
+        dimensions.width > 0 &&
+        typeof dimensions.height === 'number' &&
+        Number.isFinite(dimensions.height) &&
+        dimensions.height > 0
+    );
+}
+
+/**
  * Measure image dimensions using a DOM Image.
  * Works with local file paths, file:// URLs, blob: object URLs, and external URLs.
  *
@@ -38,10 +57,9 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
 
         img.onload = () => {
             clearTimeout(timeoutId);
-            const width = img.naturalWidth;
-            const height = img.naturalHeight;
-            if (Number.isFinite(width) && Number.isFinite(height) && width > 0 && height > 0) {
-                resolve({ width, height });
+            const dimensions = { width: img.naturalWidth, height: img.naturalHeight };
+            if (isValidImageDimensions(dimensions)) {
+                resolve(dimensions);
             } else {
                 reject(new Error('Invalid image dimensions after load.'));
             }

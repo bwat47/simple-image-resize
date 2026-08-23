@@ -39,7 +39,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 ### Shared Utilities
 
-- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement logic and the image load timeouts, kept runtime dependency-free so both execution contexts can import them.
+- `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement and dimension-validation logic plus the image load timeouts, kept runtime dependency-free so both execution contexts can import them.
 - `src/utils/resourceUtils.ts` handles resource-specific helpers.
 - `src/utils/stringUtils.ts` handles HTML entity decoding and output escaping.
 - `src/utils/toastUtils.ts` centralizes toast messaging.
