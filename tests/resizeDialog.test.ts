@@ -89,6 +89,8 @@ describe('resize dialog webview', () => {
 
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteWidth"]')?.value).toBe('200');
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.value).toBe('100');
+        expect(document.querySelector('[data-absolute-group]')?.classList).toContain('is-disabled');
+        expect(document.querySelector('[data-height-row]')?.classList).not.toContain('is-disabled');
 
         const absoluteMode = document.querySelector<HTMLInputElement>('input[name="resizeMode"][value="absolute"]');
         if (!absoluteMode) throw new Error('Missing absolute resize mode.');

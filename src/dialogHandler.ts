@@ -47,7 +47,7 @@ export function getInitialDialogState(
         percentageModeRowClass: `row${originalDimensionsDetermined ? '' : ' is-disabled'}`,
         percentageRowClass: `row${percentageInitiallyDisabled ? ' is-disabled' : ''}`,
         absoluteGroupClass: `stack absolute-size-group${absoluteInitiallyDisabled ? ' is-disabled' : ''}`,
-        heightRowClass: `row${heightInitiallyDisabled ? ' is-disabled' : ''}`,
+        heightRowClass: `row${heightInitiallyDisabled && !absoluteInitiallyDisabled ? ' is-disabled' : ''}`,
         // HTML checked attributes
         htmlCheckedAttr: htmlSyntaxSelected ? ' checked' : '',
         markdownCheckedAttr: htmlSyntaxSelected ? '' : ' checked',

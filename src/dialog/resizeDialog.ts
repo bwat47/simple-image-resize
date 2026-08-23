@@ -136,8 +136,8 @@ function initializeResizeDialog(): void {
         absoluteHeightInput.value = String(height);
     };
 
-    const setRowDisabled = (element: HTMLElement, disabled: boolean): void => {
-        element.classList.toggle('is-disabled', disabled);
+    const setRowDisabled = (element: HTMLElement, disabled: boolean, visuallyDisabled = disabled): void => {
+        element.classList.toggle('is-disabled', visuallyDisabled);
         element
             .querySelectorAll<
                 HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement
@@ -145,6 +145,15 @@ function initializeResizeDialog(): void {
             .forEach((field) => {
                 field.disabled = disabled;
             });
+    };
+
+    const setAbsoluteFieldsDisabled = (absoluteDisabled: boolean): void => {
+        setRowDisabled(absoluteGroup, absoluteDisabled);
+
+        const heightDisabled = absoluteDisabled || !originalDimensionsDetermined;
+        // The row only needs its own opacity when the parent group remains enabled.
+        const heightNeedsOwnDisabledStyle = heightDisabled && !absoluteDisabled;
+        setRowDisabled(heightRow, heightDisabled, heightNeedsOwnDisabledStyle);
     };
 
     const applyResizeMode = (mode: ResizeMode): void => {
@@ -159,8 +168,7 @@ function initializeResizeDialog(): void {
 
         setRowDisabled(percentageModeRow, !originalDimensionsDetermined);
         setRowDisabled(percentageRow, percentageDisabled);
-        setRowDisabled(absoluteGroup, absoluteDisabled);
-        setRowDisabled(heightRow, absoluteDisabled || !originalDimensionsDetermined);
+        setAbsoluteFieldsDisabled(absoluteDisabled);
 
         if (htmlActive && isPercentage && !percentageInput.value) {
             percentageInput.value = String(config.defaultPercentage);
@@ -186,13 +194,11 @@ function initializeResizeDialog(): void {
 
         if (!htmlActive) {
             setRowDisabled(percentageRow, true);
-            setRowDisabled(absoluteGroup, true);
-            setRowDisabled(heightRow, true);
+            setAbsoluteFieldsDisabled(true);
         } else {
             setRowDisabled(percentageModeRow, !originalDimensionsDetermined);
             setRowDisabled(percentageRow, currentResizeMode !== 'percentage');
-            setRowDisabled(absoluteGroup, currentResizeMode === 'percentage');
-            setRowDisabled(heightRow, currentResizeMode === 'percentage' || !originalDimensionsDetermined);
+            setAbsoluteFieldsDisabled(currentResizeMode === 'percentage');
         }
 
         applyResizeMode(currentResizeMode);
