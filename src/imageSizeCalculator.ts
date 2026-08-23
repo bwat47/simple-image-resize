@@ -22,7 +22,7 @@ const FALLBACK_IMAGE_DIMENSIONS = {
  * Retrieves image dimensions from either a Joplin resource or external URL.
  *
  * Uses platform-appropriate strategies for dimension detection:
- * - Resources: content script (works on Android/Desktop) → Blob URL (less efficient fallback that works on all platforms) → defaults
+ * - Resources: content script (works on Android/Desktop) → Blob URL (works on Web app/Desktop) → defaults
  * - External: DOM Image with the referrer suppressed (no CORS request; only intrinsic dimensions are read) → defaults
  *
  * @param source - Resource ID (32-char hex) or external URL
@@ -58,7 +58,7 @@ export async function getOriginalImageDimensions(
 /**
  * Get dimensions for a Joplin resource using multiple fallback strategies:
  * 1. Content script (works on Android + Desktop)
- * 2. Blob URL created from resource bytes (works on all platforms)
+ * 2. Blob URL created from resource bytes (works on Web app + Desktop)
  * 3. Default dimensions (last resort)
  */
 async function getJoplinResourceDimensions(resourceId: string): Promise<OriginalImageDimensionsResult> {

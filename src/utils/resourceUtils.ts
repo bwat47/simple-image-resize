@@ -54,7 +54,7 @@ function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<A
  *   covers only ArrayBuffer, Blob, and FileSystemHandle), so it deep-copies the
  *   Buffer with for...in, yielding {0: 137, 1: 80, ...}.
  *
- * Each platform produces exactly one of those. The ArrayBuffer branch is defensive,
+ * Desktop and the web app each produce one of those. The ArrayBuffer branch is defensive,
  * as is the Blob guard in getResourceBlob: those are two of the three types Joplin's
  * IPC passes through untouched, so either could appear if the transport ever stops
  * deep-copying the Buffer. Nothing produces them today.
@@ -80,7 +80,8 @@ function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
 
 /**
  * Loads a Joplin image resource into a Blob.
- * Works on Desktop and Web app (not Android, where the resourcePath approach is used instead).
+ * Works on desktop and the web app. Native mobile cannot transport the Buffer
+ * returned by the resource file endpoint through the plugin API.
  */
 export async function getResourceBlob(resourceId: string): Promise<Blob> {
     try {
