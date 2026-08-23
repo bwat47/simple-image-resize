@@ -56,7 +56,12 @@ function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
         }
 
         const candidate = position as Partial<EditorPosition>;
-        return Number.isFinite(candidate.line) && Number.isFinite(candidate.ch);
+        return (
+            typeof candidate.line === 'number' &&
+            Number.isFinite(candidate.line) &&
+            typeof candidate.ch === 'number' &&
+            Number.isFinite(candidate.ch)
+        );
     };
 
     // A non-object (null, undefined, a bare string) fails the field checks below.

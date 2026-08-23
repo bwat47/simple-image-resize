@@ -70,6 +70,20 @@ describe('getOriginalImageDimensions', () => {
         expect(measureBlobMock).toHaveBeenCalledWith(blob, { timeoutMs: 5000 });
     });
 
+    it('falls back to Blob measurement when the editor returns invalid dimensions', async () => {
+        const blob = new Blob([Uint8Array.from([1, 2, 3])], { type: 'image/png' });
+        resourcePathMock.mockResolvedValue('/resources/image.png');
+        executeMock.mockResolvedValue({ width: Number.NaN, height: 600 });
+        getResourceBlobMock.mockResolvedValue(blob);
+        measureBlobMock.mockResolvedValue({ width: 1024, height: 768 });
+
+        await expect(getOriginalImageDimensions(RESOURCE_ID, 'resource')).resolves.toEqual({
+            dimensions: { width: 1024, height: 768 },
+            determined: true,
+        });
+        expect(measureBlobMock).toHaveBeenCalledWith(blob, { timeoutMs: 5000 });
+    });
+
     it('uses default dimensions when both resource strategies fail', async () => {
         resourcePathMock.mockRejectedValue(new Error('Path unavailable'));
         getResourceBlobMock.mockRejectedValue(new Error('Bytes unavailable'));

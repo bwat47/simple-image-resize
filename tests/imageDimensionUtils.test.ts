@@ -1,4 +1,8 @@
-import { measureBlobImageDimensions, measureImageDimensions } from '../src/utils/imageDimensionUtils';
+import {
+    isValidImageDimensions,
+    measureBlobImageDimensions,
+    measureImageDimensions,
+} from '../src/utils/imageDimensionUtils';
 
 class FakeImage {
     private static latestInstance: FakeImage;
@@ -26,6 +30,25 @@ class FakeImage {
         this.source = value;
     }
 }
+
+describe('isValidImageDimensions', () => {
+    it('accepts finite, positive dimensions', () => {
+        expect(isValidImageDimensions({ width: 640, height: 480 })).toBe(true);
+    });
+
+    it.each([
+        null,
+        {},
+        { width: 640 },
+        { width: '640', height: 480 },
+        { width: 0, height: 480 },
+        { width: 640, height: -1 },
+        { width: Number.NaN, height: 480 },
+        { width: 640, height: Number.POSITIVE_INFINITY },
+    ])('rejects invalid dimensions: %j', (value) => {
+        expect(isValidImageDimensions(value)).toBe(false);
+    });
+});
 
 describe('measureBlobImageDimensions', () => {
     beforeEach(() => {
