@@ -18,7 +18,7 @@ describe('getInitialDialogState', () => {
             expect(state.percentageModeRowClass).toBe('row');
             expect(state.percentageRowClass).toBe('row');
             expect(state.absoluteGroupClass).toBe('stack absolute-size-group is-disabled');
-            expect(state.heightRowClass).toBe('row is-disabled');
+            expect(state.heightRowClass).toBe('row');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
