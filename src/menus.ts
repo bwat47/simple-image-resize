@@ -11,11 +11,12 @@ import joplin from 'api';
 import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
-import { selectViewerContextMenuImage } from './viewerContextMenu';
+import { getViewerContextMenuImage } from './viewerContextMenu';
+import type { ViewerImageTarget } from './viewerImageTarget';
 import { settingsCache } from './settings';
 import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
 
-function buildQuickResizeMenuItems(includeAccelerators: boolean): MenuItem[] {
+function buildQuickResizeMenuItems(includeAccelerators: boolean, viewerTarget?: ViewerImageTarget): MenuItem[] {
     const quickResizeOptions = tryParseQuickResizeOptions(settingsCache.quickResizeOptions);
 
     return quickResizeOptions.map((option, index) => {
@@ -24,6 +25,10 @@ function buildQuickResizeMenuItems(includeAccelerators: boolean): MenuItem[] {
             label: getQuickResizeLabel(option),
             commandName: slot.commandName,
         };
+
+        if (viewerTarget) {
+            menuItem.commandArgs = [viewerTarget];
+        }
 
         if (includeAccelerators) {
             menuItem.accelerator = slot.accelerator;
@@ -63,13 +68,11 @@ export function registerContextMenu(): void {
                 return contextMenu;
             }
 
-            // Editor right-clicks act on the image at the cursor. Viewer right-clicks
-            // first move the editor cursor onto the clicked image, so the same
-            // cursor-based commands then act on it.
+            // Viewer right-clicks only check the image. The selected menu command
+            // receives the target and moves the cursor when it runs.
             const isEditorOrigin = await isEditorContextMenuOrigin();
-            const shouldShowResize = isEditorOrigin
-                ? await isOnImageInMarkdownEditor()
-                : await selectViewerContextMenuImage();
+            const viewerTarget = isEditorOrigin ? null : await getViewerContextMenuImage();
+            const shouldShowResize = isEditorOrigin ? await isOnImageInMarkdownEditor() : viewerTarget !== null;
 
             if (!shouldShowResize) {
                 // No image targeted, return menu unchanged
@@ -90,12 +93,13 @@ export function registerContextMenu(): void {
             contextMenu.items.push({
                 commandName: 'resizeImage',
                 label: 'Resize Image',
+                ...(viewerTarget ? { commandArgs: [viewerTarget] } : {}),
             });
 
             // Add quick resize options if enabled
             const showQuickResize = settingsCache.showQuickResizeInContextMenu;
             if (showQuickResize) {
-                contextMenu.items.push(...buildQuickResizeMenuItems(false));
+                contextMenu.items.push(...buildQuickResizeMenuItems(false, viewerTarget ?? undefined));
             }
 
             logger.debug('Added context menu items - cursor on image', { isEditorOrigin });

@@ -3,9 +3,8 @@
  *
  * The markdown viewer script posts one message per right-click: the clicked
  * image's `ViewerImageTarget`, or null when the click was not on an annotated
- * resource image. The context menu filter takes that message and moves the
- * editor cursor onto the image, after which the cursor-based resize commands
- * act on it.
+ * resource image. The context menu filter checks that target without moving
+ * the editor cursor. The resize command selects the image only when chosen.
  *
  * The message and Joplin's context menu request travel separately, so the
  * filter may run before the message arrives; it waits briefly for it. A
@@ -16,7 +15,7 @@
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
 import { isViewerImageTarget, VIEWER_CONTENT_SCRIPT_ID, ViewerImageTarget } from './viewerImageTarget';
-import { selectViewerImageInEditor } from './cursorDetection';
+import { matchesViewerImageInEditor } from './cursorDetection';
 import { logger } from './logger';
 
 /** How long a viewer message stays valid for the context menu it belongs to. */
@@ -72,19 +71,18 @@ async function takeViewerTarget(): Promise<ViewerImageTarget | null> {
 }
 
 /**
- * For a context menu opened from the markdown viewer: move the editor cursor
- * onto the right-clicked image. Returns true only when the cursor now sits on
- * that image, so the caller never acts on a stale cursor position.
+ * Match a viewer image without changing the editor selection. The menu item
+ * carries this target as a command argument for revalidation when chosen.
  */
-export async function selectViewerContextMenuImage(): Promise<boolean> {
+export async function getViewerContextMenuImage(): Promise<ViewerImageTarget | null> {
     const target = await takeViewerTarget();
     if (!target) {
-        return false;
+        return null;
     }
 
-    const selected = await selectViewerImageInEditor(target);
-    logger.debug('Viewer context menu target', target, selected ? 'selected in editor' : 'not matched in editor');
-    return selected;
+    const matched = await matchesViewerImageInEditor(target);
+    logger.debug('Viewer context menu target', target, matched ? 'matched in editor' : 'not matched in editor');
+    return matched ? target : null;
 }
 
 export async function registerViewerContentScript(): Promise<void> {

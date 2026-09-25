@@ -7,6 +7,7 @@ export enum SettingItemType {
 export enum ToastType {
     Success = 'success',
     Error = 'error',
+    Info = 'info',
 }
 
 export enum ContentScriptType {

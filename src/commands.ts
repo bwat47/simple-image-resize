@@ -13,7 +13,8 @@ import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import type { ResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
-import { detectImageAtCursor } from './cursorDetection';
+import { detectImageAtCursor, selectViewerImageInEditor } from './cursorDetection';
+import { isViewerImageTarget } from './viewerImageTarget';
 import { ImageContext, EditorRange } from './types';
 import { logger } from './logger';
 import { settingsCache } from './settings';
@@ -31,7 +32,14 @@ import {
 /**
  * Shared function to handle image detection and dimension fetching
  */
-async function detectAndPrepareImage() {
+async function detectAndPrepareImage(viewerTarget?: unknown) {
+    if (viewerTarget !== undefined) {
+        if (!isViewerImageTarget(viewerTarget) || !(await selectViewerImageInEditor(viewerTarget))) {
+            await showToast('The viewer image is no longer available. Right-click it again.', ToastType.Info);
+            return null;
+        }
+    }
+
     const cursorDetection = await detectImageAtCursor();
 
     if (!cursorDetection) {
@@ -66,7 +74,7 @@ async function replaceImageInEditor(newSyntax: string, replacementRange: EditorR
 /**
  * Execute quick resize for a configured slot.
  */
-async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
+async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown): Promise<void> {
     try {
         // The cached setting is always normalized, so parsing is not expected to fail;
         // the generic catch below handles the theoretical failure.
@@ -78,7 +86,7 @@ async function executeQuickResizeSlot(slotIndex: number): Promise<void> {
             return;
         }
 
-        const prepared = await detectAndPrepareImage();
+        const prepared = await detectAndPrepareImage(viewerTarget);
         if (!prepared) return;
 
         const { fullContext, replacementRange } = prepared;
@@ -108,8 +116,8 @@ async function registerQuickResizeCommand(slotIndex: number, commandName: string
     await joplin.commands.register({
         name: commandName,
         label: `Quick Resize ${slotIndex + 1}`,
-        execute: async () => {
-            await executeQuickResizeSlot(slotIndex);
+        execute: async (viewerTarget?: unknown) => {
+            await executeQuickResizeSlot(slotIndex, viewerTarget);
         },
     });
 }
@@ -120,9 +128,9 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
         name: 'resizeImage',
         label: 'Resize Image',
         iconName: 'fas fa-expand-alt',
-        execute: async () => {
+        execute: async (viewerTarget?: unknown) => {
             try {
-                const prepared = await detectAndPrepareImage();
+                const prepared = await detectAndPrepareImage(viewerTarget);
                 if (!prepared) return;
 
                 const { fullContext, replacementRange } = prepared;

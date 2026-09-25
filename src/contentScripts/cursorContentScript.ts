@@ -27,6 +27,7 @@ export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
 export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
 export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditorContextMenuOrigin';
+export const MATCH_VIEWER_IMAGE_COMMAND = 'simpleImageResize-matchViewerImage';
 export const SELECT_VIEWER_IMAGE_COMMAND = 'simpleImageResize-selectViewerImage';
 
 // Time window to consider a context menu event as originating from the editor (in milliseconds)
@@ -360,9 +361,11 @@ export default function (): MarkdownEditorContentScriptModule {
                 return wasRecentlyTriggeredInEditor;
             });
 
-            // Command: Move the cursor onto an image right-clicked in the markdown viewer,
-            // so the cursor-based resize commands act on it. Does not scroll or focus
-            // the editor.
+            editorControl.registerCommand(MATCH_VIEWER_IMAGE_COMMAND, (target: unknown): boolean => {
+                return isViewerImageTarget(target) && findImageForViewerTarget(view.state, target) !== null;
+            });
+
+            // Called after a viewer resize item is chosen. Does not scroll or focus the editor.
             editorControl.registerCommand(SELECT_VIEWER_IMAGE_COMMAND, (target: unknown): boolean => {
                 try {
                     if (!isViewerImageTarget(target)) {
