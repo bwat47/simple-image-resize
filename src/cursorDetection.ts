@@ -4,7 +4,10 @@ import { logger } from './logger';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
+    MATCH_VIEWER_IMAGE_COMMAND,
+    SELECT_VIEWER_IMAGE_COMMAND,
 } from './contentScripts/cursorContentScript';
+import type { ViewerImageTarget } from './viewerImageTarget';
 
 interface CursorDetectionResult {
     context: Omit<ImageContext, 'originalDimensions' | 'originalDimensionsDetermined'>;
@@ -71,6 +74,41 @@ export async function isEditorContextMenuOrigin(): Promise<boolean> {
         return result === true;
     } catch (error) {
         logger.debug('Editor context menu origin check failed:', error);
+        return false;
+    }
+}
+
+/**
+ * Checks whether a viewer image still matches the note source without moving the cursor.
+ */
+export async function matchesViewerImageInEditor(target: ViewerImageTarget): Promise<boolean> {
+    try {
+        return (
+            (await joplin.commands.execute('editor.execCommand', {
+                name: MATCH_VIEWER_IMAGE_COMMAND,
+                args: [target],
+            })) === true
+        );
+    } catch (error) {
+        logger.debug('Matching viewer image in editor failed:', error);
+        return false;
+    }
+}
+
+/**
+ * Moves the editor cursor onto an image right-clicked in the markdown viewer.
+ * Returns false when the editor could not match the target to an image.
+ */
+export async function selectViewerImageInEditor(target: ViewerImageTarget): Promise<boolean> {
+    try {
+        const result = await joplin.commands.execute('editor.execCommand', {
+            name: SELECT_VIEWER_IMAGE_COMMAND,
+            args: [target],
+        });
+
+        return result === true;
+    } catch (error) {
+        logger.debug('Selecting viewer image in editor failed:', error);
         return false;
     }
 }

@@ -16,7 +16,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 - `src/index.ts` boots the plugin, registers settings, commands, menus, toolbar integration, and the CodeMirror content script.
 - `src/settings.ts` defines plugin settings and exposes cached configuration.
-- `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior.
+- `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior (editor and markdown viewer).
 - `src/quickResizeOptions.ts` parses and normalizes the configurable quick resize slot setting, then converts slots into resize requests.
 
 ### Detection and Editor Operations
@@ -27,6 +27,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/imageSyntaxParser.ts` owns the lightweight regex extraction that pulls source, alt text, and title from syntax-tree-validated image nodes.
 - Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
 - `src/cursorDetection.ts` is the thin plugin-side wrapper around these content script commands.
+- `src/contentScripts/viewerContentScript.ts` is a markdown-it content script for the markdown viewer; see Viewer Context Menu below.
 - The detection and document-mutation logic is split from the Joplin/CodeMirror wiring: `findImagesOnLine`, `getImageAtCursor`, `isCursorInImageActivationRange`, `posToOffset`, and `resolveReplaceChange` are named exports that take an `EditorState` or `Text` instead of an `EditorView`. Only the registered command handlers in the default export need the view (for `dispatch` and DOM events). Tests build a real `EditorState` with `@codemirror/lang-markdown` and drive these directly.
 
 ### Resize Pipeline
@@ -53,6 +54,17 @@ The architecture separates image detection from image extraction:
 - Extraction uses focused regex patterns only after a syntax node has already been identified as an image.
 
 That split keeps detection reliable while keeping the extraction code small and easy to maintain.
+
+## Viewer Context Menu
+
+Right-clicking a resource image in the desktop markdown viewer offers the same resize items as the editor. Opening the menu checks the matching image without changing the editor cursor. Choosing a resize item passes its viewer target as a command argument; the command then selects the image in the mounted CodeMirror editor and runs the existing cursor-based resize flow.
+
+- `viewerContentScript.ts` runs only when Joplin renders with `mapsToLine` (the note viewer). It stamps each rendered image with the source line range of the block it came from (markdown-it's token map; table cells use their row) and its index among the images in that range. Markdown images carry the position in `token.meta` and get the attributes in a wrapped `image` render rule, because Joplin rebuilds resource images from scratch; HTML `<img>` tags get the attributes written into the token content. An instance marker keeps repeated installation from adding the core rule or render wrapper twice.
+- `viewerContextMenu.js` is a plain-script viewer asset. On every viewer right-click it posts the clicked image's `ViewerImageTarget` (line range, index, `data-resource-id`), or `null`, with the click time to the plugin.
+- `src/viewerContextMenu.ts` receives those messages. For a context menu that did not originate in the editor, the filter takes a recent click message from at or before that menu request's start (waiting briefly if Joplin's menu request arrived first) and runs a read-only editor match command. A timed-out or editor-origin menu discards its click time, so a delayed message cannot target a later menu. A newer click remains available to its own menu when an older request is still waiting. Items are added only when the editor confirms the viewer image still matches the note source. The resize command revalidates and selects the image when chosen.
+- `findImageForViewerTarget` in the CodeMirror content script ensures the syntax tree is parsed through the target's line range, then counts images starting in that range with the same rules as the markdown-it side and checks the resource ID matches. It fails safe when parsing times out or the viewer render is out of date.
+- `src/viewerImageTarget.ts` holds the shared contract (content script ID, attribute names, target validation). The viewer asset repeats the ID and attribute names because it cannot import modules; `tests/viewerContextMenuAsset.test.ts` runs the actual asset against renderer output and checks its message ID and target, so drift fails the test suite.
+- External images are not supported: Joplin's viewer only opens a context menu for images with a `data-resource-id`.
 
 ## Platform Strategy
 

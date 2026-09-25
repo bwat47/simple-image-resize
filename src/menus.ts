@@ -4,17 +4,19 @@
  * Handles:
  * - Submenu creation in Tools menu with keyboard shortcuts
  * - Toolbar button in editor toolbar
- * - Dynamic context menu items based on cursor position and settings
+ * - Dynamic context menu items for images in the editor or markdown viewer
  */
 
 import joplin from 'api';
 import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
+import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerContextMenu';
+import type { ViewerImageTarget } from './viewerImageTarget';
 import { settingsCache } from './settings';
 import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
 
-function buildQuickResizeMenuItems(includeAccelerators: boolean): MenuItem[] {
+function buildQuickResizeMenuItems(includeAccelerators: boolean, viewerTarget?: ViewerImageTarget): MenuItem[] {
     const quickResizeOptions = tryParseQuickResizeOptions(settingsCache.quickResizeOptions);
 
     return quickResizeOptions.map((option, index) => {
@@ -23,6 +25,10 @@ function buildQuickResizeMenuItems(includeAccelerators: boolean): MenuItem[] {
             label: getQuickResizeLabel(option),
             commandName: slot.commandName,
         };
+
+        if (viewerTarget) {
+            menuItem.commandArgs = [viewerTarget];
+        }
 
         if (includeAccelerators) {
             menuItem.accelerator = slot.accelerator;
@@ -54,27 +60,25 @@ export async function registerToolbarButton(): Promise<void> {
 
 export function registerContextMenu(): void {
     joplin.workspace.filterEditorContextMenu(async (contextMenu) => {
+        const requestStartedAt = Date.now();
         try {
             // Only show menu items in the Markdown editor (Code View).
             const isMarkdown = await joplin.settings.globalValue('editor.codeView');
             logger.debug('Context menu filter: isMarkdown (Code View)=', isMarkdown);
             if (!isMarkdown) {
+                discardViewerMessagesThrough(requestStartedAt);
                 return contextMenu;
             }
 
-            // Skip when the context menu did not originate from the editor
-            // (for example right-clicking in the markdown viewer pane).
+            // Viewer right-clicks only check the image. The selected menu command
+            // receives the target and moves the cursor when it runs.
             const isEditorOrigin = await isEditorContextMenuOrigin();
-            if (!isEditorOrigin) {
-                return contextMenu;
-            }
-
-            // Get image context directly from editor (pull architecture)
-            // This is guaranteed to match the current cursor position
-            const shouldShowResize = await isOnImageInMarkdownEditor();
+            if (isEditorOrigin) discardViewerMessagesThrough(requestStartedAt);
+            const viewerTarget = isEditorOrigin ? null : await getViewerContextMenuImage(requestStartedAt);
+            const shouldShowResize = isEditorOrigin ? await isOnImageInMarkdownEditor() : viewerTarget !== null;
 
             if (!shouldShowResize) {
-                // No image at cursor, return menu unchanged
+                // No image targeted, return menu unchanged
                 return contextMenu;
             }
 
@@ -92,18 +96,20 @@ export function registerContextMenu(): void {
             contextMenu.items.push({
                 commandName: 'resizeImage',
                 label: 'Resize Image',
+                ...(viewerTarget ? { commandArgs: [viewerTarget] } : {}),
             });
 
             // Add quick resize options if enabled
             const showQuickResize = settingsCache.showQuickResizeInContextMenu;
             if (showQuickResize) {
-                contextMenu.items.push(...buildQuickResizeMenuItems(false));
+                contextMenu.items.push(...buildQuickResizeMenuItems(false, viewerTarget ?? undefined));
             }
 
-            logger.debug('Added context menu items - cursor on image');
+            logger.debug('Added context menu items - cursor on image', { isEditorOrigin });
 
             return contextMenu;
         } catch (error) {
+            discardViewerMessagesThrough(requestStartedAt);
             logger.error('Error in context menu filter:', error);
             // Return original menu on error to avoid breaking context menu
             return contextMenu;

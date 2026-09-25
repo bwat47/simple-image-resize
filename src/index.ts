@@ -4,6 +4,7 @@ import { registerSettings, initializeSettingsCache } from './settings';
 import { registerCommands } from './commands';
 import { registerMenus, registerContextMenu, registerToolbarButton } from './menus';
 import { ResizeDialog } from './dialogHandler';
+import { registerViewerContentScript } from './viewerContextMenu';
 
 const CONTENT_SCRIPT_ID = 'simpleImageResize-cursorContentScript';
 
@@ -21,6 +22,9 @@ joplin.plugins.register({
             CONTENT_SCRIPT_ID,
             './contentScripts/cursorContentScript.js'
         );
+
+        // Register markdown viewer script so viewer right-clicks can target images
+        await registerViewerContentScript();
 
         // Register all resize commands with one lazily-created dialog instance
         const resizeDialog = new ResizeDialog(joplin.views.dialogs);
