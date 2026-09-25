@@ -29,6 +29,8 @@ export interface ImageSourcePosition {
 
 /** Key under `token.meta` that carries a Markdown image's source position to the renderer. */
 const POSITION_META_KEY = 'simpleImageResizePosition';
+const IMAGE_POSITIONS_INSTALLED = Symbol('simpleImageResizeImagePositionsInstalled');
+type PositionedMarkdownIt = MarkdownIt & { [IMAGE_POSITIONS_INSTALLED]?: true };
 
 /**
  * Matches an HTML `<img>` tag, e.g. `<img src=":/abc" width="200">`.
@@ -121,6 +123,10 @@ export function installImagePositions(markdownIt: MarkdownIt, options?: { mapsTo
     if (!options?.mapsToLine) {
         return;
     }
+    const positionedMarkdownIt = markdownIt as PositionedMarkdownIt;
+    if (positionedMarkdownIt[IMAGE_POSITIONS_INSTALLED]) {
+        return;
+    }
 
     // Pushed after Joplin's own core rules, so HTML has already been sanitized.
     markdownIt.core.ruler.push('simpleImageResize_imagePositions', (state) => {
@@ -135,6 +141,7 @@ export function installImagePositions(markdownIt: MarkdownIt, options?: { mapsTo
         const position = tokens[idx].meta?.[POSITION_META_KEY] as ImageSourcePosition | undefined;
         return position ? addAttributesToImgTag(html, position) : html;
     };
+    positionedMarkdownIt[IMAGE_POSITIONS_INSTALLED] = true;
 }
 
 export default function (): {

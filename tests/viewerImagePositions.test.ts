@@ -116,6 +116,21 @@ describe('installImagePositions', () => {
         const doc = `![a](:/${id(1)})\n\n<img src=":/${id(2)}">`;
         expect(render(doc, false)).toBe(new MarkdownIt({ html: true }).render(doc));
     });
+
+    it('adds each position attribute once when installed twice on the same renderer', () => {
+        const markdownIt = new MarkdownIt({ html: true });
+        installImagePositions(markdownIt, { mapsToLine: true });
+        installImagePositions(markdownIt, { mapsToLine: true });
+
+        const html = markdownIt.render(`![a](:/${id(1)}) <img src=":/${id(2)}">`);
+        const imageTags = [...html.matchAll(/<img\b[^>]*>/gi)].map(([tag]) => tag);
+        expect(imageTags).toHaveLength(2);
+        for (const tag of imageTags) {
+            for (const attribute of Object.values(VIEWER_IMAGE_ATTRIBUTES)) {
+                expect(tag.match(new RegExp(`\\b${attribute}=`, 'g'))).toHaveLength(1);
+            }
+        }
+    });
 });
 
 describe('findImageForViewerTarget', () => {
