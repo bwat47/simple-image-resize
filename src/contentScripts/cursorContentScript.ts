@@ -202,6 +202,17 @@ export function findImageForViewerTarget(state: EditorState, target: ViewerImage
 }
 
 /**
+ * Cursor position that selects a viewer-targeted image.
+ *
+ * One character inside the image rather than at its start: when images touch
+ * (`![a](:/x)![b](:/y)`), an image's start is also the previous image's end,
+ * and cursor detection treats a cursor at an image's end as on that image.
+ */
+export function viewerImageCursorPosition(image: ImageNodeRange): number {
+    return image.from + 1;
+}
+
+/**
  * Treat indentation before an image as part of its activation area while keeping
  * the replacement range scoped to the image syntax itself.
  */
@@ -355,7 +366,7 @@ export default function (): MarkdownEditorContentScriptModule {
                         return false;
                     }
 
-                    view.dispatch({ selection: { anchor: image.from } });
+                    view.dispatch({ selection: { anchor: viewerImageCursorPosition(image) } });
                     return true;
                 } catch (error) {
                     logger.error('SELECT_VIEWER_IMAGE_COMMAND: failed to select image', error);

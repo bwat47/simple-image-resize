@@ -2,7 +2,11 @@ import MarkdownIt from 'markdown-it';
 import { EditorState } from '@codemirror/state';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { installImagePositions } from '../src/contentScripts/viewerContentScript';
-import { findImageForViewerTarget } from '../src/contentScripts/cursorContentScript';
+import {
+    findImageForViewerTarget,
+    getImageAtCursor,
+    viewerImageCursorPosition,
+} from '../src/contentScripts/cursorContentScript';
 import { isViewerImageTarget, ViewerImageTarget } from '../src/viewerImageTarget';
 
 vi.mock('../src/logger', () => ({
@@ -42,13 +46,19 @@ function viewerTargets(html: string): ViewerImageTarget[] {
     return targets;
 }
 
-/** Render `doc`, resolve every annotated image in the editor, and return the resolved resource IDs. */
+/**
+ * Render `doc`, then for every annotated image do what a viewer right-click
+ * does: resolve the target, place the cursor, and run cursor detection.
+ * Returns the resource IDs the resize commands would act on.
+ */
 function resolveAll(doc: string): string[] {
     const state = editorState(doc);
     return viewerTargets(render(doc)).map((target) => {
         const image = findImageForViewerTarget(state, target);
         expect(image, `target ${JSON.stringify(target)} did not resolve`).not.toBeNull();
-        return /:\/([a-f0-9]{32})/.exec(state.doc.sliceString(image!.from, image!.to))![1];
+
+        const selected = state.update({ selection: { anchor: viewerImageCursorPosition(image!) } }).state;
+        return getImageAtCursor(selected)!.source;
     });
 }
 
@@ -67,6 +77,12 @@ describe('viewer image positions resolve to the same image in the editor', () =>
         [
             'table cells in one row',
             `| a | b |\n|---|---|\n| ![a](:/${id(1)}) | ![b](:/${id(2)}) |\n| ![c](:/${id(3)}) | x |`,
+            [1, 2, 3],
+        ],
+        ['touching Markdown images', `![a](:/${id(1)})![b](:/${id(2)})![c](:/${id(3)})`, [1, 2, 3]],
+        [
+            'touching HTML images',
+            `<img src=":/${id(1)}" width="10"><img src=":/${id(2)}" width="10" /><img src=":/${id(3)}">`,
             [1, 2, 3],
         ],
         ['linked image', `[![a](:/${id(1)})](https://example.com) ![b](:/${id(2)})`, [1, 2]],
