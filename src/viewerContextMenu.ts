@@ -1,15 +1,15 @@
 /**
  * Viewer-origin context menu support.
  *
- * The markdown viewer script posts one message per right-click: the clicked
- * image's `ViewerImageTarget`, or null when the click was not on an annotated
- * resource image. The context menu filter checks that target without moving
- * the editor cursor. The resize command selects the image only when chosen.
+ * The markdown viewer script posts one message per right-click with the click
+ * time and the image's `ViewerImageTarget`, or a null target when the click was
+ * not on an annotated resource image. The context menu filter checks that
+ * target without moving the editor cursor. The resize command selects the
+ * image only when chosen.
  *
- * The message and Joplin's context menu request travel separately, so the
- * filter may run before the message arrives; it waits briefly for it. A
- * message is only used for a menu opened shortly after it arrived, so a
- * right-click that opened no menu can never steer a later one.
+ * The message and Joplin's context menu request travel separately. The click
+ * timestamp lets the filter reject a delayed message after its menu timed out,
+ * while still accepting messages that arrived before the filter started.
  */
 
 import joplin from 'api';
@@ -18,7 +18,7 @@ import { isViewerImageTarget, VIEWER_CONTENT_SCRIPT_ID, ViewerImageTarget } from
 import { matchesViewerImageInEditor } from './cursorDetection';
 import { logger } from './logger';
 
-/** How long a viewer message stays valid for the context menu it belongs to. */
+/** Maximum time between a viewer click and the start of its menu request. */
 const VIEWER_MESSAGE_GRACE_MS = 400;
 
 /** How long the context menu filter waits for a viewer message that has not arrived yet. */
@@ -26,33 +26,53 @@ const VIEWER_MESSAGE_WAIT_MS = 300;
 
 interface ViewerMessage {
     target: ViewerImageTarget | null;
-    receivedAt: number;
+    clickedAt: number;
 }
 
 let latestMessage: ViewerMessage | null = null;
-let notifyMessageArrived: (() => void) | null = null;
+let discardedThrough = -Infinity;
+const messageWaiters = new Set<() => void>();
 
 /** Record a message from the viewer script. Exported for tests. */
 export function receiveViewerMessage(message: unknown): void {
+    if (typeof message !== 'object' || message === null) return;
+
+    const candidate = message as Partial<ViewerMessage>;
+    if (typeof candidate.clickedAt !== 'number' || !Number.isFinite(candidate.clickedAt)) return;
+    if (candidate.clickedAt <= discardedThrough || candidate.clickedAt > Date.now()) return;
+    if (latestMessage && candidate.clickedAt <= latestMessage.clickedAt) return;
+
     latestMessage = {
-        target: isViewerImageTarget(message) ? message : null,
-        receivedAt: Date.now(),
+        target: isViewerImageTarget(candidate.target) ? candidate.target : null,
+        clickedAt: candidate.clickedAt,
     };
-    notifyMessageArrived?.();
+    for (const notify of messageWaiters) notify();
 }
 
-const isFresh = (message: ViewerMessage | null): message is ViewerMessage =>
-    message !== null && Date.now() - message.receivedAt <= VIEWER_MESSAGE_GRACE_MS;
+/** Discard a skipped or timed-out menu's click, including messages still in transit. */
+export function discardViewerMessagesThrough(throughTime: number): void {
+    discardedThrough = Math.max(discardedThrough, throughTime);
+    if (latestMessage && latestMessage.clickedAt <= discardedThrough) latestMessage = null;
+}
+
+const belongsToRequest = (message: ViewerMessage | null, requestStartedAt: number): message is ViewerMessage =>
+    message !== null &&
+    message.clickedAt > discardedThrough &&
+    message.clickedAt >= requestStartedAt - VIEWER_MESSAGE_GRACE_MS &&
+    message.clickedAt <= Date.now();
 
 function waitForMessage(): Promise<void> {
     return new Promise((resolve) => {
         const done = (): void => {
             clearTimeout(timer);
-            notifyMessageArrived = null;
+            messageWaiters.delete(done);
             resolve();
         };
-        const timer = setTimeout(done, VIEWER_MESSAGE_WAIT_MS);
-        notifyMessageArrived = done;
+        const timer = setTimeout(() => {
+            discardViewerMessagesThrough(Date.now());
+            done();
+        }, VIEWER_MESSAGE_WAIT_MS);
+        messageWaiters.add(done);
     });
 }
 
@@ -60,22 +80,25 @@ function waitForMessage(): Promise<void> {
  * Take the viewer message for the context menu being built, waiting briefly if
  * it has not arrived. Consumes the message so it applies to one menu only.
  */
-async function takeViewerTarget(): Promise<ViewerImageTarget | null> {
-    if (!isFresh(latestMessage)) {
+async function takeViewerTarget(requestStartedAt: number): Promise<ViewerImageTarget | null> {
+    if (!belongsToRequest(latestMessage, requestStartedAt)) {
         await waitForMessage();
     }
 
     const message = latestMessage;
     latestMessage = null;
-    return isFresh(message) ? message.target : null;
+    if (!belongsToRequest(message, requestStartedAt)) return null;
+
+    discardedThrough = Math.max(discardedThrough, message.clickedAt);
+    return message.target;
 }
 
 /**
  * Match a viewer image without changing the editor selection. The menu item
  * carries this target as a command argument for revalidation when chosen.
  */
-export async function getViewerContextMenuImage(): Promise<ViewerImageTarget | null> {
-    const target = await takeViewerTarget();
+export async function getViewerContextMenuImage(requestStartedAt: number): Promise<ViewerImageTarget | null> {
+    const target = await takeViewerTarget(requestStartedAt);
     if (!target) {
         return null;
     }

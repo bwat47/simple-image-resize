@@ -25,6 +25,10 @@ describe('viewer context menu actions', () => {
         settingsCache.showQuickResizeInContextMenu = true;
     });
 
+    afterEach(() => {
+        vi.useRealTimers();
+    });
+
     it('checks the image without moving the cursor and passes it to every viewer resize item', async () => {
         vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
             if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return false;
@@ -34,7 +38,7 @@ describe('viewer context menu actions', () => {
         registerContextMenu();
         const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
 
-        receiveViewerMessage(target);
+        receiveViewerMessage({ target, clickedAt: Date.now() });
         const menu = await filter({ items: [] });
 
         expect(menu.items.filter((item) => item.commandName?.startsWith('resize'))).toHaveLength(6);
@@ -62,6 +66,36 @@ describe('viewer context menu actions', () => {
         });
         expect(joplin.commands.execute).not.toHaveBeenCalledWith('editor.execCommand', {
             name: GET_IMAGE_AT_CURSOR_COMMAND,
+        });
+    });
+
+    it('discards a viewer message when an editor-origin menu skips it', async () => {
+        vi.useFakeTimers();
+        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
+            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return true;
+            if (args.name === GET_IMAGE_AT_CURSOR_COMMAND) return null;
+            throw new Error(`Unexpected editor command: ${args.name}`);
+        });
+        registerContextMenu();
+        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+
+        const clickedAt = Date.now();
+        receiveViewerMessage({ target, clickedAt });
+        await filter({ items: [] });
+        receiveViewerMessage({ target, clickedAt });
+
+        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
+            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return false;
+            if (args.name === MATCH_VIEWER_IMAGE_COMMAND) return true;
+            throw new Error(`Unexpected editor command: ${args.name}`);
+        });
+        const nextMenu = filter({ items: [] });
+        await vi.advanceTimersByTimeAsync(301);
+
+        await expect(nextMenu).resolves.toEqual({ items: [] });
+        expect(joplin.commands.execute).not.toHaveBeenCalledWith('editor.execCommand', {
+            name: MATCH_VIEWER_IMAGE_COMMAND,
+            args: [target],
         });
     });
 });

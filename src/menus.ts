@@ -11,7 +11,7 @@ import joplin from 'api';
 import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
-import { getViewerContextMenuImage } from './viewerContextMenu';
+import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerContextMenu';
 import type { ViewerImageTarget } from './viewerImageTarget';
 import { settingsCache } from './settings';
 import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
@@ -60,18 +60,21 @@ export async function registerToolbarButton(): Promise<void> {
 
 export function registerContextMenu(): void {
     joplin.workspace.filterEditorContextMenu(async (contextMenu) => {
+        const requestStartedAt = Date.now();
         try {
             // Only show menu items in the Markdown editor (Code View).
             const isMarkdown = await joplin.settings.globalValue('editor.codeView');
             logger.debug('Context menu filter: isMarkdown (Code View)=', isMarkdown);
             if (!isMarkdown) {
+                discardViewerMessagesThrough(Date.now());
                 return contextMenu;
             }
 
             // Viewer right-clicks only check the image. The selected menu command
             // receives the target and moves the cursor when it runs.
             const isEditorOrigin = await isEditorContextMenuOrigin();
-            const viewerTarget = isEditorOrigin ? null : await getViewerContextMenuImage();
+            if (isEditorOrigin) discardViewerMessagesThrough(Date.now());
+            const viewerTarget = isEditorOrigin ? null : await getViewerContextMenuImage(requestStartedAt);
             const shouldShowResize = isEditorOrigin ? await isOnImageInMarkdownEditor() : viewerTarget !== null;
 
             if (!shouldShowResize) {
@@ -106,6 +109,7 @@ export function registerContextMenu(): void {
 
             return contextMenu;
         } catch (error) {
+            discardViewerMessagesThrough(Date.now());
             logger.error('Error in context menu filter:', error);
             // Return original menu on error to avoid breaking context menu
             return contextMenu;

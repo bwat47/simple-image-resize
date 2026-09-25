@@ -5,9 +5,9 @@
  * shared modules. The content script ID and attribute names below must match
  * src/viewerImageTarget.ts.
  *
- * Every right-click in the viewer posts a message, with `null` when the target
- * is not an annotated resource image. That gives the context menu filter a
- * definitive answer for each right-click instead of waiting for a timeout.
+ * Every right-click in the viewer posts its click time and image target, with
+ * a null target when the click is not on an annotated resource image. That
+ * gives the context menu filter a definitive answer for each right-click.
  * Only resource images qualify, because the viewer opens a context menu for an
  * image only when it has a `data-resource-id`.
  */
@@ -40,7 +40,7 @@
     document.addEventListener(
         'contextmenu',
         (event) => {
-            webviewApi.postMessage(CONTENT_SCRIPT_ID, findTarget(event.target)).catch((error) => {
+            webviewApi.postMessage(CONTENT_SCRIPT_ID, { target: findTarget(event.target), clickedAt: Date.now() }).catch((error) => {
                 console.warn('[Image Resize] Could not report viewer context menu target:', error);
             });
         },
