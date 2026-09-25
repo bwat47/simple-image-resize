@@ -98,4 +98,36 @@ describe('viewer context menu actions', () => {
             args: [target],
         });
     });
+
+    it('keeps a viewer click that lands while an editor menu is still being built', async () => {
+        vi.useFakeTimers();
+        let releaseOrigin: (origin: boolean) => void = () => {};
+        vi.mocked(joplin.commands.execute).mockImplementation((_command, args) => {
+            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) {
+                return new Promise((resolve) => {
+                    releaseOrigin = resolve;
+                });
+            }
+            if (args.name === GET_IMAGE_AT_CURSOR_COMMAND) return Promise.resolve(null);
+            return Promise.reject(new Error(`Unexpected editor command: ${args.name}`));
+        });
+        registerContextMenu();
+        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+
+        const editorMenu = filter({ items: [] });
+        await vi.advanceTimersByTimeAsync(50);
+        const clickedAt = Date.now();
+        releaseOrigin(true);
+        await editorMenu;
+
+        receiveViewerMessage({ target, clickedAt });
+        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
+            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return false;
+            if (args.name === MATCH_VIEWER_IMAGE_COMMAND) return true;
+            throw new Error(`Unexpected editor command: ${args.name}`);
+        });
+
+        const menu = await filter({ items: [] });
+        expect(menu.items.find((item) => item.commandName === 'resizeImage')?.commandArgs).toEqual([target]);
+    });
 });

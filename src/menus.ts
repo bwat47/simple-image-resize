@@ -66,14 +66,14 @@ export function registerContextMenu(): void {
             const isMarkdown = await joplin.settings.globalValue('editor.codeView');
             logger.debug('Context menu filter: isMarkdown (Code View)=', isMarkdown);
             if (!isMarkdown) {
-                discardViewerMessagesThrough(Date.now());
+                discardViewerMessagesThrough(requestStartedAt);
                 return contextMenu;
             }
 
             // Viewer right-clicks only check the image. The selected menu command
             // receives the target and moves the cursor when it runs.
             const isEditorOrigin = await isEditorContextMenuOrigin();
-            if (isEditorOrigin) discardViewerMessagesThrough(Date.now());
+            if (isEditorOrigin) discardViewerMessagesThrough(requestStartedAt);
             const viewerTarget = isEditorOrigin ? null : await getViewerContextMenuImage(requestStartedAt);
             const shouldShowResize = isEditorOrigin ? await isOnImageInMarkdownEditor() : viewerTarget !== null;
 
@@ -109,7 +109,7 @@ export function registerContextMenu(): void {
 
             return contextMenu;
         } catch (error) {
-            discardViewerMessagesThrough(Date.now());
+            discardViewerMessagesThrough(requestStartedAt);
             logger.error('Error in context menu filter:', error);
             // Return original menu on error to avoid breaking context menu
             return contextMenu;

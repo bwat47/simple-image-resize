@@ -49,7 +49,10 @@ export function receiveViewerMessage(message: unknown): void {
     for (const notify of messageWaiters) notify();
 }
 
-/** Discard a skipped or timed-out menu's click, including messages still in transit. */
+/**
+ * Drop clicks at or before `throughTime`, including messages still in transit.
+ * Callers pass the menu's start time, so a click during that menu's awaits stays valid.
+ */
 export function discardViewerMessagesThrough(throughTime: number): void {
     discardedThrough = Math.max(discardedThrough, throughTime);
     if (latestMessage && latestMessage.clickedAt <= discardedThrough) latestMessage = null;
@@ -59,9 +62,9 @@ const belongsToRequest = (message: ViewerMessage | null, requestStartedAt: numbe
     message !== null &&
     message.clickedAt > discardedThrough &&
     message.clickedAt >= requestStartedAt - VIEWER_MESSAGE_GRACE_MS &&
-    message.clickedAt <= Date.now();
+    message.clickedAt <= requestStartedAt;
 
-function waitForMessage(): Promise<void> {
+function waitForMessage(requestStartedAt: number): Promise<void> {
     return new Promise((resolve) => {
         const done = (): void => {
             clearTimeout(timer);
@@ -69,7 +72,7 @@ function waitForMessage(): Promise<void> {
             resolve();
         };
         const timer = setTimeout(() => {
-            discardViewerMessagesThrough(Date.now());
+            discardViewerMessagesThrough(requestStartedAt);
             done();
         }, VIEWER_MESSAGE_WAIT_MS);
         messageWaiters.add(done);
@@ -82,13 +85,13 @@ function waitForMessage(): Promise<void> {
  */
 async function takeViewerTarget(requestStartedAt: number): Promise<ViewerImageTarget | null> {
     if (!belongsToRequest(latestMessage, requestStartedAt)) {
-        await waitForMessage();
+        await waitForMessage(requestStartedAt);
     }
 
     const message = latestMessage;
-    latestMessage = null;
     if (!belongsToRequest(message, requestStartedAt)) return null;
 
+    latestMessage = null;
     discardedThrough = Math.max(discardedThrough, message.clickedAt);
     return message.target;
 }

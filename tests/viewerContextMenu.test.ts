@@ -104,10 +104,9 @@ describe('getViewerContextMenuImage', () => {
     });
 
     it('discards a message that arrives just after its menu request timed out', async () => {
-        const first = getViewerContextMenuImage(Date.now());
-        await vi.advanceTimersByTimeAsync(50);
         const clickedAt = Date.now();
-        await vi.advanceTimersByTimeAsync(251);
+        const first = getViewerContextMenuImage(clickedAt);
+        await vi.advanceTimersByTimeAsync(301);
         await expect(first).resolves.toBeNull();
 
         receiveViewerMessage({ target, clickedAt });
@@ -116,6 +115,27 @@ describe('getViewerContextMenuImage', () => {
 
         await expect(second).resolves.toBeNull();
         expect(execute).not.toHaveBeenCalled();
+    });
+
+    it('keeps a click that happens while an earlier menu is waiting', async () => {
+        const first = getViewerContextMenuImage(Date.now());
+        await vi.advanceTimersByTimeAsync(50);
+        const clickedAt = Date.now();
+        receiveViewerMessage({ target, clickedAt });
+        await expect(first).resolves.toBeNull();
+        await expect(getViewerContextMenuImage(clickedAt)).resolves.toEqual(target);
+    });
+
+    it('gives a click to the later of two waiting menus', async () => {
+        const first = getViewerContextMenuImage(Date.now());
+        await vi.advanceTimersByTimeAsync(50);
+        const clickedAt = Date.now();
+        const second = getViewerContextMenuImage(clickedAt);
+
+        receiveViewerMessage({ target, clickedAt });
+
+        await expect(first).resolves.toBeNull();
+        await expect(second).resolves.toEqual(target);
     });
 
     it('accepts a new click after discarding a timed-out menu', async () => {
