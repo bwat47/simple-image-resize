@@ -23,6 +23,9 @@ This will open a simple image resize dialogue, the following options are provide
 > The plugin detects images at the cursor position in the editor. In Joplin versions prior to 3.6.3 you need to put your cursor inside the image embed text (not on the rendered image itself). In Joplin version 3.6.3 or newer, you can also right click anywhere on the rendered image (joplin will automatically move the cursor to the image embed line).
 
 > [!note]
+> On desktop, you can also right-click an attached image in the markdown viewer and select "Resize Image". The plugin moves the editor cursor to that image's embed and resizes it in the note source. External (URL) images are not supported in the viewer, because Joplin doesn't show a context menu for them there.
+
+> [!note]
 > On mobile/web you need to put your cursor inside the image embed text and then open the dialog using the toolbar icon.
 
 ### Switch image syntax

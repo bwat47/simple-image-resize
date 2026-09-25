@@ -8,3 +8,8 @@ export enum ToastType {
     Success = 'success',
     Error = 'error',
 }
+
+export enum ContentScriptType {
+    MarkdownItPlugin = 'markdownItPlugin',
+    CodeMirrorPlugin = 'codeMirrorPlugin',
+}

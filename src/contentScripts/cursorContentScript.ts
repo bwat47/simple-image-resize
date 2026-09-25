@@ -3,6 +3,7 @@
  *
  * Registers custom commands for:
  * - Image detection at cursor using syntax tree
+ * - Moving the cursor onto an image right-clicked in the markdown viewer
  * - Text replacement at specified ranges
  * - Image dimension measurement (loads images in editor context)
  *
@@ -19,12 +20,14 @@ import type { EditorImageAtCursorResult, EditorPosition, ImageDimensions, ImageS
 import { logger } from '../logger';
 import { extractImageDetails } from '../imageSyntaxParser';
 import { measureImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../utils/imageDimensionUtils';
+import { isViewerImageTarget, ViewerImageTarget } from '../viewerImageTarget';
 
 // Command names - exported for use by other modules
 export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
 export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
 export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
 export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditorContextMenuOrigin';
+export const SELECT_VIEWER_IMAGE_COMMAND = 'simpleImageResize-selectViewerImage';
 
 // Time window to consider a context menu event as originating from the editor (in milliseconds)
 const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
@@ -89,22 +92,23 @@ function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
 }
 
 /**
- * Find all image nodes on the current line using syntax tree.
- * Returns both Markdown Image nodes and HTML img tags.
+ * Find all image nodes that intersect a document range, in document order,
+ * using the syntax tree. Returns both Markdown Image nodes and HTML img tags.
  *
  * Handles three cases:
  * 1. Markdown images: ![alt](url) - detected as Image nodes
  * 2. Simple HTML in Markdown: <img src="..."> - detected as HTMLTag nodes
  * 3. Nested HTML in Markdown: <div><img src="..."></div> - detected within HTMLBlock nodes
+ *
+ * The viewer's markdown-it plugin counts images with the same rules; see
+ * `viewerContentScript.ts`.
  */
-export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
-    const cursor = state.selection.main.head;
-    const currentLine = state.doc.lineAt(cursor);
+function findImagesInRange(state: EditorState, from: number, to: number): ImageNodeRange[] {
     const images: ImageNodeRange[] = [];
 
     syntaxTree(state).iterate({
-        from: currentLine.from,
-        to: currentLine.to,
+        from,
+        to,
         enter: (node) => {
             // Case 1: Markdown images (direct Image node)
             if (node.name === 'Image') {
@@ -140,8 +144,8 @@ export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
                 while ((match = imgRegex.exec(blockText)) !== null) {
                     const imgStart = node.from + match.index;
                     const imgEnd = imgStart + match[0].length;
-                    // Only include if the img tag intersects with current line
-                    if (imgStart <= currentLine.to && imgEnd >= currentLine.from) {
+                    // Only include if the img tag intersects with the range
+                    if (imgStart <= to && imgEnd >= from) {
                         images.push({
                             type: 'html',
                             from: imgStart,
@@ -154,6 +158,47 @@ export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
     });
 
     return images;
+}
+
+/**
+ * Find all image nodes on the current line using syntax tree.
+ */
+export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
+    const currentLine = state.doc.lineAt(state.selection.main.head);
+    return findImagesInRange(state, currentLine.from, currentLine.to);
+}
+
+/**
+ * Resolve an image right-clicked in the markdown viewer to its node in the editor.
+ *
+ * Counts the images that start inside the target's source line range and takes
+ * the one at the target's index. Fails safe: returns null when the range is
+ * outside the document, the index is out of range, or the image found does not
+ * embed the resource the viewer rendered (for example when the viewer is still
+ * showing an older render of the note).
+ */
+export function findImageForViewerTarget(state: EditorState, target: ViewerImageTarget): ImageNodeRange | null {
+    const { doc } = state;
+    if (target.line >= doc.lines) {
+        return null;
+    }
+
+    // Target lines are 0-based with an exclusive end; CM6 lines are 1-based.
+    const rangeFrom = doc.line(target.line + 1).from;
+    const rangeTo = doc.line(Math.min(target.lineEnd, doc.lines)).to;
+
+    const images = findImagesInRange(state, rangeFrom, rangeTo).filter((image) => image.from >= rangeFrom);
+    const image = images[target.index];
+    if (!image) {
+        return null;
+    }
+
+    const details = extractImageDetails(doc.sliceString(image.from, image.to), image.type);
+    if (details?.sourceType !== 'resource' || details.source.toLowerCase() !== target.resourceId.toLowerCase()) {
+        return null;
+    }
+
+    return image;
 }
 
 /**
@@ -292,6 +337,30 @@ export default function (): MarkdownEditorContentScriptModule {
                 editorContextMenuOriginPending = false;
 
                 return wasRecentlyTriggeredInEditor;
+            });
+
+            // Command: Move the cursor onto an image right-clicked in the markdown viewer,
+            // so the cursor-based resize commands act on it. Does not scroll or focus
+            // the editor.
+            editorControl.registerCommand(SELECT_VIEWER_IMAGE_COMMAND, (target: unknown): boolean => {
+                try {
+                    if (!isViewerImageTarget(target)) {
+                        logger.warn('SELECT_VIEWER_IMAGE_COMMAND: invalid target', target);
+                        return false;
+                    }
+
+                    const image = findImageForViewerTarget(view.state, target);
+                    if (!image) {
+                        logger.debug('SELECT_VIEWER_IMAGE_COMMAND: no matching image for target', target);
+                        return false;
+                    }
+
+                    view.dispatch({ selection: { anchor: image.from } });
+                    return true;
+                } catch (error) {
+                    logger.error('SELECT_VIEWER_IMAGE_COMMAND: failed to select image', error);
+                    return false;
+                }
             });
 
             // Command: Get image at cursor using syntax tree (primary method)

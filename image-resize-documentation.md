@@ -16,7 +16,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 - `src/index.ts` boots the plugin, registers settings, commands, menus, toolbar integration, and the CodeMirror content script.
 - `src/settings.ts` defines plugin settings and exposes cached configuration.
-- `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior.
+- `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior (editor and markdown viewer).
 - `src/quickResizeOptions.ts` parses and normalizes the configurable quick resize slot setting, then converts slots into resize requests.
 
 ### Detection and Editor Operations
@@ -27,6 +27,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/imageSyntaxParser.ts` owns the lightweight regex extraction that pulls source, alt text, and title from syntax-tree-validated image nodes.
 - Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
 - `src/cursorDetection.ts` is the thin plugin-side wrapper around these content script commands.
+- `src/contentScripts/viewerContentScript.ts` is a markdown-it content script for the markdown viewer; see Viewer Context Menu below.
 - The detection and document-mutation logic is split from the Joplin/CodeMirror wiring: `findImagesOnLine`, `getImageAtCursor`, `isCursorInImageActivationRange`, `posToOffset`, and `resolveReplaceChange` are named exports that take an `EditorState` or `Text` instead of an `EditorView`. Only the registered command handlers in the default export need the view (for `dispatch` and DOM events). Tests build a real `EditorState` with `@codemirror/lang-markdown` and drive these directly.
 
 ### Resize Pipeline
@@ -53,6 +54,17 @@ The architecture separates image detection from image extraction:
 - Extraction uses focused regex patterns only after a syntax node has already been identified as an image.
 
 That split keeps detection reliable while keeping the extraction code small and easy to maintain.
+
+## Viewer Context Menu
+
+Right-clicking a resource image in the desktop markdown viewer offers the same resize items as the editor. The viewer never edits the note itself: it moves the editor cursor onto the matching image (the CodeMirror editor stays mounted even in the viewer-only layout), and the existing cursor-based commands do the rest.
+
+- `viewerContentScript.ts` runs only when Joplin renders with `mapsToLine` (the note viewer). It stamps each rendered image with the source line range of the block it came from (markdown-it's token map; table cells use their row) and its index among the images in that range. Markdown images carry the position in `token.meta` and get the attributes in a wrapped `image` render rule, because Joplin rebuilds resource images from scratch; HTML `<img>` tags get the attributes written into the token content.
+- `viewerContextMenu.js` is a plain-script viewer asset. On every viewer right-click it posts the clicked image's `ViewerImageTarget` (line range, index, `data-resource-id`), or `null`, to the plugin.
+- `src/viewerContextMenu.ts` receives those messages. For a context menu that did not originate in the editor, the filter takes the message (waiting briefly if Joplin's menu request arrived first; each message is valid for one menu within a short window) and runs the editor's select command. Items are added only when the editor confirms the cursor is on that image, so a stale cursor is never acted on.
+- `findImageForViewerTarget` in the CodeMirror content script counts images starting in the target's line range with the same rules as the markdown-it side and checks the resource ID matches, failing safe when the viewer render is out of date.
+- `src/viewerImageTarget.ts` holds the shared contract (content script ID, attribute names, target validation). The viewer asset repeats the ID and attribute names because it cannot import modules.
+- External images are not supported: Joplin's viewer only opens a context menu for images with a `data-resource-id`.
 
 ## Platform Strategy
 

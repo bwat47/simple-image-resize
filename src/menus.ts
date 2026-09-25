@@ -4,13 +4,14 @@
  * Handles:
  * - Submenu creation in Tools menu with keyboard shortcuts
  * - Toolbar button in editor toolbar
- * - Dynamic context menu items based on cursor position and settings
+ * - Dynamic context menu items for images in the editor or markdown viewer
  */
 
 import joplin from 'api';
 import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
+import { selectViewerContextMenuImage } from './viewerContextMenu';
 import { settingsCache } from './settings';
 import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
 
@@ -62,19 +63,16 @@ export function registerContextMenu(): void {
                 return contextMenu;
             }
 
-            // Skip when the context menu did not originate from the editor
-            // (for example right-clicking in the markdown viewer pane).
+            // Editor right-clicks act on the image at the cursor. Viewer right-clicks
+            // first move the editor cursor onto the clicked image, so the same
+            // cursor-based commands then act on it.
             const isEditorOrigin = await isEditorContextMenuOrigin();
-            if (!isEditorOrigin) {
-                return contextMenu;
-            }
-
-            // Get image context directly from editor (pull architecture)
-            // This is guaranteed to match the current cursor position
-            const shouldShowResize = await isOnImageInMarkdownEditor();
+            const shouldShowResize = isEditorOrigin
+                ? await isOnImageInMarkdownEditor()
+                : await selectViewerContextMenuImage();
 
             if (!shouldShowResize) {
-                // No image at cursor, return menu unchanged
+                // No image targeted, return menu unchanged
                 return contextMenu;
             }
 
@@ -100,7 +98,7 @@ export function registerContextMenu(): void {
                 contextMenu.items.push(...buildQuickResizeMenuItems(false));
             }
 
-            logger.debug('Added context menu items - cursor on image');
+            logger.debug('Added context menu items - cursor on image', { isEditorOrigin });
 
             return contextMenu;
         } catch (error) {

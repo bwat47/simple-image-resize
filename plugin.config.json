@@ -1,3 +1,7 @@
 {
-    "extraScripts": ["contentScripts/cursorContentScript.ts", "dialog/resizeDialog.ts"]
+    "extraScripts": [
+        "contentScripts/cursorContentScript.ts",
+        "contentScripts/viewerContentScript.ts",
+        "dialog/resizeDialog.ts"
+    ]
 }
