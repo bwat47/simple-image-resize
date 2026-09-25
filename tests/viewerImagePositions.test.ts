@@ -104,6 +104,11 @@ describe('viewer image positions resolve to the same image in the editor', () =>
         expect(findImageForViewerTarget(state, first)!.from).toBe(0);
         expect(findImageForViewerTarget(state, second)!.from).toBe(doc.lastIndexOf('!['));
     });
+
+    it('resolves an image beyond the editor syntax tree in a long note', () => {
+        const doc = `${'ordinary text line\n'.repeat(1000)}\n![a](:/${id(1)})`;
+        expect(resolveAll(doc)).toEqual([id(1)]);
+    });
 });
 
 describe('installImagePositions', () => {

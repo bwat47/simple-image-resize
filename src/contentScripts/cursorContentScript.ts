@@ -12,7 +12,7 @@
  * for local resources that the main plugin context cannot access directly.
  */
 
-import { syntaxTree } from '@codemirror/language';
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import { EditorView } from '@codemirror/view';
 import { EditorState, Text } from '@codemirror/state';
 import type { CodeMirrorControl, MarkdownEditorContentScriptModule } from 'api/types';
@@ -31,6 +31,9 @@ export const SELECT_VIEWER_IMAGE_COMMAND = 'simpleImageResize-selectViewerImage'
 
 // Time window to consider a context menu event as originating from the editor (in milliseconds)
 const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
+
+// Keep viewer context menus responsive when parsing a very large note.
+const VIEWER_IMAGE_PARSE_TIMEOUT_MS = 200;
 
 export interface ReplaceRangeArgs {
     text: string;
@@ -103,10 +106,10 @@ function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
  * The viewer's markdown-it plugin counts images with the same rules; see
  * `viewerContentScript.ts`.
  */
-function findImagesInRange(state: EditorState, from: number, to: number): ImageNodeRange[] {
+function findImagesInRange(state: EditorState, from: number, to: number, tree = syntaxTree(state)): ImageNodeRange[] {
     const images: ImageNodeRange[] = [];
 
-    syntaxTree(state).iterate({
+    tree.iterate({
         from,
         to,
         enter: (node) => {
@@ -173,9 +176,10 @@ export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
  *
  * Counts the images that start inside the target's source line range and takes
  * the one at the target's index. Fails safe: returns null when the range is
- * outside the document, the index is out of range, or the image found does not
- * embed the resource the viewer rendered (for example when the viewer is still
- * showing an older render of the note).
+ * outside the document, its syntax tree cannot be parsed in time, the index is
+ * out of range, or the image found does not embed the resource the viewer
+ * rendered (for example when the viewer is still showing an older render of
+ * the note).
  */
 export function findImageForViewerTarget(state: EditorState, target: ViewerImageTarget): ImageNodeRange | null {
     const { doc } = state;
@@ -187,7 +191,13 @@ export function findImageForViewerTarget(state: EditorState, target: ViewerImage
     const rangeFrom = doc.line(target.line + 1).from;
     const rangeTo = doc.line(Math.min(target.lineEnd, doc.lines)).to;
 
-    const images = findImagesInRange(state, rangeFrom, rangeTo).filter((image) => image.from >= rangeFrom);
+    // The hidden editor may not have parsed this part of a long note yet.
+    const tree = ensureSyntaxTree(state, rangeTo, VIEWER_IMAGE_PARSE_TIMEOUT_MS);
+    if (!tree) {
+        return null;
+    }
+
+    const images = findImagesInRange(state, rangeFrom, rangeTo, tree).filter((image) => image.from >= rangeFrom);
     const image = images[target.index];
     if (!image) {
         return null;
