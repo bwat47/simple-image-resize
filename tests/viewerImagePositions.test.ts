@@ -7,7 +7,7 @@ import {
     getImageAtCursor,
     viewerImageCursorPosition,
 } from '../src/contentScripts/cursorContentScript';
-import { isViewerImageTarget, ViewerImageTarget } from '../src/viewerImageTarget';
+import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, ViewerImageTarget } from '../src/viewerImageTarget';
 
 vi.mock('../src/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -34,12 +34,12 @@ function viewerTargets(html: string): ViewerImageTarget[] {
     const targets: ViewerImageTarget[] = [];
     for (const [tag] of html.matchAll(/<img\b[^>]*>/gi)) {
         const attr = (name: string): string | undefined => new RegExp(`${name}="([^"]*)"`).exec(tag)?.[1];
-        const line = attr('data-image-resize-line');
+        const line = attr(VIEWER_IMAGE_ATTRIBUTES.line);
         if (line === undefined) continue;
         targets.push({
             line: Number(line),
-            lineEnd: Number(attr('data-image-resize-line-end')),
-            index: Number(attr('data-image-resize-index')),
+            lineEnd: Number(attr(VIEWER_IMAGE_ATTRIBUTES.lineEnd)),
+            index: Number(attr(VIEWER_IMAGE_ATTRIBUTES.index)),
             resourceId: /src=":\/([a-f0-9]{32})"/.exec(tag)![1],
         });
     }
