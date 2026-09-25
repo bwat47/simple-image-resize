@@ -42,7 +42,7 @@
         "globals": "^14.0.0",
         "jsdom": "^29.1.1",
         "knip": "^6.24.0",
-        "markdown-it": "^13.0.2",
+        "markdown-it": "^14.1.1",
         "prettier": "^3.8.3",
         "tar": "^7.5.15",
         "ts-loader": "^9.5.7",
