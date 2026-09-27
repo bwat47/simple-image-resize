@@ -73,6 +73,13 @@ const SETTINGS_CONFIG = {
         label: 'Show toast notifications',
         description: 'Display brief notification messages for plugin actions',
     },
+    showFormattingToolbarIcon: {
+        key: `${SECTION_ID}.showFormattingToolbarIcon`,
+        defaultValue: true,
+        type: SettingItemType.Bool,
+        label: 'Show formatting toolbar icon',
+        description: 'Display the resize icon in the Markdown formatting toolbar. Requires restarting Joplin.',
+    },
 } as const;
 
 export type SettingsCache = {
@@ -82,6 +89,7 @@ export type SettingsCache = {
     showQuickResizeInContextMenu: boolean;
     quickResizeOptions: string;
     showToastMessages: boolean;
+    showFormattingToolbarIcon: boolean;
 };
 
 /**
@@ -94,6 +102,7 @@ export const settingsCache: SettingsCache = {
     showQuickResizeInContextMenu: SETTINGS_CONFIG.showQuickResizeInContextMenu.defaultValue,
     quickResizeOptions: SETTINGS_CONFIG.quickResizeOptions.defaultValue,
     showToastMessages: SETTINGS_CONFIG.showToastMessages.defaultValue,
+    showFormattingToolbarIcon: SETTINGS_CONFIG.showFormattingToolbarIcon.defaultValue,
 };
 
 /**
@@ -155,6 +164,10 @@ async function updateSettingsCache(): Promise<void> {
         ),
         quickResizeOptions: normalizedQuickResizeOptions,
         showToastMessages: readBool(raw[config.showToastMessages.key], config.showToastMessages.defaultValue),
+        showFormattingToolbarIcon: readBool(
+            raw[config.showFormattingToolbarIcon.key],
+            config.showFormattingToolbarIcon.defaultValue
+        ),
     };
 
     // Assign in place: other modules import settingsCache by reference.

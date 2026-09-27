@@ -76,6 +76,12 @@
             "label": "Show toast notifications",
             "description": "Display brief notification messages for plugin actions",
             "value": true
+        },
+        "showFormattingToolbarIcon": {
+            "type": "bool",
+            "label": "Show formatting toolbar icon",
+            "description": "Display the resize icon in the Markdown formatting toolbar. Requires restarting Joplin.",
+            "value": true
         }
     }
 }

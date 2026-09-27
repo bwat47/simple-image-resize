@@ -16,6 +16,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 
 - `src/index.ts` boots the plugin, registers settings, commands, menus, toolbar integration, and the CodeMirror content script.
 - `src/settings.ts` defines plugin settings and exposes cached configuration.
+- The `showFormattingToolbarIcon` setting defaults to `true` and is checked in `src/index.ts` only at startup before registering the Markdown formatting toolbar button. Changing it requires restarting Joplin.
 - `src/menus.ts` wires the command surface into Joplin menus, toolbar, and context menu behavior (editor and markdown viewer).
 - `src/quickResizeOptions.ts` parses and normalizes the configurable quick resize slot setting, then converts slots into resize requests.
 

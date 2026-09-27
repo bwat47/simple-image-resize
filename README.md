@@ -58,6 +58,8 @@ You can configure up to 5 quick resize slots (using percentage or pixel sizes), 
 
 **Quick resize options** - Comma-separated list that determines the Quick resize options. Use 1-5 positive whole-number values, with units (percent or pixels), e.g.: 100%, 75%, 300px. Invalid entries are removed automatically, and an empty list resets to the defaults.
 
+**Show formatting toolbar icon** - Show the resize icon in the Markdown formatting toolbar (enabled by default). Changes take effect after restarting Joplin.
+
 ### Default keyboard shortcuts:
 
 - Resize Image dialog (CmdOrCtrl+Shift+R)

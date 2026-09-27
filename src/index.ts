@@ -1,6 +1,6 @@
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
-import { registerSettings, initializeSettingsCache } from './settings';
+import { registerSettings, initializeSettingsCache, settingsCache } from './settings';
 import { registerCommands } from './commands';
 import { registerMenus, registerContextMenu, registerToolbarButton } from './menus';
 import { ResizeDialog } from './dialogHandler';
@@ -33,8 +33,10 @@ joplin.plugins.register({
         // Register menus
         await registerMenus();
 
-        // Register toolbar button
-        await registerToolbarButton();
+        // Apply toolbar visibility only at startup.
+        if (settingsCache.showFormattingToolbarIcon) {
+            await registerToolbarButton();
+        }
 
         // Register context menu
         registerContextMenu();
