@@ -21,6 +21,10 @@ export default [
         files: ['**/*.{ts,tsx,js}'],
         languageOptions: {
             parser: tsParser,
+            parserOptions: {
+                projectService: true,
+                tsconfigRootDir: import.meta.dirname,
+            },
             ecmaVersion: 2020,
             sourceType: 'module',
             globals: {
@@ -34,7 +38,7 @@ export default [
         rules: {
             // Turn off rules TypeScript handles (prevents NodeJS / type-only false positives)
             'no-undef': 'off',
-            ...tsPlugin.configs.recommended.rules,
+            ...tsPlugin.configs['recommended-type-checked'].rules,
             // report an error if any circular dependency is found
             'import/no-cycle': ['error', { maxDepth: Infinity }],
             'no-useless-escape': 'off',
