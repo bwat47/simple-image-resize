@@ -21,12 +21,22 @@ describe('viewer context menu actions', () => {
         vi.mocked(joplin.commands.execute).mockReset();
         vi.mocked(joplin.commands.register).mockClear();
         vi.mocked(joplin.workspace.filterEditorContextMenu).mockClear();
-        vi.mocked(joplin.settings.globalValue).mockResolvedValue(true);
+        vi.mocked(joplin.settings.globalValues).mockResolvedValue([true]);
         settingsCache.showQuickResizeInContextMenu = true;
     });
 
     afterEach(() => {
         vi.useRealTimers();
+    });
+
+    it.each([false, undefined, 'true'])('omits resize items when code view is %s', async (codeView) => {
+        vi.mocked(joplin.settings.globalValues).mockResolvedValue([codeView]);
+        registerContextMenu();
+        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+
+        expect(await filter({ items: [] })).toEqual({ items: [] });
+        expect(joplin.settings.globalValues).toHaveBeenCalledWith(['editor.codeView']);
+        expect(joplin.commands.execute).not.toHaveBeenCalled();
     });
 
     it('checks the image without moving the cursor and passes it to every viewer resize item', async () => {
