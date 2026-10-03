@@ -83,7 +83,7 @@ export function annotateImagePositions(tokens: Token[]): void {
             continue;
         }
 
-        const map = (token.map as LineMap | null) ?? enclosingMaps[enclosingMaps.length - 1] ?? null;
+        const map = token.map ?? enclosingMaps[enclosingMaps.length - 1] ?? null;
 
         if (token.nesting === 1) {
             enclosingMaps.push(map);
