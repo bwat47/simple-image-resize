@@ -11,7 +11,7 @@ import vitest from '@vitest/eslint-plugin';
 
 export default [
     {
-        ignores: ['api/**', 'dist/**'],
+        ignores: ['api/**', 'dist/**', 'webpack.config.js', '.prettierrc.js'],
     },
 
     js.configs.recommended,
