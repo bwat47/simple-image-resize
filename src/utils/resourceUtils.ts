@@ -85,21 +85,23 @@ function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
  */
 export async function getResourceBlob(resourceId: string): Promise<Blob> {
     try {
-        const resource = await joplin.data.get(['resources', resourceId], { fields: ['mime'] });
-        const file = await joplin.data.get(['resources', resourceId, 'file']);
+        const resource: unknown = await joplin.data.get(['resources', resourceId], { fields: ['mime'] });
+        const file: unknown = await joplin.data.get(['resources', resourceId, 'file']);
 
         if (!resource || !file) {
             throw new Error('Resource not found or is empty.');
         }
 
-        if (typeof resource.mime !== 'string' || !resource.mime.toLowerCase().startsWith('image/')) {
+        if (
+            typeof resource !== 'object' ||
+            !('mime' in resource) ||
+            typeof resource.mime !== 'string' ||
+            !resource.mime.toLowerCase().startsWith('image/')
+        ) {
             throw new Error('Resource is not an image.');
         }
 
-        const body = file.body ?? file;
-        if (body === null || body === undefined) {
-            throw new Error('Could not find file data.');
-        }
+        const body = typeof file === 'object' && 'body' in file ? (file.body ?? file) : file;
 
         // Blob is one of the three types Joplin's plugin IPC passes through untouched,
         // so it is the likeliest shape to appear if the transport ever stops deep-copying

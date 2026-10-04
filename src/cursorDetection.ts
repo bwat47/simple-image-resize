@@ -67,7 +67,7 @@ export async function isOnImageInMarkdownEditor(): Promise<boolean> {
  */
 export async function isEditorContextMenuOrigin(): Promise<boolean> {
     try {
-        const result = await joplin.commands.execute('editor.execCommand', {
+        const result: unknown = await joplin.commands.execute('editor.execCommand', {
             name: IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
         });
 
@@ -101,7 +101,7 @@ export async function matchesViewerImageInEditor(target: ViewerImageTarget): Pro
  */
 export async function selectViewerImageInEditor(target: ViewerImageTarget): Promise<boolean> {
     try {
-        const result = await joplin.commands.execute('editor.execCommand', {
+        const result: unknown = await joplin.commands.execute('editor.execCommand', {
             name: SELECT_VIEWER_IMAGE_COMMAND,
             args: [target],
         });

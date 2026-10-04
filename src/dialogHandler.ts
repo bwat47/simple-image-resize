@@ -241,22 +241,30 @@ export class ResizeDialog {
 
             if (result?.id !== 'ok' || !result.formData) return null;
 
-            const form = result.formData.resizeForm;
-            if (!form) return null;
+            const formData: unknown = result.formData;
+            if (typeof formData !== 'object' || formData === null || !('resizeForm' in formData)) return null;
+            const form = formData.resizeForm;
+            if (typeof form !== 'object' || form === null) return null;
+            const fields = form as Record<string, unknown>;
 
-            const targetSyntax = (form.targetSyntax as ImageSyntax) || 'html';
-            const altText = typeof form.altText === 'string' ? form.altText : '';
+            const targetSyntax = fields.targetSyntax === 'markdown' ? 'markdown' : 'html';
+            const altText = typeof fields.altText === 'string' ? fields.altText : '';
+            const defaultResizeMode = context.originalDimensionsDetermined ? defaults.defaultResizeMode : 'absolute';
             const resizeMode =
-                (form.resizeMode as ResizeMode) ||
-                (context.originalDimensionsDetermined ? defaults.defaultResizeMode : 'absolute');
+                fields.resizeMode === 'percentage' || fields.resizeMode === 'absolute'
+                    ? fields.resizeMode
+                    : defaultResizeMode;
+
+            const readDimension = (value: unknown): number | undefined =>
+                typeof value === 'string' && value ? parseInt(value, 10) : undefined;
 
             return {
                 targetSyntax,
                 altText,
                 resizeMode,
-                percentage: form.percentage ? parseInt(form.percentage, 10) : undefined,
-                absoluteWidth: form.absoluteWidth ? parseInt(form.absoluteWidth, 10) : undefined,
-                absoluteHeight: form.absoluteHeight ? parseInt(form.absoluteHeight, 10) : undefined,
+                percentage: readDimension(fields.percentage),
+                absoluteWidth: readDimension(fields.absoluteWidth),
+                absoluteHeight: readDimension(fields.absoluteHeight),
             };
         } finally {
             this.isOpen = false;

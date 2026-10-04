@@ -44,8 +44,8 @@ export function decodeHtmlEntities(value: string): string {
     // Decode amp first in case the input contains &amp;quot; etc
     str = str.replace(/&amp;/g, '&');
     // Numeric character references (decimal and hex)
-    str = str.replace(/&#(\d+);/g, (_, dec) => String.fromCharCode(parseInt(dec, 10)));
-    str = str.replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => String.fromCharCode(parseInt(hex, 16)));
+    str = str.replace(/&#(\d+);/g, (_, dec: string) => String.fromCharCode(parseInt(dec, 10)));
+    str = str.replace(/&#x([0-9a-fA-F]+);/g, (_, hex: string) => String.fromCharCode(parseInt(hex, 16)));
     // Named entities we care about
     str = str
         .replace(/&quot;/g, '"')
