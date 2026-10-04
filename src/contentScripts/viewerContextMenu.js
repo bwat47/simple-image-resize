@@ -1,8 +1,9 @@
+// @ts-check
 /**
  * Markdown viewer asset: reports right-clicked images to the plugin.
  *
  * Loaded as a plain script by viewerContentScript.ts, so it cannot import
- * shared modules. The content script ID and attribute names below must match
+ * shared modules (JSDoc type imports are erased). The content script ID and attribute names below must match
  * src/viewerImageTarget.ts.
  *
  * Every right-click in the viewer posts its click time and image target, with
@@ -12,10 +13,20 @@
  * image only when it has a `data-resource-id`.
  */
 (function () {
-    if (window.simpleImageResizeViewerContextMenuLoaded) return;
-    window.simpleImageResizeViewerContextMenuLoaded = true;
+    const viewerWindow = /** @type {import('./viewerContextMenuTypes').ViewerWindow} */ (window);
+    if (viewerWindow.simpleImageResizeViewerContextMenuLoaded) return;
+    viewerWindow.simpleImageResizeViewerContextMenuLoaded = true;
 
     const CONTENT_SCRIPT_ID = 'simpleImageResize-viewerContentScript';
+
+    /** Joplin injects `webviewApi` as a lexical global only in the viewer runtime. */
+    const getViewerApi = () => {
+        /** @type {unknown} */
+        const hostApi =
+            // @ts-expect-error Not declared globally, so plugin-side code cannot use it by mistake.
+            webviewApi;
+        return /** @type {import('./viewerContextMenuTypes').ViewerWebviewApi} */ (hostApi);
+    };
 
     /** @param {Element} element @param {string} name */
     const readIndex = (element, name) => {
@@ -42,7 +53,7 @@
     document.addEventListener(
         'contextmenu',
         (event) => {
-            webviewApi
+            getViewerApi()
                 .postMessage(CONTENT_SCRIPT_ID, { target: findTarget(event.target), clickedAt: Date.now() })
                 .catch((error) => {
                     console.warn('[Image Resize] Could not report viewer context menu target:', error);

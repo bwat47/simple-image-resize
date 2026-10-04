@@ -17,17 +17,13 @@ import { ContentScriptType } from 'api/types';
 import { isViewerImageTarget, VIEWER_CONTENT_SCRIPT_ID, ViewerImageTarget } from './viewerImageTarget';
 import { matchesViewerImageInEditor } from './cursorDetection';
 import { logger } from './logger';
+import type { ViewerContextMenuMessage as ViewerMessage } from './contentScripts/viewerContextMenuTypes';
 
 /** Maximum time between a viewer click and the start of its menu request. */
 const VIEWER_MESSAGE_GRACE_MS = 400;
 
 /** How long the context menu filter waits for a viewer message that has not arrived yet. */
 const VIEWER_MESSAGE_WAIT_MS = 300;
-
-interface ViewerMessage {
-    target: ViewerImageTarget | null;
-    clickedAt: number;
-}
 
 let latestMessage: ViewerMessage | null = null;
 let discardedThrough = -Infinity;
