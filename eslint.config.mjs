@@ -28,8 +28,6 @@ export default defineConfig([
                 projectService: true,
                 tsconfigRootDir: import.meta.dirname,
             },
-            ecmaVersion: 2020,
-            sourceType: 'module',
             globals: {
                 ...globals.node,
             },
