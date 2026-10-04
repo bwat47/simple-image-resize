@@ -54,6 +54,7 @@ export default [
             '**/*.test.{ts,tsx,js}',
             '**/*.spec.{ts,tsx,js}',
             '**/__tests__/**/*.{ts,tsx,js}',
+            'tests/**/*.{ts,tsx,js}',
             'src/testHelpers.ts',
         ],
         languageOptions: {
@@ -63,7 +64,8 @@ export default [
             },
         },
         rules: {
-            // You can add Vitest-specific overrides here later
+            // expect(mock.method) passes vi.fn() mocks, which have no `this` to lose.
+            '@typescript-eslint/unbound-method': 'off',
         },
     },
 

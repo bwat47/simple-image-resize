@@ -23,7 +23,7 @@ describe('buildNewSyntax', () => {
         originalDimensionsDetermined: true,
     };
 
-    test('returns markdown syntax when targetSyntax=markdown', async () => {
+    test('returns markdown syntax when targetSyntax=markdown', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'New Alt',
@@ -35,7 +35,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toBe('![New Alt](:/0123456789abcdef0123456789abcdef)');
     });
 
-    test('calculates percentage resize for HTML output with width and height', async () => {
+    test('calculates percentage resize for HTML output with width and height', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
@@ -48,7 +48,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toContain('height="150"');
     });
 
-    test('calculates percentage resize for HTML output with width only', async () => {
+    test('calculates percentage resize for HTML output with width only', () => {
         settingsCache.htmlSyntaxStyle = 'widthOnly';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
@@ -62,7 +62,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).not.toContain('height=');
     });
 
-    test('absolute dimensions both provided with width and height', async () => {
+    test('absolute dimensions both provided with width and height', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
@@ -75,7 +75,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toContain('height="240"');
     });
 
-    test('absolute dimensions both provided with width only', async () => {
+    test('absolute dimensions both provided with width only', () => {
         settingsCache.htmlSyntaxStyle = 'widthOnly';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
@@ -89,7 +89,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).not.toContain('height=');
     });
 
-    test('omits height when original dimensions could not be determined', async () => {
+    test('omits height when original dimensions could not be determined', () => {
         const context: ImageContext = { ...baseContext, originalDimensionsDetermined: false };
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
@@ -105,7 +105,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).not.toContain('height=');
     });
 
-    test('absolute width only keeps aspect ratio', async () => {
+    test('absolute width only keeps aspect ratio', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
@@ -118,7 +118,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toContain('height="300"');
     });
 
-    test('absolute height only keeps aspect ratio', async () => {
+    test('absolute height only keeps aspect ratio', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
@@ -131,7 +131,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toContain('height="300"');
     });
 
-    test('preserves title when generating HTML', async () => {
+    test('preserves title when generating HTML', () => {
         const ctx: ImageContext = { ...baseContext, title: 'My Title' };
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
@@ -143,7 +143,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toContain('title="My Title"');
     });
 
-    test('preserves title when generating markdown', async () => {
+    test('preserves title when generating markdown', () => {
         const ctx: ImageContext = { ...baseContext, title: 'My Title' };
         const result: ResizeDialogResult = {
             targetSyntax: 'markdown',
@@ -155,7 +155,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
     });
 
-    test('removes brackets and preserves backslashes in alt text for markdown output', async () => {
+    test('removes brackets and preserves backslashes in alt text for markdown output', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt [with] brackets and \\ backslash',
@@ -166,7 +166,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toBe('![Alt with brackets and \\ backslash](:/0123456789abcdef0123456789abcdef)');
     });
 
-    test('escapes quotes in title for markdown and html output', async () => {
+    test('escapes quotes in title for markdown and html output', () => {
         const ctx: ImageContext = { ...baseContext, title: 'He said "hi" & <ok>' };
         // HTML: HTML entities are escaped
         const htmlRes: ResizeDialogResult = {
@@ -188,7 +188,7 @@ describe('buildNewSyntax', () => {
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said \\"hi\\" & <ok>")');
     });
 
-    test('escapes quotes in alt text for html output', async () => {
+    test('escapes quotes in alt text for html output', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Quote: "double" & <tag>',
@@ -199,7 +199,7 @@ describe('buildNewSyntax', () => {
         expect(html).toContain('alt="Quote: &quot;double&quot; &amp; &lt;tag&gt;"');
     });
 
-    test('escapes single quotes in alt text for html output', async () => {
+    test('escapes single quotes in alt text for html output', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: "It's fine",
@@ -210,7 +210,7 @@ describe('buildNewSyntax', () => {
         expect(html).toContain('alt="It&#39;s fine"');
     });
 
-    test('preserves backslashes in title without accumulation', async () => {
+    test('preserves backslashes in title without accumulation', () => {
         const ctx: ImageContext = { ...baseContext, title: 'mern & test\\ABC' };
         // Convert to HTML
         const htmlRes: ResizeDialogResult = {
@@ -233,7 +233,7 @@ describe('buildNewSyntax', () => {
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "mern & test\\ABC")');
     });
 
-    test('builds syntax for external URL source', async () => {
+    test('builds syntax for external URL source', () => {
         const externalCtx: ImageContext = {
             type: 'markdown',
             syntax: '![Logo](https://example.com/logo.png)',

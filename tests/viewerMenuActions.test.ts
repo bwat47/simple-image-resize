@@ -16,6 +16,17 @@ vi.mock('../src/logger', () => ({
 
 const target = { line: 2, lineEnd: 3, index: 0, resourceId: '0123456789abcdef0123456789abcdef' };
 
+type EditorCommandArgs = { name: string };
+
+/** Answers `editor.execCommand` calls from a map of command name to result. */
+function mockEditorCommands(results: Record<string, unknown>): void {
+    vi.mocked(joplin.commands.execute).mockImplementation((_command, args: EditorCommandArgs) =>
+        args.name in results
+            ? Promise.resolve(results[args.name])
+            : Promise.reject(new Error(`Unexpected editor command: ${args.name}`))
+    );
+}
+
 describe('viewer context menu actions', () => {
     beforeEach(() => {
         vi.mocked(joplin.commands.execute).mockReset();
@@ -40,11 +51,7 @@ describe('viewer context menu actions', () => {
     });
 
     it('checks the image without moving the cursor and passes it to every viewer resize item', async () => {
-        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
-            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return false;
-            if (args.name === MATCH_VIEWER_IMAGE_COMMAND) return true;
-            throw new Error(`Unexpected editor command: ${args.name}`);
-        });
+        mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: false, [MATCH_VIEWER_IMAGE_COMMAND]: true });
         registerContextMenu();
         const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
 
@@ -81,11 +88,7 @@ describe('viewer context menu actions', () => {
 
     it('discards a viewer message when an editor-origin menu skips it', async () => {
         vi.useFakeTimers();
-        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
-            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return true;
-            if (args.name === GET_IMAGE_AT_CURSOR_COMMAND) return null;
-            throw new Error(`Unexpected editor command: ${args.name}`);
-        });
+        mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: true, [GET_IMAGE_AT_CURSOR_COMMAND]: null });
         registerContextMenu();
         const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
 
@@ -94,11 +97,7 @@ describe('viewer context menu actions', () => {
         await filter({ items: [] });
         receiveViewerMessage({ target, clickedAt });
 
-        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
-            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return false;
-            if (args.name === MATCH_VIEWER_IMAGE_COMMAND) return true;
-            throw new Error(`Unexpected editor command: ${args.name}`);
-        });
+        mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: false, [MATCH_VIEWER_IMAGE_COMMAND]: true });
         const nextMenu = filter({ items: [] });
         await vi.advanceTimersByTimeAsync(301);
 
@@ -112,7 +111,7 @@ describe('viewer context menu actions', () => {
     it('keeps a viewer click that lands while an editor menu is still being built', async () => {
         vi.useFakeTimers();
         let releaseOrigin: (origin: boolean) => void = () => {};
-        vi.mocked(joplin.commands.execute).mockImplementation((_command, args) => {
+        vi.mocked(joplin.commands.execute).mockImplementation((_command, args: EditorCommandArgs) => {
             if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) {
                 return new Promise((resolve) => {
                     releaseOrigin = resolve;
@@ -131,11 +130,7 @@ describe('viewer context menu actions', () => {
         await editorMenu;
 
         receiveViewerMessage({ target, clickedAt });
-        vi.mocked(joplin.commands.execute).mockImplementation(async (_command, args) => {
-            if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) return false;
-            if (args.name === MATCH_VIEWER_IMAGE_COMMAND) return true;
-            throw new Error(`Unexpected editor command: ${args.name}`);
-        });
+        mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: false, [MATCH_VIEWER_IMAGE_COMMAND]: true });
 
         const menu = await filter({ items: [] });
         expect(menu.items.find((item) => item.commandName === 'resizeImage')?.commandArgs).toEqual([target]);

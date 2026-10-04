@@ -28,11 +28,12 @@ describe('initializeSettingsCache', () => {
             settingsValues.set(`imageResize.${settingName}`, value);
         }
 
-        (joplin.settings.values as Mock).mockImplementation(async (keys: string[]) =>
-            Object.fromEntries(keys.map((key) => [key, settingsValues.get(key)]))
+        (joplin.settings.values as Mock).mockImplementation((keys: string[]) =>
+            Promise.resolve(Object.fromEntries(keys.map((key) => [key, settingsValues.get(key)])))
         );
-        (joplin.settings.onChange as Mock).mockImplementation(async (handler) => {
+        (joplin.settings.onChange as Mock).mockImplementation((handler: typeof onChangeHandler) => {
             onChangeHandler = handler;
+            return Promise.resolve();
         });
     });
 

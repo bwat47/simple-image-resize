@@ -34,7 +34,7 @@ it('reports positions stamped by the viewer renderer to the registered content s
             id: VIEWER_CONTENT_SCRIPT_ID,
             message: {
                 target: { line: 2, lineEnd: 3, index: 1, resourceId },
-                clickedAt: expect.any(Number),
+                clickedAt: expect.any(Number) as number,
             },
         },
     ]);

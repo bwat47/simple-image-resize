@@ -13,7 +13,8 @@ let clock = Date.now();
 describe('getViewerContextMenuImage', () => {
     beforeEach(async () => {
         vi.useFakeTimers();
-        vi.setSystemTime(new Date((clock += 10_000)));
+        clock += 10_000;
+        vi.setSystemTime(new Date(clock));
         execute.mockReset();
         execute.mockResolvedValue(true);
         // Drain any message a previous test left behind.

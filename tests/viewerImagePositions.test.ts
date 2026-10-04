@@ -127,7 +127,7 @@ describe('installImagePositions', () => {
         expect(imageTags).toHaveLength(2);
         for (const tag of imageTags) {
             for (const attribute of Object.values(VIEWER_IMAGE_ATTRIBUTES)) {
-                expect(tag.match(new RegExp(`\\b${attribute}=`, 'g'))).toHaveLength(1);
+                expect([...tag.matchAll(new RegExp(`\\b${attribute}=`, 'g'))]).toHaveLength(1);
             }
         }
     });
