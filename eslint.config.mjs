@@ -7,6 +7,7 @@ import importPlugin from 'eslint-plugin-import-x';
 import sonarjs from 'eslint-plugin-sonarjs';
 import prettier from 'eslint-config-prettier';
 import globals from 'globals';
+import vitest from '@vitest/eslint-plugin';
 
 export default [
     {
@@ -63,9 +64,14 @@ export default [
                 ...globals.vitest,
             },
         },
+        plugins: {
+            vitest,
+        },
         rules: {
-            // expect(mock.method) passes vi.fn() mocks, which have no `this` to lose.
+            ...vitest.configs.recommended.rules,
+            // Vitest-aware variant allows expect(mock.method) and vi.mocked(mock.method).
             '@typescript-eslint/unbound-method': 'off',
+            'vitest/unbound-method': 'error',
         },
     },
 

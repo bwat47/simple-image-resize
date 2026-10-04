@@ -1,9 +1,8 @@
 import joplin from 'api';
-import type { Mock } from 'vitest';
 import { getResourceBlob } from '../src/utils/resourceUtils';
 
 const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
-const getMock = joplin.data.get as Mock;
+const getMock = vi.mocked(joplin.data.get);
 
 function mockResource(data: unknown, mime = 'image/png', wrapped = false): void {
     getMock.mockResolvedValueOnce({ mime }).mockResolvedValueOnce(wrapped ? { body: data } : data);

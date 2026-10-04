@@ -1,5 +1,5 @@
 import joplin from 'api';
-import type { Mock, MockInstance } from 'vitest';
+import type { MockInstance } from 'vitest';
 import { getResourceBlob } from '../src/utils/resourceUtils';
 import { measureBlobImageDimensions, measureImageDimensions } from '../src/utils/imageDimensionUtils';
 import { getOriginalImageDimensions } from '../src/imageSizeCalculator';
@@ -23,8 +23,8 @@ vi.mock('../src/utils/imageDimensionUtils', async (importOriginal) => {
 });
 
 const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
-const resourcePathMock = joplin.data.resourcePath as Mock;
-const executeMock = joplin.commands.execute as Mock;
+const resourcePathMock = vi.mocked(joplin.data.resourcePath);
+const executeMock = vi.mocked(joplin.commands.execute);
 const getResourceBlobMock = vi.mocked(getResourceBlob);
 const measureBlobMock = vi.mocked(measureBlobImageDimensions);
 const measureImageMock = vi.mocked(measureImageDimensions);

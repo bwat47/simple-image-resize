@@ -227,8 +227,7 @@ describe('ResizeDialog', () => {
         await dialog.open(dialogContext, dialogDefaults);
         await dialog.open({ ...dialogContext, altText: 'Second image' }, dialogDefaults);
 
-        expect(dialogs.create).toHaveBeenCalledOnce();
-        expect(dialogs.create).toHaveBeenCalledWith('image-resize-dialog');
+        expect(dialogs.create).toHaveBeenCalledExactlyOnceWith('image-resize-dialog');
         expect(dialogs.setFitToContent).toHaveBeenCalledOnce();
         expect(dialogs.addScript).toHaveBeenCalledTimes(2);
         expect(dialogs.setButtons).toHaveBeenCalledOnce();

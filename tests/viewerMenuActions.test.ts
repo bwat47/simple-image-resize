@@ -27,6 +27,12 @@ function mockEditorCommands(results: Record<string, unknown>): void {
     );
 }
 
+/** Returns the filter registered by the most recent `registerContextMenu()` call. */
+function getContextMenuFilter(): Parameters<typeof joplin.workspace.filterEditorContextMenu>[0] {
+    const filterMock = vi.mocked(joplin.workspace.filterEditorContextMenu);
+    return filterMock.mock.calls[0][0];
+}
+
 describe('viewer context menu actions', () => {
     beforeEach(() => {
         vi.mocked(joplin.commands.execute).mockReset();
@@ -43,7 +49,7 @@ describe('viewer context menu actions', () => {
     it.each([false, undefined, 'true'])('omits resize items when code view is %s', async (codeView) => {
         vi.mocked(joplin.settings.globalValues).mockResolvedValue([codeView]);
         registerContextMenu();
-        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+        const filter = getContextMenuFilter();
 
         expect(await filter({ items: [] })).toEqual({ items: [] });
         expect(joplin.settings.globalValues).toHaveBeenCalledWith(['editor.codeView']);
@@ -53,7 +59,7 @@ describe('viewer context menu actions', () => {
     it('checks the image without moving the cursor and passes it to every viewer resize item', async () => {
         mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: false, [MATCH_VIEWER_IMAGE_COMMAND]: true });
         registerContextMenu();
-        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+        const filter = getContextMenuFilter();
 
         receiveViewerMessage({ target, clickedAt: Date.now() });
         const menu = await filter({ items: [] });
@@ -90,7 +96,7 @@ describe('viewer context menu actions', () => {
         vi.useFakeTimers();
         mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: true, [GET_IMAGE_AT_CURSOR_COMMAND]: null });
         registerContextMenu();
-        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+        const filter = getContextMenuFilter();
 
         const clickedAt = Date.now();
         receiveViewerMessage({ target, clickedAt });
@@ -121,7 +127,7 @@ describe('viewer context menu actions', () => {
             return Promise.reject(new Error(`Unexpected editor command: ${args.name}`));
         });
         registerContextMenu();
-        const filter = vi.mocked(joplin.workspace.filterEditorContextMenu).mock.calls[0][0];
+        const filter = getContextMenuFilter();
 
         const editorMenu = filter({ items: [] });
         await vi.advanceTimersByTimeAsync(50);

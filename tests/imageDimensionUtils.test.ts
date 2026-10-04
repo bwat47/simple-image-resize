@@ -89,14 +89,14 @@ describe('measureBlobImageDimensions', () => {
 
     it('revokes the object URL after a timeout', async () => {
         vi.useFakeTimers();
-        const resultPromise = measureBlobImageDimensions(new Blob([Uint8Array.from([1])]), {
+        // Capture the rejection before advancing timers so it is never unhandled.
+        const rejection = measureBlobImageDimensions(new Blob([Uint8Array.from([1])]), {
             timeoutMs: 1000,
-        });
-        const rejection = expect(resultPromise).rejects.toThrow('Timeout: Could not load image');
+        }).catch((error: unknown) => error);
 
         await vi.advanceTimersByTimeAsync(1000);
 
-        await rejection;
+        expect(await rejection).toEqual(new Error('Timeout: Could not load image to determine dimensions.'));
         expect(FakeImage.latest.src).toBe('');
         expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
     });
