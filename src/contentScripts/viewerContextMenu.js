@@ -17,11 +17,13 @@
 
     const CONTENT_SCRIPT_ID = 'simpleImageResize-viewerContentScript';
 
+    /** @param {Element} element @param {string} name */
     const readIndex = (element, name) => {
         const value = element.getAttribute(name);
         return value !== null && /^\d+$/.test(value) ? Number(value) : null;
     };
 
+    /** @param {EventTarget | null} eventTarget */
     const findTarget = (eventTarget) => {
         const image = eventTarget instanceof Element ? eventTarget.closest('img') : null;
         if (!image) return null;
@@ -40,9 +42,11 @@
     document.addEventListener(
         'contextmenu',
         (event) => {
-            webviewApi.postMessage(CONTENT_SCRIPT_ID, { target: findTarget(event.target), clickedAt: Date.now() }).catch((error) => {
-                console.warn('[Image Resize] Could not report viewer context menu target:', error);
-            });
+            webviewApi
+                .postMessage(CONTENT_SCRIPT_ID, { target: findTarget(event.target), clickedAt: Date.now() })
+                .catch((error) => {
+                    console.warn('[Image Resize] Could not report viewer context menu target:', error);
+                });
         },
         true
     );

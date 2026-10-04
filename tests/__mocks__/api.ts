@@ -9,7 +9,7 @@ export default {
         register: vi.fn().mockResolvedValue(undefined),
     },
     settings: {
-        globalValue: vi.fn(),
+        globalValues: vi.fn(),
         values: vi.fn().mockResolvedValue({}),
         setValue: vi.fn().mockResolvedValue(undefined),
         onChange: vi.fn().mockResolvedValue(undefined),

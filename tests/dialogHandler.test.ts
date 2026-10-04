@@ -330,4 +330,40 @@ describe('ResizeDialog', () => {
             absoluteHeight: 225,
         });
     });
+
+    it.each(['invalid form data', {}, { resizeForm: null }, { resizeForm: 'invalid form' }])(
+        'ignores malformed form data %j',
+        async (formData) => {
+            const dialogs = createDialogApi();
+            dialogs.open.mockResolvedValue({ id: 'ok', formData });
+
+            await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toBeNull();
+        }
+    );
+
+    it('falls back for malformed form field types', async () => {
+        const dialogs = createDialogApi();
+        dialogs.open.mockResolvedValue({
+            id: 'ok',
+            formData: {
+                resizeForm: {
+                    targetSyntax: 'invalid',
+                    altText: 123,
+                    resizeMode: 'invalid',
+                    percentage: {},
+                    absoluteWidth: 300,
+                    absoluteHeight: [],
+                },
+            },
+        });
+
+        await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toEqual({
+            targetSyntax: 'html',
+            altText: '',
+            resizeMode: dialogDefaults.defaultResizeMode,
+            percentage: undefined,
+            absoluteWidth: undefined,
+            absoluteHeight: undefined,
+        });
+    });
 });

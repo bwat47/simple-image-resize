@@ -29,6 +29,7 @@ export interface ImageSourcePosition {
 
 /** Key under `token.meta` that carries a Markdown image's source position to the renderer. */
 const POSITION_META_KEY = 'simpleImageResizePosition';
+type ImagePositionMeta = Record<string, unknown> & { [POSITION_META_KEY]?: ImageSourcePosition };
 const IMAGE_POSITIONS_INSTALLED = Symbol('simpleImageResizeImagePositionsInstalled');
 type PositionedMarkdownIt = MarkdownIt & { [IMAGE_POSITIONS_INSTALLED]?: true };
 
@@ -83,7 +84,7 @@ export function annotateImagePositions(tokens: Token[]): void {
             continue;
         }
 
-        const map = (token.map as LineMap | null) ?? enclosingMaps[enclosingMaps.length - 1] ?? null;
+        const map = token.map ?? enclosingMaps[enclosingMaps.length - 1] ?? null;
 
         if (token.nesting === 1) {
             enclosingMaps.push(map);
@@ -104,7 +105,8 @@ export function annotateImagePositions(tokens: Token[]): void {
     function annotateInlineChildren(children: Token[], map: LineMap): void {
         for (const child of children) {
             if (child.type === 'image') {
-                child.meta = { ...child.meta, [POSITION_META_KEY]: claimPosition(map) };
+                const meta = child.meta as ImagePositionMeta | null;
+                child.meta = { ...meta, [POSITION_META_KEY]: claimPosition(map) };
             } else if (child.type === 'html_inline') {
                 child.content = annotateHtml(child.content, map);
             }
@@ -138,7 +140,8 @@ export function installImagePositions(markdownIt: MarkdownIt, options?: { mapsTo
         const html = defaultImageRender
             ? defaultImageRender(tokens, idx, options, env, self)
             : self.renderToken(tokens, idx, options);
-        const position = tokens[idx].meta?.[POSITION_META_KEY] as ImageSourcePosition | undefined;
+        const meta = tokens[idx].meta as ImagePositionMeta | null;
+        const position = meta?.[POSITION_META_KEY];
         return position ? addAttributesToImgTag(html, position) : html;
     };
     positionedMarkdownIt[IMAGE_POSITIONS_INSTALLED] = true;

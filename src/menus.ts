@@ -63,7 +63,8 @@ export function registerContextMenu(): void {
         const requestStartedAt = Date.now();
         try {
             // Only show menu items in the Markdown editor (Code View).
-            const isMarkdown = await joplin.settings.globalValue('editor.codeView');
+            const globalValues: unknown[] = await joplin.settings.globalValues(['editor.codeView']);
+            const isMarkdown = globalValues[0] === true;
             logger.debug('Context menu filter: isMarkdown (Code View)=', isMarkdown);
             if (!isMarkdown) {
                 discardViewerMessagesThrough(requestStartedAt);

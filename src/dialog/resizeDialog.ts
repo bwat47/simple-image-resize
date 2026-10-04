@@ -25,7 +25,7 @@ function initializeResizeDialog(): void {
 
     let config: ResizeDialogConfig;
     try {
-        config = JSON.parse(rawConfig);
+        config = JSON.parse(rawConfig) as ResizeDialogConfig;
     } catch (error) {
         // Unlike the checks above, a malformed payload never becomes valid, so mark the
         // root done rather than let a second entry log the same failure again.

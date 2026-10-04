@@ -16,7 +16,7 @@ const getSettingKey = (settingName: keyof typeof SETTING_VALUES): string => `ima
 
 describe('initializeSettingsCache', () => {
     const settingsValues = new Map<string, unknown>();
-    let onChangeHandler: ((event: { keys: string[] }) => Promise<void>) | undefined;
+    let onChangeHandler: ((event: { keys: string[] }) => void) | undefined;
     let consoleInfoSpy: MockInstance;
 
     beforeEach(() => {
@@ -46,23 +46,43 @@ describe('initializeSettingsCache', () => {
         await initializeSettingsCache();
 
         expect(settingsCache.quickResizeOptions).toBe('100%, 300px, 75%');
-        expect(joplin.settings.setValue).toHaveBeenCalledWith(
-            getSettingKey('quickResizeOptions'),
-            '100%, 300px, 75%'
-        );
+        expect(joplin.settings.setValue).toHaveBeenCalledWith(getSettingKey('quickResizeOptions'), '100%, 300px, 75%');
     });
 
     it('normalizes quick resize options after settings change', async () => {
         await initializeSettingsCache();
 
         settingsValues.set(getSettingKey('quickResizeOptions'), '');
-        await onChangeHandler?.({ keys: [getSettingKey('quickResizeOptions')] });
+        onChangeHandler?.({ keys: [getSettingKey('quickResizeOptions')] });
 
-        expect(settingsCache.quickResizeOptions).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
-        expect(joplin.settings.setValue).toHaveBeenCalledWith(
-            getSettingKey('quickResizeOptions'),
-            QUICK_RESIZE_OPTIONS_DEFAULT
-        );
+        await vi.waitFor(() => {
+            expect(settingsCache.quickResizeOptions).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
+            expect(joplin.settings.setValue).toHaveBeenCalledWith(
+                getSettingKey('quickResizeOptions'),
+                QUICK_RESIZE_OPTIONS_DEFAULT
+            );
+        });
+    });
+
+    it('reports failed cache updates from the change listener', async () => {
+        await initializeSettingsCache();
+        const error = new Error('Settings read failed');
+        vi.mocked(joplin.settings.values).mockRejectedValueOnce(error);
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+        try {
+            onChangeHandler?.({ keys: [getSettingKey('quickResizeOptions')] });
+            await vi.waitFor(() => {
+                expect(consoleErrorSpy).toHaveBeenCalledWith('[Image Resize]', 'Settings cache update failed:', error);
+            });
+        } finally {
+            consoleErrorSpy.mockRestore();
+        }
+    });
+
+    it('propagates change listener registration failures during initialization', async () => {
+        const error = new Error('Listener registration failed');
+        vi.mocked(joplin.settings.onChange).mockRejectedValueOnce(error);
+        await expect(initializeSettingsCache()).rejects.toThrow(error);
     });
 
     it('does not write back unchanged quick resize options', async () => {

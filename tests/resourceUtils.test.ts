@@ -116,4 +116,10 @@ describe('getResourceBlob', () => {
 
         await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Resource is not an image');
     });
+
+    it.each(['invalid metadata', {}, { mime: 123 }])('rejects malformed resource metadata %j', async (resource) => {
+        getMock.mockResolvedValueOnce(resource).mockResolvedValueOnce(Uint8Array.from([1, 2, 3]));
+
+        await expect(getResourceBlob(RESOURCE_ID)).rejects.toThrow('Resource is not an image');
+    });
 });

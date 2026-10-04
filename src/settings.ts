@@ -191,10 +191,12 @@ async function updateSettingsCache(): Promise<void> {
 export async function initializeSettingsCache(): Promise<void> {
     await updateSettingsCache();
 
-    joplin.settings.onChange(async (event) => {
+    await joplin.settings.onChange((event) => {
         const settingKeys = Object.values(SETTINGS_CONFIG).map((c) => c.key) as string[];
         if (event.keys.some((key) => settingKeys.includes(key))) {
-            await updateSettingsCache();
+            updateSettingsCache().catch((error: unknown) => {
+                logger.error('Settings cache update failed:', error);
+            });
         }
     });
 

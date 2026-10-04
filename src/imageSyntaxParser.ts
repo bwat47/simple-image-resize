@@ -21,17 +21,17 @@ type ExtractedImageDetails = Omit<EditorImageAtCursorResult, 'range'>;
 type ImageSourceInfo = Pick<EditorImageAtCursorResult, 'source' | 'sourceType'>;
 
 function resolveImageSource(src: string): ImageSourceInfo {
-    const resourceMatch = src.match(RESOURCE_ID_PATTERN);
+    const resourceMatch = RESOURCE_ID_PATTERN.exec(src);
     if (resourceMatch) return { source: resourceMatch[1], sourceType: 'resource' };
 
-    const urlMatch = src.match(EXTERNAL_URL_PATTERN);
+    const urlMatch = EXTERNAL_URL_PATTERN.exec(src);
     if (urlMatch) return { source: urlMatch[1], sourceType: 'external' };
 
     return { source: src, sourceType: 'external' };
 }
 
 function extractMarkdownDetails(imageText: string): ExtractedImageDetails | null {
-    const match = imageText.match(MARKDOWN_IMAGE_PATTERN);
+    const match = MARKDOWN_IMAGE_PATTERN.exec(imageText);
     if (!match?.groups) return null;
 
     const { altText, src, title } = match.groups;
@@ -46,12 +46,12 @@ function extractMarkdownDetails(imageText: string): ExtractedImageDetails | null
 }
 
 function extractHtmlDetails(imageText: string): ExtractedImageDetails | null {
-    const srcMatch = imageText.match(HTML_SRC_PATTERN);
+    const srcMatch = HTML_SRC_PATTERN.exec(imageText);
     if (!srcMatch) return null;
 
     const src = srcMatch[2];
-    const altMatch = imageText.match(HTML_ALT_PATTERN);
-    const titleMatch = imageText.match(HTML_TITLE_PATTERN);
+    const altMatch = HTML_ALT_PATTERN.exec(imageText);
+    const titleMatch = HTML_TITLE_PATTERN.exec(imageText);
 
     return {
         type: 'html',
