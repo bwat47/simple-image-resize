@@ -64,5 +64,5 @@ export function decodeHtmlEntities(value: string): string {
  * @returns Sanitized alt text safe for use in Markdown `![alt](url)` syntax
  */
 export function sanitizeMarkdownAlt(value: string): string {
-    return String(value || '').replace(/[\[\]]/g, '');
+    return String(value || '').replace(/[[\]]/g, '');
 }
