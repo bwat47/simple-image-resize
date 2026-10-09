@@ -7,7 +7,7 @@ import {
     getImageAtCursor,
     viewerImageCursorPosition,
 } from '../src/contentScripts/cursorContentScript';
-import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, ViewerImageTarget } from '../src/viewerImageTarget';
+import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, type ViewerImageTarget } from '../src/viewerImageTarget';
 
 vi.mock('../src/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },

@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
-import { ImageDimensions, OriginalImageDimensionsResult } from './types';
+import type { ImageDimensions, OriginalImageDimensionsResult } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
 import {
     isValidImageDimensions,

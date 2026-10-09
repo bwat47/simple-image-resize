@@ -15,7 +15,7 @@ import type { ResizeDialog } from './dialogHandler';
 import { getOriginalImageDimensions } from './imageSizeCalculator';
 import { detectImageAtCursor, selectViewerImageInEditor } from './cursorDetection';
 import { isViewerImageTarget } from './viewerImageTarget';
-import { ImageContext, EditorRange } from './types';
+import type { ImageContext, EditorRange } from './types';
 import { logger } from './logger';
 import { settingsCache } from './settings';
 import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';

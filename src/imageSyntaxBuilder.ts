@@ -1,4 +1,4 @@
-import { ImageContext, ResizeDialogResult } from './types';
+import type { ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './utils/stringUtils';
 import { settingsCache } from './settings';
 

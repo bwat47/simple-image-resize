@@ -1,5 +1,5 @@
 import { buildNewSyntax } from '../src/imageSyntaxBuilder';
-import { ImageContext, ResizeDialogResult } from '../src/types';
+import type { ImageContext, ResizeDialogResult } from '../src/types';
 import { settingsCache } from '../src/settings';
 
 describe('buildNewSyntax', () => {

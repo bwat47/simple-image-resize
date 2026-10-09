@@ -8,7 +8,7 @@
  */
 
 import joplin from 'api';
-import { MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
+import { type MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
 import { logger } from './logger';
 import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerContextMenu';

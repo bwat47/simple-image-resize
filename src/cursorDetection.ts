@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { EditorImageAtCursorResult, ImageContext, EditorRange } from './types';
+import type { EditorImageAtCursorResult, ImageContext, EditorRange } from './types';
 import { logger } from './logger';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,

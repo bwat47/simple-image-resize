@@ -9,7 +9,7 @@
  */
 
 import joplin from 'api';
-import { SettingItem, SettingItemType } from 'api/types';
+import { type SettingItem, SettingItemType } from 'api/types';
 import { logger } from './logger';
 import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
 import type { ResizeMode } from './types';

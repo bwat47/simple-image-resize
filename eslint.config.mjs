@@ -47,6 +47,9 @@ export default defineConfig([
             // report an error if any circular dependency is found
             'import/no-cycle': ['error', { maxDepth: Infinity }],
             'sonarjs/todo-tag': 'off',
+            '@typescript-eslint/consistent-type-imports': ['error', { fixStyle: 'inline-type-imports' }],
+            // Use `import type { A }` rather than `import { type A }` when every specifier is a type
+            '@typescript-eslint/no-import-type-side-effects': 'error',
             '@typescript-eslint/no-inferrable-types': 'error',
             '@typescript-eslint/explicit-module-boundary-types': 'error',
         },

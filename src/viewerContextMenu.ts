@@ -14,7 +14,7 @@
 
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
-import { isViewerImageTarget, VIEWER_CONTENT_SCRIPT_ID, ViewerImageTarget } from './viewerImageTarget';
+import { isViewerImageTarget, VIEWER_CONTENT_SCRIPT_ID, type ViewerImageTarget } from './viewerImageTarget';
 import { matchesViewerImageInEditor } from './cursorDetection';
 import { logger } from './logger';
 import type { ViewerContextMenuMessage as ViewerMessage } from './contentScripts/viewerContextMenuTypes';

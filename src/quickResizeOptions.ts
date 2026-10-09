@@ -1,4 +1,4 @@
-import { ResizeDialogResult } from './types';
+import type { ResizeDialogResult } from './types';
 
 export const QUICK_RESIZE_OPTIONS_DEFAULT = '100%, 75%, 50%, 33%, 25%';
 const QUICK_RESIZE_SLOT_LIMIT = 5;
