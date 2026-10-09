@@ -15,6 +15,7 @@ vi.mock('../src/logger', () => ({
 }));
 
 const target = { line: 2, lineEnd: 3, index: 0, resourceId: '0123456789abcdef0123456789abcdef' };
+let clock = Date.now();
 
 type EditorCommandArgs = { name: string };
 
@@ -35,6 +36,10 @@ function getContextMenuFilter(): Parameters<typeof joplin.workspace.filterEditor
 
 describe('viewer context menu actions', () => {
     beforeEach(() => {
+        vi.useFakeTimers();
+        // Keep new clicks later than the timestamps discarded by previous tests.
+        clock += 10_000;
+        vi.setSystemTime(new Date(clock));
         vi.mocked(joplin.commands.execute).mockReset();
         vi.mocked(joplin.commands.register).mockClear();
         vi.mocked(joplin.workspace.filterEditorContextMenu).mockClear();
@@ -93,7 +98,6 @@ describe('viewer context menu actions', () => {
     });
 
     it('discards a viewer message when an editor-origin menu skips it', async () => {
-        vi.useFakeTimers();
         mockEditorCommands({ [IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND]: true, [GET_IMAGE_AT_CURSOR_COMMAND]: null });
         registerContextMenu();
         const filter = getContextMenuFilter();
@@ -115,7 +119,6 @@ describe('viewer context menu actions', () => {
     });
 
     it('keeps a viewer click that lands while an editor menu is still being built', async () => {
-        vi.useFakeTimers();
         let releaseOrigin: (origin: boolean) => void = () => {};
         vi.mocked(joplin.commands.execute).mockImplementation((_command, args: EditorCommandArgs) => {
             if (args.name === IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND) {
