@@ -5,45 +5,32 @@ import { registerCommands } from './commands';
 import { registerMenus, registerContextMenu, registerToolbarButton } from './menus';
 import { ResizeDialog } from './dialogHandler';
 import { registerViewerContentScript } from './viewerContextMenu';
-import { logger } from './logger';
 
 const CONTENT_SCRIPT_ID = 'simpleImageResize-cursorContentScript';
 
-joplin.plugins
-    .register({
-        onStart: async function () {
-            // Register plugin settings
-            await registerSettings();
+void joplin.plugins.register({
+    onStart: async function () {
+        await registerSettings();
 
-            // Initialize settings cache for synchronous access
-            await initializeSettingsCache();
+        await initializeSettingsCache();
 
-            // Register CodeMirror content script for cursor detection (mobile support)
-            await joplin.contentScripts.register(
-                ContentScriptType.CodeMirrorPlugin,
-                CONTENT_SCRIPT_ID,
-                './contentScripts/cursorContentScript.js'
-            );
+        await joplin.contentScripts.register(
+            ContentScriptType.CodeMirrorPlugin,
+            CONTENT_SCRIPT_ID,
+            './contentScripts/cursorContentScript.js'
+        );
 
-            // Register markdown viewer script so viewer right-clicks can target images
-            await registerViewerContentScript();
+        await registerViewerContentScript();
 
-            // Register all resize commands with one lazily-created dialog instance
-            const resizeDialog = new ResizeDialog(joplin.views.dialogs);
-            await registerCommands(resizeDialog);
+        const resizeDialog = new ResizeDialog(joplin.views.dialogs);
+        await registerCommands(resizeDialog);
 
-            // Register menus
-            await registerMenus();
+        await registerMenus();
 
-            // Apply toolbar visibility only at startup.
-            if (settingsCache.showFormattingToolbarIcon) {
-                await registerToolbarButton();
-            }
+        if (settingsCache.showFormattingToolbarIcon) {
+            await registerToolbarButton();
+        }
 
-            // Register context menu
-            registerContextMenu();
-        },
-    })
-    .catch((error: unknown) => {
-        logger.error('Plugin registration failed:', error);
-    });
+        registerContextMenu();
+    },
+});
