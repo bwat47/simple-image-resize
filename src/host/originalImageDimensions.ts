@@ -1,14 +1,14 @@
 import joplin from 'api';
-import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
-import { logger } from './logger';
-import type { ImageSourceType, OriginalImageDimensionsResult } from './types';
+import { getResourceBlob, validateResourceId } from './resourceUtils';
+import { logger } from '../shared/logger';
+import type { ImageSourceType, OriginalImageDimensionsResult } from '../shared/types';
 import { measureImageInEditor } from './editorBridge';
 import {
     measureBlobImageDimensions,
     measureImageDimensions,
     EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
     RESOURCE_IMAGE_LOAD_TIMEOUT_MS,
-} from './utils/imageDimensionUtils';
+} from '../shared/imageDimensionUtils';
 
 const FALLBACK_IMAGE_DIMENSIONS = {
     width: 400,

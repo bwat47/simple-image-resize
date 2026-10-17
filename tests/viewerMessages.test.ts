@@ -1,8 +1,8 @@
 import joplin from 'api';
-import { getViewerContextMenuImage, receiveViewerMessage } from '../src/viewerMessages';
-import { MATCH_VIEWER_IMAGE_COMMAND, SELECT_VIEWER_IMAGE_COMMAND } from '../src/editorCommands';
+import { getViewerContextMenuImage, receiveViewerMessage } from '../src/host/viewerMessages';
+import { MATCH_VIEWER_IMAGE_COMMAND, SELECT_VIEWER_IMAGE_COMMAND } from '../src/shared/editorCommands';
 
-vi.mock('../src/logger', () => ({
+vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 

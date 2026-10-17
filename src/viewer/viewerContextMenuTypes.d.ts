@@ -1,5 +1,5 @@
 /** Types for local access to Joplin's viewer environment; no global declarations. */
-import type { ViewerImageTarget } from '../viewerImageTarget';
+import type { ViewerImageTarget } from '../shared/viewerImageTarget';
 
 export type ViewerWindow = Window & {
     simpleImageResizeViewerContextMenuLoaded?: boolean;

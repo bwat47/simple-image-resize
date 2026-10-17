@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { logger } from '../logger';
+import { logger } from '../shared/logger';
 
 /**
  * A simple validator for Joplin resource IDs (32-character hex string).

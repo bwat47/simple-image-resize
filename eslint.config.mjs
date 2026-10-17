@@ -10,6 +10,42 @@ import prettier from 'eslint-config-prettier';
 import globals from 'globals';
 import vitest from '@vitest/eslint-plugin';
 
+// Each folder is bundled for one runtime; src/shared is bundled into several.
+const RUNTIME_FOLDERS = ['host', 'editor', 'viewer', 'dialog'];
+
+/**
+ * Keeps a src/ folder from importing code bundled for another runtime.
+ * Type-only imports are erased at build time, so they may cross boundaries.
+ */
+function runtimeBoundary(folder) {
+    const otherFolders = RUNTIME_FOLDERS.filter((other) => other !== folder);
+    const hostApiMessage = 'The Joplin plugin API is only available in src/host and src/index.ts.';
+    return {
+        files: [`src/${folder}/**/*.{ts,js}`],
+        rules: {
+            '@typescript-eslint/no-restricted-imports': [
+                'error',
+                {
+                    paths:
+                        folder === 'host'
+                            ? []
+                            : [
+                                  { name: 'api', message: hostApiMessage, allowTypeImports: true },
+                                  { name: 'api/types', message: hostApiMessage, allowTypeImports: true },
+                              ],
+                    patterns: [
+                        {
+                            regex: `^\\.\\./(${otherFolders.join('|')})/`,
+                            message: `src/${folder} cannot import code bundled for another runtime; move shared code to src/shared.`,
+                            allowTypeImports: true,
+                        },
+                    ],
+                },
+            ],
+        },
+    };
+}
+
 export default defineConfig([
     {
         ignores: ['api/**', 'dist/**', 'webpack.config.js', '.prettierrc.js'],
@@ -58,9 +94,11 @@ export default defineConfig([
         },
     },
 
+    ...[...RUNTIME_FOLDERS, 'shared'].map(runtimeBoundary),
+
     // Viewer content scripts run in the browser, with Joplin's injected webviewApi
     {
-        files: ['src/contentScripts/**/*.js'],
+        files: ['src/viewer/**/*.js'],
         languageOptions: {
             globals: {
                 ...globals.browser,

@@ -5,8 +5,8 @@ import {
     ResizeDialog,
     type JoplinDialogApi,
     type ResizeDialogDefaults,
-} from '../src/dialog/resizeDialogHost';
-import type { ImageContext } from '../src/types';
+} from '../src/host/resizeDialogHost';
+import type { ImageContext } from '../src/shared/types';
 
 describe('getInitialDialogState', () => {
     describe('HTML syntax with percentage mode', () => {

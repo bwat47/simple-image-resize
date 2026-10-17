@@ -5,7 +5,7 @@ import {
     parseQuickResizeOptions,
     QUICK_RESIZE_OPTIONS_DEFAULT,
     requiresOriginalDimensions,
-} from '../src/quickResizeOptions';
+} from '../src/host/quickResizeOptions';
 
 describe('parseQuickResizeOptions', () => {
     it('parses the default quick resize options', () => {

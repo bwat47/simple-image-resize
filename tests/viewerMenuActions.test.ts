@@ -1,16 +1,16 @@
 import joplin from 'api';
-import { registerCommands } from '../src/commands';
-import { registerContextMenu } from '../src/menus';
-import { receiveViewerMessage } from '../src/viewerMessages';
+import { registerCommands } from '../src/host/commands';
+import { registerContextMenu } from '../src/host/menus';
+import { receiveViewerMessage } from '../src/host/viewerMessages';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
     MATCH_VIEWER_IMAGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
-} from '../src/editorCommands';
-import { settingsCache } from '../src/settings';
+} from '../src/shared/editorCommands';
+import { settingsCache } from '../src/host/settings';
 
-vi.mock('../src/logger', () => ({
+vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 

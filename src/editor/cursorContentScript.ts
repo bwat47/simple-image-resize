@@ -17,10 +17,10 @@
 
 import type { EditorView } from '@codemirror/view';
 import type { CodeMirrorControl, MarkdownEditorContentScriptModule } from 'api/types';
-import type { EditorImageAtCursorResult, ImageDimensions } from '../types';
-import { logger } from '../logger';
-import { measureImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../utils/imageDimensionUtils';
-import { isViewerImageTarget } from '../viewerImageTarget';
+import type { EditorImageAtCursorResult, ImageDimensions } from '../shared/types';
+import { logger } from '../shared/logger';
+import { measureImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../shared/imageDimensionUtils';
+import { isViewerImageTarget } from '../shared/viewerImageTarget';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
     GET_IMAGE_DIMENSIONS_COMMAND,
@@ -28,7 +28,7 @@ import {
     MATCH_VIEWER_IMAGE_COMMAND,
     REPLACE_RANGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
-} from '../editorCommands';
+} from '../shared/editorCommands';
 import {
     findImageForViewerTarget,
     getImageAtCursor,

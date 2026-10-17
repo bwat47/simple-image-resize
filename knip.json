@@ -3,9 +3,9 @@
     "entry": [
         "webpack.config.js",
         "src/index.ts",
-        "src/contentScripts/cursorContentScript.ts",
-        "src/contentScripts/viewerContentScript.ts",
-        "src/contentScripts/viewerContextMenu.js",
+        "src/editor/cursorContentScript.ts",
+        "src/viewer/viewerContentScript.ts",
+        "src/viewer/viewerContextMenu.js",
         "src/dialog/resizeDialog.ts",
         "tests/**/*.test.ts"
     ],

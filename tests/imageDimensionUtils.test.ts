@@ -2,7 +2,7 @@ import {
     isValidImageDimensions,
     measureBlobImageDimensions,
     measureImageDimensions,
-} from '../src/utils/imageDimensionUtils';
+} from '../src/shared/imageDimensionUtils';
 
 class FakeImage {
     private static latestInstance: FakeImage;

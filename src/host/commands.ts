@@ -11,14 +11,14 @@
 
 import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
-import type { ResizeDialog } from './dialog/resizeDialogHost';
+import type { ResizeDialog } from './resizeDialogHost';
 import { getOriginalImageDimensions } from './originalImageDimensions';
 import { detectImageAtCursor, replaceRangeInEditor, selectViewerImageInEditor } from './editorBridge';
-import { isViewerImageTarget } from './viewerImageTarget';
-import type { ImageContext } from './types';
-import { logger } from './logger';
+import { isViewerImageTarget } from '../shared/viewerImageTarget';
+import type { ImageContext } from '../shared/types';
+import { logger } from '../shared/logger';
 import { settingsCache } from './settings';
-import { showToast, ToastType } from './utils/toastUtils';
+import { showToast, ToastType } from './toastUtils';
 import {
     buildQuickResizeResult,
     getQuickResizeSkippedMessage,

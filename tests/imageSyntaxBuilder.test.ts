@@ -1,5 +1,5 @@
-import { buildNewSyntax } from '../src/imageSyntaxBuilder';
-import type { ImageContext, ResizeDialogResult } from '../src/types';
+import { buildNewSyntax } from '../src/host/imageSyntaxBuilder';
+import type { ImageContext, ResizeDialogResult } from '../src/shared/types';
 
 describe('buildNewSyntax', () => {
     const baseContext: ImageContext = {

@@ -1,9 +1,9 @@
 // @vitest-environment jsdom
 
 import initializeResizeDialog from '../src/dialog/resizeDialog';
-import { renderDialogHtml, type ResizeDialogDefaults } from '../src/dialog/resizeDialogHost';
-import { logger } from '../src/logger';
-import type { ImageContext, ResizeMode } from '../src/types';
+import { renderDialogHtml, type ResizeDialogDefaults } from '../src/host/resizeDialogHost';
+import { logger } from '../src/shared/logger';
+import type { ImageContext, ResizeMode } from '../src/shared/types';
 
 /**
  * Builds the same markup the plugin host writes, so these tests break if the

@@ -9,11 +9,11 @@
 
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { EditorState, Text } from '@codemirror/state';
-import type { EditorImageAtCursorResult, EditorPosition, ImageSyntax } from '../types';
-import { logger } from '../logger';
-import { extractImageDetails } from '../imageSyntaxParser';
-import type { ViewerImageTarget } from '../viewerImageTarget';
-import type { ReplaceRangeArgs } from '../editorCommands';
+import type { EditorImageAtCursorResult, EditorPosition, ImageSyntax } from '../shared/types';
+import { logger } from '../shared/logger';
+import { extractImageDetails } from './imageSyntaxParser';
+import type { ViewerImageTarget } from '../shared/viewerImageTarget';
+import type { ReplaceRangeArgs } from '../shared/editorCommands';
 
 // Keep viewer context menus responsive when parsing a very large note.
 const VIEWER_IMAGE_PARSE_TIMEOUT_MS = 200;

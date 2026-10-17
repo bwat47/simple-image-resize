@@ -6,7 +6,7 @@
  * browser-compatible.
  */
 
-import type { ImageSyntax, ResizeMode } from '../types';
+import type { ImageSyntax, ResizeMode } from './types';
 
 export interface DialogFieldState {
     /** The mode actually in effect: percentage falls back to absolute without original dimensions. */

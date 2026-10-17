@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { getResourceBlob } from '../src/utils/resourceUtils';
+import { getResourceBlob } from '../src/host/resourceUtils';
 
 const RESOURCE_ID = '0123456789abcdef0123456789abcdef';
 const getMock = vi.mocked(joplin.data.get);

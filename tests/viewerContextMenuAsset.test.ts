@@ -3,11 +3,11 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import MarkdownIt from 'markdown-it';
-import { installImagePositions } from '../src/contentScripts/viewerContentScript';
-import { VIEWER_CONTENT_SCRIPT_ID } from '../src/viewerImageTarget';
-import type { ViewerContextMenuMessage, ViewerWebviewApi } from '../src/contentScripts/viewerContextMenuTypes';
+import { installImagePositions } from '../src/viewer/viewerContentScript';
+import { VIEWER_CONTENT_SCRIPT_ID } from '../src/shared/viewerImageTarget';
+import type { ViewerContextMenuMessage, ViewerWebviewApi } from '../src/viewer/viewerContextMenuTypes';
 
-const script = readFileSync(resolve(process.cwd(), 'src/contentScripts/viewerContextMenu.js'), 'utf8');
+const script = readFileSync(resolve(process.cwd(), 'src/viewer/viewerContextMenu.js'), 'utf8');
 const resourceId = '0123456789abcdef0123456789abcdef';
 
 it('reports positions stamped by the viewer renderer to the registered content script', () => {

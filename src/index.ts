@@ -1,11 +1,11 @@
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
-import { registerSettings, initializeSettingsCache, settingsCache } from './settings';
-import { registerCommands } from './commands';
-import { registerMenus, registerContextMenu, registerToolbarButton } from './menus';
-import { ResizeDialog } from './dialog/resizeDialogHost';
-import { registerViewerContentScript } from './viewerMessages';
-import { EDITOR_CONTENT_SCRIPT_ID } from './editorCommands';
+import { registerSettings, initializeSettingsCache, settingsCache } from './host/settings';
+import { registerCommands } from './host/commands';
+import { registerMenus, registerContextMenu, registerToolbarButton } from './host/menus';
+import { ResizeDialog } from './host/resizeDialogHost';
+import { registerViewerContentScript } from './host/viewerMessages';
+import { EDITOR_CONTENT_SCRIPT_ID } from './shared/editorCommands';
 
 void joplin.plugins.register({
     onStart: async function () {
@@ -16,7 +16,7 @@ void joplin.plugins.register({
         await joplin.contentScripts.register(
             ContentScriptType.CodeMirrorPlugin,
             EDITOR_CONTENT_SCRIPT_ID,
-            './contentScripts/cursorContentScript.js'
+            './editor/cursorContentScript.js'
         );
 
         await registerViewerContentScript();
