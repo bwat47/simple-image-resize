@@ -140,9 +140,9 @@ function initializeResizeDialog(): void {
     const setRowDisabled = (element: HTMLElement, disabled: boolean, visuallyDisabled = disabled): void => {
         element.classList.toggle('is-disabled', visuallyDisabled);
         element
-            .querySelectorAll<
-                HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement
-            >('input, select, textarea, button')
+            .querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
+                'input, select, textarea, button'
+            )
             .forEach((field) => {
                 field.disabled = disabled;
             });
