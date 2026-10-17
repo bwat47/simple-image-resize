@@ -5,10 +5,6 @@ import { getResourceBlob } from '../src/utils/resourceUtils';
 import { measureBlobImageDimensions, measureImageDimensions } from '../src/utils/imageDimensionUtils';
 import { getOriginalImageDimensions } from '../src/imageSizeCalculator';
 
-vi.mock('../src/contentScripts/cursorContentScript', () => ({
-    GET_IMAGE_DIMENSIONS_COMMAND: 'simpleImageResize-getImageDimensions',
-}));
-
 vi.mock('../src/utils/resourceUtils', () => ({
     getResourceBlob: vi.fn(),
     validateResourceId: vi.fn((id: string) => /^[a-f0-9]{32}$/i.test(id)),

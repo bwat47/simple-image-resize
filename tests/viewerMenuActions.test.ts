@@ -7,7 +7,7 @@ import {
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
     MATCH_VIEWER_IMAGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
-} from '../src/contentScripts/cursorContentScript';
+} from '../src/editorCommands';
 import { settingsCache } from '../src/settings';
 
 vi.mock('../src/logger', () => ({

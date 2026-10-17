@@ -6,7 +6,7 @@ import {
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
     MATCH_VIEWER_IMAGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
-} from './contentScripts/cursorContentScript';
+} from './editorCommands';
 import type { ViewerImageTarget } from './viewerImageTarget';
 
 interface CursorDetectionResult {

@@ -25,6 +25,7 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/contentScripts/cursorContentScript.ts` runs inside the CodeMirror editor context.
 - It is the source of truth for cursor-based image detection, editor text replacement, dimension lookup in editor context, and editor-origin context menu checks.
 - Detection is syntax-tree based, not regex-first. It recognizes Markdown image nodes plus HTML `img` tags, including nested HTML blocks.
+- `src/editorCommands.ts` is the shared contract between the host and the content script: the content script ID, every editor command name, and the replace-range argument shape. It has no runtime dependencies, so host modules never import from the content script itself.
 - `src/imageSyntaxParser.ts` owns the lightweight regex extraction that pulls source, alt text, and title from syntax-tree-validated image nodes.
 - Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
 - `src/cursorDetection.ts` is the thin plugin-side wrapper around these content script commands.

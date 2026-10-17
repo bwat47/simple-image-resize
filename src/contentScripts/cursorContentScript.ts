@@ -21,27 +21,21 @@ import { logger } from '../logger';
 import { extractImageDetails } from '../imageSyntaxParser';
 import { measureImageDimensions, RESOURCE_IMAGE_LOAD_TIMEOUT_MS } from '../utils/imageDimensionUtils';
 import { isViewerImageTarget, type ViewerImageTarget } from '../viewerImageTarget';
-
-// Command names - exported for use by other modules
-export const GET_IMAGE_AT_CURSOR_COMMAND = 'simpleImageResize-getImageAtCursor';
-export const REPLACE_RANGE_COMMAND = 'simpleImageResize-replaceRange';
-export const GET_IMAGE_DIMENSIONS_COMMAND = 'simpleImageResize-getImageDimensions';
-export const IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND = 'simpleImageResize-isEditorContextMenuOrigin';
-export const MATCH_VIEWER_IMAGE_COMMAND = 'simpleImageResize-matchViewerImage';
-export const SELECT_VIEWER_IMAGE_COMMAND = 'simpleImageResize-selectViewerImage';
+import {
+    GET_IMAGE_AT_CURSOR_COMMAND,
+    GET_IMAGE_DIMENSIONS_COMMAND,
+    IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
+    MATCH_VIEWER_IMAGE_COMMAND,
+    REPLACE_RANGE_COMMAND,
+    SELECT_VIEWER_IMAGE_COMMAND,
+    type ReplaceRangeArgs,
+} from '../editorCommands';
 
 // Time window to consider a context menu event as originating from the editor (in milliseconds)
 const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
 
 // Keep viewer context menus responsive when parsing a very large note.
 const VIEWER_IMAGE_PARSE_TIMEOUT_MS = 200;
-
-export interface ReplaceRangeArgs {
-    text: string;
-    from: EditorPosition;
-    to: EditorPosition;
-    expectedText: string;
-}
 
 export interface ImageNodeRange {
     type: ImageSyntax;

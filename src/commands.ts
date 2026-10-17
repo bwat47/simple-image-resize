@@ -18,7 +18,7 @@ import { isViewerImageTarget } from './viewerImageTarget';
 import type { ImageContext, EditorRange } from './types';
 import { logger } from './logger';
 import { settingsCache } from './settings';
-import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
+import { REPLACE_RANGE_COMMAND } from './editorCommands';
 import { showToast, ToastType } from './utils/toastUtils';
 import {
     buildQuickResizeResult,

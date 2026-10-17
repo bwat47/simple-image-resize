@@ -2,7 +2,7 @@ import joplin from 'api';
 import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
 import type { ImageDimensions, ImageSourceType, OriginalImageDimensionsResult } from './types';
-import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
+import { GET_IMAGE_DIMENSIONS_COMMAND } from './editorCommands';
 import {
     isValidImageDimensions,
     measureBlobImageDimensions,
