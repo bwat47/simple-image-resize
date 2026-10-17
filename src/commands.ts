@@ -11,9 +11,9 @@
 
 import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
-import type { ResizeDialog } from './dialogHandler';
-import { getOriginalImageDimensions } from './imageSizeCalculator';
-import { detectImageAtCursor, selectViewerImageInEditor } from './cursorDetection';
+import type { ResizeDialog } from './dialog/resizeDialogHost';
+import { getOriginalImageDimensions } from './originalImageDimensions';
+import { detectImageAtCursor, selectViewerImageInEditor } from './editorBridge';
 import { isViewerImageTarget } from './viewerImageTarget';
 import type { ImageContext, EditorRange } from './types';
 import { logger } from './logger';

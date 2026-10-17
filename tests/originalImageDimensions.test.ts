@@ -3,7 +3,7 @@ import type { MockInstance } from 'vitest';
 import type * as ImageDimensionUtils from '../src/utils/imageDimensionUtils';
 import { getResourceBlob } from '../src/utils/resourceUtils';
 import { measureBlobImageDimensions, measureImageDimensions } from '../src/utils/imageDimensionUtils';
-import { getOriginalImageDimensions } from '../src/imageSizeCalculator';
+import { getOriginalImageDimensions } from '../src/originalImageDimensions';
 
 vi.mock('../src/utils/resourceUtils', () => ({
     getResourceBlob: vi.fn(),

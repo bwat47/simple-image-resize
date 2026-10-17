@@ -1,5 +1,5 @@
 import joplin from 'api';
-import { getViewerContextMenuImage, receiveViewerMessage } from '../src/viewerContextMenu';
+import { getViewerContextMenuImage, receiveViewerMessage } from '../src/viewerMessages';
 import { MATCH_VIEWER_IMAGE_COMMAND, SELECT_VIEWER_IMAGE_COMMAND } from '../src/editorCommands';
 
 vi.mock('../src/logger', () => ({

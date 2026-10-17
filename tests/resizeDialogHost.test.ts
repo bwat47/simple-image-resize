@@ -5,7 +5,7 @@ import {
     ResizeDialog,
     type JoplinDialogApi,
     type ResizeDialogDefaults,
-} from '../src/dialogHandler';
+} from '../src/dialog/resizeDialogHost';
 import type { ImageContext } from '../src/types';
 
 describe('getInitialDialogState', () => {

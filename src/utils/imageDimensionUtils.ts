@@ -11,7 +11,7 @@ export interface MeasureImageOptions {
 }
 
 /**
- * Image load timeouts used by imageSizeCalculator and cursorContentScript.
+ * Image load timeouts used by originalImageDimensions and cursorContentScript.
  */
 export const RESOURCE_IMAGE_LOAD_TIMEOUT_MS = 5000;
 // Longer than the resource timeout because external images cross the network.

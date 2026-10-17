@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { registerCommands } from '../src/commands';
 import { registerContextMenu } from '../src/menus';
-import { receiveViewerMessage } from '../src/viewerContextMenu';
+import { receiveViewerMessage } from '../src/viewerMessages';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
