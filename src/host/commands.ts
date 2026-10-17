@@ -28,6 +28,8 @@ import {
     requiresOriginalDimensions,
 } from './quickResizeOptions';
 
+const IMAGE_CHANGED_MESSAGE = 'The image changed before it could be resized. Try again.';
+
 /**
  * Shared function to handle image detection and dimension fetching
  */
@@ -100,7 +102,10 @@ async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown)
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
         const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
 
-        await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax);
+        if (!(await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax))) {
+            await showToast(IMAGE_CHANGED_MESSAGE, ToastType.Info);
+            return;
+        }
 
         await showToast(getQuickResizeSuccessMessage(option), ToastType.Success);
     });
@@ -140,7 +145,10 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
 
                 if (result) {
                     const newSyntax = buildNewSyntax(fullContext, result, settingsCache.htmlSyntaxStyle);
-                    await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax);
+                    if (!(await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax))) {
+                        await showToast(IMAGE_CHANGED_MESSAGE, ToastType.Info);
+                        return;
+                    }
 
                     await showToast('Image resized successfully!', ToastType.Success);
                 }

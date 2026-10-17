@@ -117,16 +117,20 @@ export async function selectViewerImageInEditor(target: ViewerImageTarget): Prom
 /**
  * Replaces an image embed in the editor.
  * Uses a custom content script command for cross-platform support (desktop + mobile).
+ * Returns false when the replacement was skipped, e.g. because the range no
+ * longer contains `originalSyntax` after the note changed.
  */
 export async function replaceRangeInEditor(
     newSyntax: string,
     replacementRange: EditorRange,
     originalSyntax: string
-): Promise<void> {
-    await joplin.commands.execute('editor.execCommand', {
+): Promise<boolean> {
+    const result: unknown = await joplin.commands.execute('editor.execCommand', {
         name: REPLACE_RANGE_COMMAND,
         args: [newSyntax, replacementRange.from, replacementRange.to, originalSyntax],
     });
+
+    return result === true;
 }
 
 /**
