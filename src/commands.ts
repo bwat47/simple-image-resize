@@ -13,12 +13,11 @@ import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
 import type { ResizeDialog } from './dialog/resizeDialogHost';
 import { getOriginalImageDimensions } from './originalImageDimensions';
-import { detectImageAtCursor, selectViewerImageInEditor } from './editorBridge';
+import { detectImageAtCursor, replaceRangeInEditor, selectViewerImageInEditor } from './editorBridge';
 import { isViewerImageTarget } from './viewerImageTarget';
-import type { ImageContext, EditorRange } from './types';
+import type { ImageContext } from './types';
 import { logger } from './logger';
 import { settingsCache } from './settings';
-import { REPLACE_RANGE_COMMAND } from './editorCommands';
 import { showToast, ToastType } from './utils/toastUtils';
 import {
     buildQuickResizeResult,
@@ -58,17 +57,6 @@ async function detectAndPrepareImage(viewerTarget?: unknown) {
 
     const fullContext: ImageContext = { ...partialContext, originalDimensions, originalDimensionsDetermined };
     return { fullContext, replacementRange };
-}
-
-/**
- * Shared function to replace image in editor.
- * Uses custom content script command for cross-platform support (desktop + mobile).
- */
-async function replaceImageInEditor(newSyntax: string, replacementRange: EditorRange, originalSyntax: string) {
-    await joplin.commands.execute('editor.execCommand', {
-        name: REPLACE_RANGE_COMMAND,
-        args: [newSyntax, replacementRange.from, replacementRange.to, originalSyntax],
-    });
 }
 
 /**
@@ -112,7 +100,7 @@ async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown)
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
         const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
 
-        await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
+        await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax);
 
         await showToast(getQuickResizeSuccessMessage(option), ToastType.Success);
     });
@@ -152,7 +140,7 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
 
                 if (result) {
                     const newSyntax = buildNewSyntax(fullContext, result, settingsCache.htmlSyntaxStyle);
-                    await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
+                    await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax);
 
                     await showToast('Image resized successfully!', ToastType.Success);
                 }

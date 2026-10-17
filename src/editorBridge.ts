@@ -1,12 +1,22 @@
+/**
+ * Plugin-side wrapper around the CodeMirror content script's commands.
+ *
+ * Every `editor.execCommand` call the host makes goes through this module, so
+ * the rest of the plugin works with typed functions instead of command names.
+ */
+
 import joplin from 'api';
-import type { EditorImageAtCursorResult, EditorRange, ImageDetails } from './types';
+import type { EditorImageAtCursorResult, EditorRange, ImageDetails, ImageDimensions } from './types';
 import { logger } from './logger';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
+    GET_IMAGE_DIMENSIONS_COMMAND,
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
     MATCH_VIEWER_IMAGE_COMMAND,
+    REPLACE_RANGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
 } from './editorCommands';
+import { isValidImageDimensions } from './utils/imageDimensionUtils';
 import type { ViewerImageTarget } from './viewerImageTarget';
 
 interface CursorDetectionResult {
@@ -101,5 +111,38 @@ export async function selectViewerImageInEditor(target: ViewerImageTarget): Prom
     } catch (error) {
         logger.debug('Selecting viewer image in editor failed:', error);
         return false;
+    }
+}
+
+/**
+ * Replaces an image embed in the editor.
+ * Uses a custom content script command for cross-platform support (desktop + mobile).
+ */
+export async function replaceRangeInEditor(
+    newSyntax: string,
+    replacementRange: EditorRange,
+    originalSyntax: string
+): Promise<void> {
+    await joplin.commands.execute('editor.execCommand', {
+        name: REPLACE_RANGE_COMMAND,
+        args: [newSyntax, replacementRange.from, replacementRange.to, originalSyntax],
+    });
+}
+
+/**
+ * Measures an image by loading it in the editor context.
+ * The editor has access to local files on mobile platforms, unlike the plugin host.
+ */
+export async function measureImageInEditor(imagePath: string): Promise<ImageDimensions | null> {
+    try {
+        const result: unknown = await joplin.commands.execute('editor.execCommand', {
+            name: GET_IMAGE_DIMENSIONS_COMMAND,
+            args: [imagePath],
+        });
+
+        return isValidImageDimensions(result) ? result : null;
+    } catch (error) {
+        logger.debug('Content script dimension fetch failed:', error);
+        return null;
     }
 }
