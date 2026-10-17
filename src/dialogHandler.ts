@@ -7,6 +7,7 @@ import type {
     ResizeDialogResult,
     ResizeMode,
 } from './types';
+import { getDialogFieldState } from './dialog/dialogFieldState';
 import { escapeHtmlAttribute } from './utils/stringUtils';
 
 const DIALOG_ID = 'image-resize-dialog';
@@ -27,37 +28,39 @@ export interface ResizeDialogDefaults {
 }
 
 /**
- * Calculates the initial state for the dialog based on default syntax and resize mode.
- * Centralizes all state calculation logic to avoid duplication and improve maintainability.
+ * Renders the initial control state as markup classes and attributes, so the dialog
+ * opens in the right state before its script runs. The rules themselves live in
+ * getDialogFieldState, which the webview applies on every change.
  */
 export function getInitialDialogState(
     defaultSyntax: ImageSyntax,
     defaultResizeMode: ResizeMode,
     originalDimensionsDetermined: boolean
 ): InitialDialogState {
+    const state = getDialogFieldState(defaultSyntax, defaultResizeMode, originalDimensionsDetermined);
     const htmlSyntaxSelected = defaultSyntax === 'html';
-    const percentageModeDefault = originalDimensionsDetermined && defaultResizeMode === 'percentage';
-    const percentageInitiallyDisabled = !htmlSyntaxSelected || !percentageModeDefault;
-    const absoluteInitiallyDisabled = !htmlSyntaxSelected || percentageModeDefault;
-    const heightInitiallyDisabled = absoluteInitiallyDisabled || !originalDimensionsDetermined;
+    const percentageModeSelected = state.resizeMode === 'percentage';
+    const disabledClass = (disabled: boolean): string => (disabled ? ' is-disabled' : '');
+    const disabledAttr = (disabled: boolean): string => (disabled ? ' disabled' : '');
+    const checkedAttr = (checked: boolean): string => (checked ? ' checked' : '');
 
     return {
         // CSS classes
-        resizeFieldsetClass: `resize-fieldset${htmlSyntaxSelected ? '' : ' is-locked'}`,
-        percentageModeRowClass: `row${originalDimensionsDetermined ? '' : ' is-disabled'}`,
-        percentageRowClass: `row${percentageInitiallyDisabled ? ' is-disabled' : ''}`,
-        absoluteGroupClass: `stack absolute-size-group${absoluteInitiallyDisabled ? ' is-disabled' : ''}`,
-        heightRowClass: `row${heightInitiallyDisabled && !absoluteInitiallyDisabled ? ' is-disabled' : ''}`,
+        resizeFieldsetClass: `resize-fieldset${state.resizeLocked ? ' is-locked' : ''}`,
+        percentageModeRowClass: `row${disabledClass(state.percentageModeDisabled)}`,
+        percentageRowClass: `row${disabledClass(state.percentageDisabled)}`,
+        absoluteGroupClass: `stack absolute-size-group${disabledClass(state.absoluteDisabled)}`,
+        heightRowClass: `row${disabledClass(state.heightDimmed)}`,
         // HTML checked attributes
-        htmlCheckedAttr: htmlSyntaxSelected ? ' checked' : '',
-        markdownCheckedAttr: htmlSyntaxSelected ? '' : ' checked',
-        percentageModeCheckedAttr: percentageModeDefault ? ' checked' : '',
-        absoluteModeCheckedAttr: percentageModeDefault ? '' : ' checked',
+        htmlCheckedAttr: checkedAttr(htmlSyntaxSelected),
+        markdownCheckedAttr: checkedAttr(!htmlSyntaxSelected),
+        percentageModeCheckedAttr: checkedAttr(percentageModeSelected),
+        absoluteModeCheckedAttr: checkedAttr(!percentageModeSelected),
         // HTML disabled attributes
-        percentageDisabledAttr: percentageInitiallyDisabled ? ' disabled' : '',
-        percentageModeDisabledAttr: originalDimensionsDetermined ? '' : ' disabled',
-        absoluteDisabledAttr: absoluteInitiallyDisabled ? ' disabled' : '',
-        heightDisabledAttr: heightInitiallyDisabled ? ' disabled' : '',
+        percentageDisabledAttr: disabledAttr(state.percentageDisabled),
+        percentageModeDisabledAttr: disabledAttr(state.percentageModeDisabled),
+        absoluteDisabledAttr: disabledAttr(state.absoluteDisabled),
+        heightDisabledAttr: disabledAttr(state.heightDisabled),
     };
 }
 
@@ -103,7 +106,8 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
 
     // Dialog configuration passed as single JSON attribute for cleaner extensibility
     const dialogConfig: ResizeDialogConfig = {
-        defaultResizeMode: context.originalDimensionsDetermined ? defaultResizeMode : 'absolute',
+        defaultResizeMode: getDialogFieldState(defaultSyntax, defaultResizeMode, context.originalDimensionsDetermined)
+            .resizeMode,
         defaultPercentage,
         originalWidth,
         originalHeight,
@@ -249,7 +253,11 @@ export class ResizeDialog {
 
             const targetSyntax = fields.targetSyntax === 'markdown' ? 'markdown' : 'html';
             const altText = typeof fields.altText === 'string' ? fields.altText : '';
-            const defaultResizeMode = context.originalDimensionsDetermined ? defaults.defaultResizeMode : 'absolute';
+            const defaultResizeMode = getDialogFieldState(
+                targetSyntax,
+                defaults.defaultResizeMode,
+                context.originalDimensionsDetermined
+            ).resizeMode;
             const resizeMode =
                 fields.resizeMode === 'percentage' || fields.resizeMode === 'absolute'
                     ? fields.resizeMode

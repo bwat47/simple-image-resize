@@ -7,6 +7,7 @@
 
 import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
 import { logger } from '../logger';
+import { getDialogFieldState } from './dialogFieldState';
 
 // The generated bundle ends with `exports.default = ...`, but Joplin executes
 // dialog scripts as browser scripts without providing `exports`.
@@ -147,28 +148,17 @@ function initializeResizeDialog(): void {
             });
     };
 
-    const setAbsoluteFieldsDisabled = (absoluteDisabled: boolean): void => {
-        setRowDisabled(absoluteGroup, absoluteDisabled);
-
-        const heightDisabled = absoluteDisabled || !originalDimensionsDetermined;
-        // The row only needs its own opacity when the parent group remains enabled.
-        const heightNeedsOwnDisabledStyle = heightDisabled && !absoluteDisabled;
-        setRowDisabled(heightRow, heightDisabled, heightNeedsOwnDisabledStyle);
-    };
-
     const applyResizeMode = (mode: ResizeMode): void => {
-        // Percentage resizing has nothing to scale from when the original size is unknown.
-        const effectiveMode: ResizeMode = mode === 'percentage' && !originalDimensionsDetermined ? 'absolute' : mode;
-        currentResizeMode = effectiveMode;
+        const state = getDialogFieldState(currentSyntax, mode, originalDimensionsDetermined);
+        currentResizeMode = state.resizeMode;
         const htmlActive = currentSyntax === 'html';
-        const isPercentage = effectiveMode === 'percentage';
+        const isPercentage = state.resizeMode === 'percentage';
 
-        const percentageDisabled = !htmlActive || !isPercentage;
-        const absoluteDisabled = !htmlActive || isPercentage;
-
-        setRowDisabled(percentageModeRow, !originalDimensionsDetermined);
-        setRowDisabled(percentageRow, percentageDisabled);
-        setAbsoluteFieldsDisabled(absoluteDisabled);
+        resizeFieldset.classList.toggle('is-locked', state.resizeLocked);
+        setRowDisabled(percentageModeRow, state.percentageModeDisabled);
+        setRowDisabled(percentageRow, state.percentageDisabled);
+        setRowDisabled(absoluteGroup, state.absoluteDisabled);
+        setRowDisabled(heightRow, state.heightDisabled, state.heightDimmed);
 
         if (htmlActive && isPercentage && !percentageInput.value) {
             percentageInput.value = String(config.defaultPercentage);
@@ -188,19 +178,6 @@ function initializeResizeDialog(): void {
 
     const applySyntaxMode = (syntax: ImageSyntax): void => {
         currentSyntax = syntax;
-        const htmlActive = syntax === 'html';
-
-        resizeFieldset.classList.toggle('is-locked', !htmlActive);
-
-        if (!htmlActive) {
-            setRowDisabled(percentageRow, true);
-            setAbsoluteFieldsDisabled(true);
-        } else {
-            setRowDisabled(percentageModeRow, !originalDimensionsDetermined);
-            setRowDisabled(percentageRow, currentResizeMode !== 'percentage');
-            setAbsoluteFieldsDisabled(currentResizeMode === 'percentage');
-        }
-
         applyResizeMode(currentResizeMode);
     };
 
@@ -221,7 +198,6 @@ function initializeResizeDialog(): void {
     });
 
     applySyntaxMode(initialSyntax);
-    applyResizeMode(defaultResizeMode);
 }
 
 // Joplin remounts the dialog webview on every open and applies the new HTML before
