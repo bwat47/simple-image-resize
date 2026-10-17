@@ -11,14 +11,13 @@
 
 import joplin from 'api';
 import { buildNewSyntax } from './imageSyntaxBuilder';
-import type { ResizeDialog } from './dialogHandler';
-import { getOriginalImageDimensions } from './imageSizeCalculator';
-import { detectImageAtCursor, selectViewerImageInEditor } from './cursorDetection';
+import type { ResizeDialog } from './dialog/resizeDialogHost';
+import { getOriginalImageDimensions } from './originalImageDimensions';
+import { detectImageAtCursor, replaceRangeInEditor, selectViewerImageInEditor } from './editorBridge';
 import { isViewerImageTarget } from './viewerImageTarget';
-import type { ImageContext, EditorRange } from './types';
+import type { ImageContext } from './types';
 import { logger } from './logger';
 import { settingsCache } from './settings';
-import { REPLACE_RANGE_COMMAND } from './contentScripts/cursorContentScript';
 import { showToast, ToastType } from './utils/toastUtils';
 import {
     buildQuickResizeResult,
@@ -61,23 +60,25 @@ async function detectAndPrepareImage(viewerTarget?: unknown) {
 }
 
 /**
- * Shared function to replace image in editor.
- * Uses custom content script command for cross-platform support (desktop + mobile).
+ * Run a command body, reporting any unexpected failure to the user as a toast.
  */
-async function replaceImageInEditor(newSyntax: string, replacementRange: EditorRange, originalSyntax: string) {
-    await joplin.commands.execute('editor.execCommand', {
-        name: REPLACE_RANGE_COMMAND,
-        args: [newSyntax, replacementRange.from, replacementRange.to, originalSyntax],
-    });
+async function withErrorToast(action: () => Promise<void>): Promise<void> {
+    try {
+        await action();
+    } catch (err) {
+        logger.error('Error:', err);
+        const message = err instanceof Error ? err.message : 'Unknown error occurred';
+        await showToast(`Operation failed: ${message}`, ToastType.Error);
+    }
 }
 
 /**
  * Execute quick resize for a configured slot.
  */
 async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown): Promise<void> {
-    try {
+    await withErrorToast(async () => {
         // The cached setting is always normalized, so parsing is not expected to fail;
-        // the generic catch below handles the theoretical failure.
+        // withErrorToast handles the theoretical failure.
         const quickResizeOptions = parseQuickResizeOptions(settingsCache.quickResizeOptions);
 
         const option = quickResizeOptions[slotIndex];
@@ -97,16 +98,12 @@ async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown)
         }
 
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
-        const newSyntax = buildNewSyntax(fullContext, resizeResult);
+        const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
 
-        await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
+        await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax);
 
         await showToast(getQuickResizeSuccessMessage(option), ToastType.Success);
-    } catch (err) {
-        logger.error('Error:', err);
-        const message = err instanceof Error ? err.message : 'Unknown error occurred';
-        await showToast(`Operation failed: ${message}`, ToastType.Error);
-    }
+    });
 }
 
 /**
@@ -129,7 +126,7 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
         label: 'Resize Image',
         iconName: 'fas fa-expand-alt',
         execute: async (viewerTarget?: unknown) => {
-            try {
+            await withErrorToast(async () => {
                 const prepared = await detectAndPrepareImage(viewerTarget);
                 if (!prepared) return;
 
@@ -142,16 +139,12 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
                 });
 
                 if (result) {
-                    const newSyntax = buildNewSyntax(fullContext, result);
-                    await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
+                    const newSyntax = buildNewSyntax(fullContext, result, settingsCache.htmlSyntaxStyle);
+                    await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax);
 
                     await showToast('Image resized successfully!', ToastType.Success);
                 }
-            } catch (err) {
-                logger.error('Error:', err);
-                const message = err instanceof Error ? err.message : 'Unknown error occurred';
-                await showToast(`Operation failed: ${message}`, ToastType.Error);
-            }
+            });
         },
     });
 

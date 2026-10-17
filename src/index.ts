@@ -3,10 +3,9 @@ import { ContentScriptType } from 'api/types';
 import { registerSettings, initializeSettingsCache, settingsCache } from './settings';
 import { registerCommands } from './commands';
 import { registerMenus, registerContextMenu, registerToolbarButton } from './menus';
-import { ResizeDialog } from './dialogHandler';
-import { registerViewerContentScript } from './viewerContextMenu';
-
-const CONTENT_SCRIPT_ID = 'simpleImageResize-cursorContentScript';
+import { ResizeDialog } from './dialog/resizeDialogHost';
+import { registerViewerContentScript } from './viewerMessages';
+import { EDITOR_CONTENT_SCRIPT_ID } from './editorCommands';
 
 void joplin.plugins.register({
     onStart: async function () {
@@ -16,7 +15,7 @@ void joplin.plugins.register({
 
         await joplin.contentScripts.register(
             ContentScriptType.CodeMirrorPlugin,
-            CONTENT_SCRIPT_ID,
+            EDITOR_CONTENT_SCRIPT_ID,
             './contentScripts/cursorContentScript.js'
         );
 

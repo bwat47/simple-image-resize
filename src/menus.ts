@@ -9,9 +9,9 @@
 
 import joplin from 'api';
 import { type MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
-import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './cursorDetection';
+import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './editorBridge';
 import { logger } from './logger';
-import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerContextMenu';
+import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerMessages';
 import type { ViewerImageTarget } from './viewerImageTarget';
 import { settingsCache } from './settings';
 import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';

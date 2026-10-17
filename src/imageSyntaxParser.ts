@@ -1,4 +1,4 @@
-import type { EditorImageAtCursorResult } from './types';
+import type { ImageDetails, ImageSyntax } from './types';
 import { decodeHtmlEntities } from './utils/stringUtils';
 
 // Matches a syntax-tree-validated Markdown image, for example:
@@ -16,9 +16,7 @@ const HTML_SRC_PATTERN = /src=(["'])([^"']+)\1/i;
 const HTML_ALT_PATTERN = /alt=(["'])(.*?)\1/i;
 const HTML_TITLE_PATTERN = /title=(["'])(.*?)\1/i;
 
-type ImageSyntaxType = EditorImageAtCursorResult['type'];
-type ExtractedImageDetails = Omit<EditorImageAtCursorResult, 'range'>;
-type ImageSourceInfo = Pick<EditorImageAtCursorResult, 'source' | 'sourceType'>;
+type ImageSourceInfo = Pick<ImageDetails, 'source' | 'sourceType'>;
 
 function resolveImageSource(src: string): ImageSourceInfo {
     const resourceMatch = RESOURCE_ID_PATTERN.exec(src);
@@ -30,7 +28,7 @@ function resolveImageSource(src: string): ImageSourceInfo {
     return { source: src, sourceType: 'external' };
 }
 
-function extractMarkdownDetails(imageText: string): ExtractedImageDetails | null {
+function extractMarkdownDetails(imageText: string): ImageDetails | null {
     const match = MARKDOWN_IMAGE_PATTERN.exec(imageText);
     if (!match?.groups) return null;
 
@@ -45,7 +43,7 @@ function extractMarkdownDetails(imageText: string): ExtractedImageDetails | null
     };
 }
 
-function extractHtmlDetails(imageText: string): ExtractedImageDetails | null {
+function extractHtmlDetails(imageText: string): ImageDetails | null {
     const srcMatch = HTML_SRC_PATTERN.exec(imageText);
     if (!srcMatch) return null;
 
@@ -65,6 +63,6 @@ function extractHtmlDetails(imageText: string): ExtractedImageDetails | null {
 /**
  * Extract image metadata after CodeMirror's syntax tree has identified the syntax type.
  */
-export function extractImageDetails(imageText: string, syntaxType: ImageSyntaxType): ExtractedImageDetails | null {
+export function extractImageDetails(imageText: string, syntaxType: ImageSyntax): ImageDetails | null {
     return syntaxType === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);
 }

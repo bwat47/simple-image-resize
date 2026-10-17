@@ -5,7 +5,7 @@ import {
     ResizeDialog,
     type JoplinDialogApi,
     type ResizeDialogDefaults,
-} from '../src/dialogHandler';
+} from '../src/dialog/resizeDialogHost';
 import type { ImageContext } from '../src/types';
 
 describe('getInitialDialogState', () => {
@@ -177,6 +177,7 @@ describe('getInitialDialogState', () => {
             source: 'https://example.com/image.png',
             sourceType: 'external' as const,
             altText: 'Alt',
+            title: '',
             originalDimensions: { width: 400, height: 300 },
             originalDimensionsDetermined: true,
         };
@@ -199,6 +200,7 @@ const dialogContext: ImageContext = {
     source: 'https://example.com/image.png',
     sourceType: 'external',
     altText: 'Alt',
+    title: '',
     originalDimensions: { width: 400, height: 300 },
     originalDimensionsDetermined: true,
 };

@@ -1,10 +1,9 @@
 import joplin from 'api';
 import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
-import type { ImageDimensions, OriginalImageDimensionsResult } from './types';
-import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
+import type { ImageSourceType, OriginalImageDimensionsResult } from './types';
+import { measureImageInEditor } from './editorBridge';
 import {
-    isValidImageDimensions,
     measureBlobImageDimensions,
     measureImageDimensions,
     EXTERNAL_IMAGE_LOAD_TIMEOUT_MS,
@@ -32,7 +31,7 @@ const FALLBACK_IMAGE_DIMENSIONS = {
  */
 export async function getOriginalImageDimensions(
     source: string,
-    sourceType: 'resource' | 'external'
+    sourceType: ImageSourceType
 ): Promise<OriginalImageDimensionsResult> {
     if (sourceType === 'resource') {
         return getJoplinResourceDimensions(source);
@@ -71,7 +70,7 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<Original
         const resourcePath = await joplin.data.resourcePath(resourceId);
         if (resourcePath) {
             logger.debug(`Trying content script with path: ${resourcePath}`);
-            const contentScriptResult = await getImageDimensionsViaContentScript(resourcePath);
+            const contentScriptResult = await measureImageInEditor(resourcePath);
             if (contentScriptResult) {
                 logger.debug(
                     `Content script returned dimensions: ${contentScriptResult.width}x${contentScriptResult.height}`
@@ -99,27 +98,6 @@ async function getJoplinResourceDimensions(resourceId: string): Promise<Original
     // Strategy 3: Return default dimensions as last resort
     logger.warn(`All dimension strategies failed for resource ${resourceId}, using defaults`);
     return { dimensions: { ...FALLBACK_IMAGE_DIMENSIONS }, determined: false };
-}
-
-/**
- * Get image dimensions via the content script running in the editor context.
- * This has access to local files on mobile platforms.
- */
-async function getImageDimensionsViaContentScript(imagePath: string): Promise<ImageDimensions | null> {
-    try {
-        const result: unknown = await joplin.commands.execute('editor.execCommand', {
-            name: GET_IMAGE_DIMENSIONS_COMMAND,
-            args: [imagePath],
-        });
-
-        if (isValidImageDimensions(result)) {
-            return result;
-        }
-        return null;
-    } catch (error) {
-        logger.debug('Content script dimension fetch failed:', error);
-        return null;
-    }
 }
 
 function isValidHttpUrl(string: string): boolean {

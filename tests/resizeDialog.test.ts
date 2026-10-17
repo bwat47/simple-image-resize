@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import initializeResizeDialog from '../src/dialog/resizeDialog';
-import { renderDialogHtml, type ResizeDialogDefaults } from '../src/dialogHandler';
+import { renderDialogHtml, type ResizeDialogDefaults } from '../src/dialog/resizeDialogHost';
 import { logger } from '../src/logger';
 import type { ImageContext, ResizeMode } from '../src/types';
 
@@ -16,6 +16,7 @@ function dialogMarkup(width: number, height: number, defaults: ResizeDialogDefau
         source: 'https://example.com/image.png',
         sourceType: 'external',
         altText: 'Alt',
+        title: '',
         originalDimensions: { width, height },
         originalDimensionsDetermined: true,
     };
