@@ -12,7 +12,7 @@ const DEFAULT_TOAST_DURATION = 3000;
  * Displays a toast notification if toast messages are enabled in settings.
  *
  * @param message - The message to display
- * @param type - Toast type (Info, Warning, Error). Defaults to Info.
+ * @param type - Toast type (Info, Success, Error). Defaults to Info.
  * @param duration - Display duration in milliseconds. Defaults to 3000ms.
  */
 export async function showToast(
