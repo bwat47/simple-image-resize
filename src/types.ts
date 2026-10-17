@@ -2,6 +2,8 @@ export type ImageSyntax = 'markdown' | 'html';
 
 export type ResizeMode = 'percentage' | 'absolute';
 
+export type HtmlSyntaxStyle = 'widthAndHeight' | 'widthOnly';
+
 export interface ImageDimensions {
     width: number;
     height: number;
@@ -12,13 +14,19 @@ export interface OriginalImageDimensionsResult {
     determined: boolean;
 }
 
-export interface ImageContext {
+export type ImageSourceType = 'resource' | 'external';
+
+/** An image embed as found in the note source. */
+export interface ImageDetails {
     type: ImageSyntax;
     syntax: string;
     source: string; // Can be resourceId or external URL
-    sourceType: 'resource' | 'external';
+    sourceType: ImageSourceType;
     altText: string;
-    title?: string;
+    title: string;
+}
+
+export interface ImageContext extends ImageDetails {
     // The original, detected dimensions of the image
     originalDimensions: ImageDimensions;
     originalDimensionsDetermined: boolean;
@@ -42,27 +50,6 @@ export interface ResizeDialogConfig {
     originalDimensionsDetermined: boolean;
 }
 
-/** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
-export interface InitialDialogState {
-    // CSS classes
-    resizeFieldsetClass: string;
-    percentageModeRowClass: string;
-    percentageRowClass: string;
-    absoluteGroupClass: string;
-    heightRowClass: string;
-    // HTML checked attributes
-    htmlCheckedAttr: string;
-    markdownCheckedAttr: string;
-    percentageModeCheckedAttr: string;
-    absoluteModeCheckedAttr: string;
-    // HTML disabled attributes
-    percentageDisabledAttr: string;
-    percentageModeDisabledAttr: string;
-    absoluteDisabledAttr: string;
-    heightDisabledAttr: string;
-}
-
-// New types for cursor-based detection
 export interface EditorPosition {
     line: number;
     ch: number;
@@ -73,12 +60,6 @@ export interface EditorRange {
     to: EditorPosition;
 }
 
-export interface EditorImageAtCursorResult {
-    type: ImageSyntax;
-    syntax: string;
-    source: string;
-    sourceType: 'resource' | 'external';
-    altText: string;
-    title: string;
+export interface EditorImageAtCursorResult extends ImageDetails {
     range: EditorRange;
 }

@@ -1,7 +1,7 @@
 import joplin from 'api';
 import { getResourceBlob, validateResourceId } from './utils/resourceUtils';
 import { logger } from './logger';
-import type { ImageDimensions, OriginalImageDimensionsResult } from './types';
+import type { ImageDimensions, ImageSourceType, OriginalImageDimensionsResult } from './types';
 import { GET_IMAGE_DIMENSIONS_COMMAND } from './contentScripts/cursorContentScript';
 import {
     isValidImageDimensions,
@@ -32,7 +32,7 @@ const FALLBACK_IMAGE_DIMENSIONS = {
  */
 export async function getOriginalImageDimensions(
     source: string,
-    sourceType: 'resource' | 'external'
+    sourceType: ImageSourceType
 ): Promise<OriginalImageDimensionsResult> {
     if (sourceType === 'resource') {
         return getJoplinResourceDimensions(source);

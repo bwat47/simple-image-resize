@@ -12,7 +12,7 @@ import joplin from 'api';
 import { type SettingItem, SettingItemType } from 'api/types';
 import { logger } from './logger';
 import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
-import type { ResizeMode } from './types';
+import type { HtmlSyntaxStyle, ResizeMode } from './types';
 
 const SECTION_ID = 'imageResize';
 
@@ -41,7 +41,7 @@ const SETTINGS_CONFIG = {
     },
     htmlSyntaxStyle: {
         key: `${SECTION_ID}.htmlSyntaxStyle`,
-        defaultValue: 'widthAndHeight' as 'widthAndHeight' | 'widthOnly',
+        defaultValue: 'widthAndHeight' as HtmlSyntaxStyle,
         type: SettingItemType.String,
         label: 'HTML syntax style',
         description: 'Controls whether HTML image tags include both width and height attributes or just width',
@@ -85,7 +85,7 @@ const SETTINGS_CONFIG = {
 export type SettingsCache = {
     defaultResizeMode: ResizeMode;
     defaultPercentage: number;
-    htmlSyntaxStyle: 'widthAndHeight' | 'widthOnly';
+    htmlSyntaxStyle: HtmlSyntaxStyle;
     showQuickResizeInContextMenu: boolean;
     quickResizeOptions: string;
     showToastMessages: boolean;

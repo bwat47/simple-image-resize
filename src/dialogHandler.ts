@@ -1,12 +1,5 @@
 import type { ButtonSpec, DialogResult, ViewHandle } from 'api/types';
-import type {
-    ImageContext,
-    ImageSyntax,
-    InitialDialogState,
-    ResizeDialogConfig,
-    ResizeDialogResult,
-    ResizeMode,
-} from './types';
+import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from './types';
 import { getDialogFieldState } from './dialog/dialogFieldState';
 import { escapeHtmlAttribute } from './utils/stringUtils';
 
@@ -25,6 +18,26 @@ export interface JoplinDialogApi {
 export interface ResizeDialogDefaults {
     defaultResizeMode: ResizeMode;
     defaultPercentage: number;
+}
+
+/** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
+export interface InitialDialogState {
+    // CSS classes
+    resizeFieldsetClass: string;
+    percentageModeRowClass: string;
+    percentageRowClass: string;
+    absoluteGroupClass: string;
+    heightRowClass: string;
+    // HTML checked attributes
+    htmlCheckedAttr: string;
+    markdownCheckedAttr: string;
+    percentageModeCheckedAttr: string;
+    absoluteModeCheckedAttr: string;
+    // HTML disabled attributes
+    percentageDisabledAttr: string;
+    percentageModeDisabledAttr: string;
+    absoluteDisabledAttr: string;
+    heightDisabledAttr: string;
 }
 
 /**

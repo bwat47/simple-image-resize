@@ -72,12 +72,25 @@ async function replaceImageInEditor(newSyntax: string, replacementRange: EditorR
 }
 
 /**
+ * Run a command body, reporting any unexpected failure to the user as a toast.
+ */
+async function withErrorToast(action: () => Promise<void>): Promise<void> {
+    try {
+        await action();
+    } catch (err) {
+        logger.error('Error:', err);
+        const message = err instanceof Error ? err.message : 'Unknown error occurred';
+        await showToast(`Operation failed: ${message}`, ToastType.Error);
+    }
+}
+
+/**
  * Execute quick resize for a configured slot.
  */
 async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown): Promise<void> {
-    try {
+    await withErrorToast(async () => {
         // The cached setting is always normalized, so parsing is not expected to fail;
-        // the generic catch below handles the theoretical failure.
+        // withErrorToast handles the theoretical failure.
         const quickResizeOptions = parseQuickResizeOptions(settingsCache.quickResizeOptions);
 
         const option = quickResizeOptions[slotIndex];
@@ -97,16 +110,12 @@ async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown)
         }
 
         const resizeResult = buildQuickResizeResult(option, fullContext.altText);
-        const newSyntax = buildNewSyntax(fullContext, resizeResult);
+        const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
 
         await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
         await showToast(getQuickResizeSuccessMessage(option), ToastType.Success);
-    } catch (err) {
-        logger.error('Error:', err);
-        const message = err instanceof Error ? err.message : 'Unknown error occurred';
-        await showToast(`Operation failed: ${message}`, ToastType.Error);
-    }
+    });
 }
 
 /**
@@ -129,7 +138,7 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
         label: 'Resize Image',
         iconName: 'fas fa-expand-alt',
         execute: async (viewerTarget?: unknown) => {
-            try {
+            await withErrorToast(async () => {
                 const prepared = await detectAndPrepareImage(viewerTarget);
                 if (!prepared) return;
 
@@ -142,16 +151,12 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
                 });
 
                 if (result) {
-                    const newSyntax = buildNewSyntax(fullContext, result);
+                    const newSyntax = buildNewSyntax(fullContext, result, settingsCache.htmlSyntaxStyle);
                     await replaceImageInEditor(newSyntax, replacementRange, fullContext.syntax);
 
                     await showToast('Image resized successfully!', ToastType.Success);
                 }
-            } catch (err) {
-                logger.error('Error:', err);
-                const message = err instanceof Error ? err.message : 'Unknown error occurred';
-                await showToast(`Operation failed: ${message}`, ToastType.Error);
-            }
+            });
         },
     });
 

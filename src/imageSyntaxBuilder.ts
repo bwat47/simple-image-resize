@@ -1,6 +1,5 @@
-import type { ImageContext, ResizeDialogResult } from './types';
+import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from './types';
 import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './utils/stringUtils';
-import { settingsCache } from './settings';
 
 function buildSourcePath(context: ImageContext): string {
     return context.sourceType === 'resource' ? `:/${context.source}` : context.source;
@@ -30,13 +29,18 @@ function calculateWidth(context: ImageContext, result: ResizeDialogResult): numb
     return originalWidth;
 }
 
-function buildHtmlSyntax(context: ImageContext, result: ResizeDialogResult, srcPath: string): string {
+function buildHtmlSyntax(
+    context: ImageContext,
+    result: ResizeDialogResult,
+    srcPath: string,
+    htmlSyntaxStyle: HtmlSyntaxStyle
+): string {
     const { width: originalWidth, height: originalHeight } = context.originalDimensions;
     const newWidth = calculateWidth(context, result);
 
     // Guard against division by zero (edge case with malformed image dimensions)
     const newHeight = originalWidth > 0 ? Math.round(newWidth * (originalHeight / originalWidth)) : originalHeight;
-    const includeHeight = settingsCache.htmlSyntaxStyle === 'widthAndHeight' && context.originalDimensionsDetermined;
+    const includeHeight = htmlSyntaxStyle === 'widthAndHeight' && context.originalDimensionsDetermined;
     const heightAttr = includeHeight ? ` height="${newHeight}"` : '';
     const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
     const safeAlt = escapeHtmlAttribute(result.altText);
@@ -52,14 +56,19 @@ function buildHtmlSyntax(context: ImageContext, result: ResizeDialogResult, srcP
  *
  * @param context - Original image metadata and dimensions
  * @param result - User's selections from the resize dialog
+ * @param htmlSyntaxStyle - Whether HTML output includes a height attribute
  * @returns New image syntax
  */
-export function buildNewSyntax(context: ImageContext, result: ResizeDialogResult): string {
+export function buildNewSyntax(
+    context: ImageContext,
+    result: ResizeDialogResult,
+    htmlSyntaxStyle: HtmlSyntaxStyle
+): string {
     const srcPath = buildSourcePath(context);
 
     if (result.targetSyntax === 'markdown') {
         return buildMarkdownSyntax(context, result, srcPath);
     }
 
-    return buildHtmlSyntax(context, result, srcPath);
+    return buildHtmlSyntax(context, result, srcPath, htmlSyntaxStyle);
 }

@@ -1,24 +1,14 @@
 import { buildNewSyntax } from '../src/imageSyntaxBuilder';
 import type { ImageContext, ResizeDialogResult } from '../src/types';
-import { settingsCache } from '../src/settings';
 
 describe('buildNewSyntax', () => {
-    beforeEach(() => {
-        // Default to 'widthAndHeight' setting
-        settingsCache.htmlSyntaxStyle = 'widthAndHeight';
-    });
-
-    afterEach(() => {
-        // Reset to default
-        settingsCache.htmlSyntaxStyle = 'widthAndHeight';
-    });
     const baseContext: ImageContext = {
         type: 'markdown',
         syntax: '![Alt](:/0123456789abcdef0123456789abcdef)',
         source: '0123456789abcdef0123456789abcdef',
         sourceType: 'resource',
         altText: 'Alt',
-        title: undefined,
+        title: '',
         originalDimensions: { width: 800, height: 600 },
         originalDimensionsDetermined: true,
     };
@@ -31,7 +21,7 @@ describe('buildNewSyntax', () => {
             percentage: 50,
         };
 
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         expect(syntax).toBe('![New Alt](:/0123456789abcdef0123456789abcdef)');
     });
 
@@ -42,21 +32,20 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 25,
         };
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         // 25% of 800x600 => 200x150
         expect(syntax).toContain('width="200"');
         expect(syntax).toContain('height="150"');
     });
 
     test('calculates percentage resize for HTML output with width only', () => {
-        settingsCache.htmlSyntaxStyle = 'widthOnly';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
             resizeMode: 'percentage',
             percentage: 25,
         };
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthOnly');
         // 25% of 800x600 => 200x150
         expect(syntax).toContain('width="200"');
         expect(syntax).not.toContain('height=');
@@ -70,13 +59,12 @@ describe('buildNewSyntax', () => {
             absoluteWidth: 320,
             absoluteHeight: 240,
         };
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         expect(syntax).toContain('width="320"');
         expect(syntax).toContain('height="240"');
     });
 
     test('absolute dimensions both provided with width only', () => {
-        settingsCache.htmlSyntaxStyle = 'widthOnly';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
@@ -84,7 +72,7 @@ describe('buildNewSyntax', () => {
             absoluteWidth: 320,
             absoluteHeight: 240,
         };
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthOnly');
         expect(syntax).toContain('width="320"');
         expect(syntax).not.toContain('height=');
     });
@@ -99,7 +87,7 @@ describe('buildNewSyntax', () => {
             absoluteHeight: 240,
         };
 
-        const syntax = buildNewSyntax(context, result);
+        const syntax = buildNewSyntax(context, result, 'widthAndHeight');
 
         expect(syntax).toContain('width="320"');
         expect(syntax).not.toContain('height=');
@@ -112,7 +100,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'absolute',
             absoluteWidth: 400,
         };
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         // Aspect ratio 800x600 => height scales to 300
         expect(syntax).toContain('width="400"');
         expect(syntax).toContain('height="300"');
@@ -125,7 +113,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'absolute',
             absoluteHeight: 300,
         };
-        const syntax = buildNewSyntax(baseContext, result);
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         // Width should scale: 800/600 * 300 = 400
         expect(syntax).toContain('width="400"');
         expect(syntax).toContain('height="300"');
@@ -139,7 +127,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 50,
         };
-        const syntax = buildNewSyntax(ctx, result);
+        const syntax = buildNewSyntax(ctx, result, 'widthAndHeight');
         expect(syntax).toContain('title="My Title"');
     });
 
@@ -151,7 +139,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax(ctx, result);
+        const syntax = buildNewSyntax(ctx, result, 'widthAndHeight');
         expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
     });
 
@@ -162,7 +150,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax(baseContext, res);
+        const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
         expect(syntax).toBe('![Alt with brackets and \\ backslash](:/0123456789abcdef0123456789abcdef)');
     });
 
@@ -175,7 +163,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = buildNewSyntax(ctx, htmlRes);
+        const html = buildNewSyntax(ctx, htmlRes, 'widthAndHeight');
         expect(html).toContain('title="He said &quot;hi&quot; &amp; &lt;ok&gt;"');
         // Markdown: Only quotes are escaped (extraction regex works with raw text)
         const mdRes: ResizeDialogResult = {
@@ -184,7 +172,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const md = buildNewSyntax(ctx, mdRes);
+        const md = buildNewSyntax(ctx, mdRes, 'widthAndHeight');
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said \\"hi\\" & <ok>")');
     });
 
@@ -195,7 +183,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = buildNewSyntax(baseContext, res);
+        const html = buildNewSyntax(baseContext, res, 'widthAndHeight');
         expect(html).toContain('alt="Quote: &quot;double&quot; &amp; &lt;tag&gt;"');
     });
 
@@ -206,7 +194,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = buildNewSyntax(baseContext, res);
+        const html = buildNewSyntax(baseContext, res, 'widthAndHeight');
         expect(html).toContain('alt="It&#39;s fine"');
     });
 
@@ -219,7 +207,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = buildNewSyntax(ctx, htmlRes);
+        const html = buildNewSyntax(ctx, htmlRes, 'widthAndHeight');
         expect(html).toContain('title="mern &amp; test\\ABC"');
 
         // Convert back to Markdown - backslash should not be doubled
@@ -229,7 +217,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const md = buildNewSyntax(ctx, mdRes);
+        const md = buildNewSyntax(ctx, mdRes, 'widthAndHeight');
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "mern & test\\ABC")');
     });
 
@@ -240,6 +228,7 @@ describe('buildNewSyntax', () => {
             source: 'https://example.com/logo.png',
             sourceType: 'external',
             altText: 'Logo',
+            title: '',
             originalDimensions: { width: 1024, height: 512 },
             originalDimensionsDetermined: true,
         };
@@ -249,7 +238,7 @@ describe('buildNewSyntax', () => {
             resizeMode: 'percentage',
             percentage: 50,
         };
-        const syntax = buildNewSyntax(externalCtx, result);
+        const syntax = buildNewSyntax(externalCtx, result, 'widthAndHeight');
         expect(syntax).toContain('<img src="https://example.com/logo.png"');
         expect(syntax).toContain('width="512"');
         expect(syntax).toContain('height="256"');

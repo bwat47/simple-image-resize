@@ -1,5 +1,5 @@
 import joplin from 'api';
-import type { EditorImageAtCursorResult, ImageContext, EditorRange } from './types';
+import type { EditorImageAtCursorResult, EditorRange, ImageDetails } from './types';
 import { logger } from './logger';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
@@ -10,7 +10,7 @@ import {
 import type { ViewerImageTarget } from './viewerImageTarget';
 
 interface CursorDetectionResult {
-    context: Omit<ImageContext, 'originalDimensions' | 'originalDimensionsDetermined'>;
+    context: ImageDetails;
     range: EditorRange;
 }
 
@@ -30,17 +30,8 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
             return null;
         }
 
-        return {
-            context: {
-                type: result.type,
-                syntax: result.syntax,
-                source: result.source,
-                sourceType: result.sourceType,
-                altText: result.altText,
-                title: result.title,
-            },
-            range: result.range,
-        };
+        const { range, ...context } = result;
+        return { context, range };
     } catch (error) {
         logger.warn('Cursor detection failed:', error);
         return null;

@@ -16,6 +16,7 @@ function dialogMarkup(width: number, height: number, defaults: ResizeDialogDefau
         source: 'https://example.com/image.png',
         sourceType: 'external',
         altText: 'Alt',
+        title: '',
         originalDimensions: { width, height },
         originalDimensionsDetermined: true,
     };
