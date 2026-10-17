@@ -6,7 +6,7 @@ import {
     isCursorInImageActivationRange,
     posToOffset,
     resolveReplaceChange,
-} from '../src/contentScripts/cursorContentScript';
+} from '../src/contentScripts/editorImageQueries';
 
 vi.mock('../src/logger', () => ({
     logger: {

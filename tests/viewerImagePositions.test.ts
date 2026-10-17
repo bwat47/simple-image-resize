@@ -6,7 +6,7 @@ import {
     findImageForViewerTarget,
     getImageAtCursor,
     viewerImageCursorPosition,
-} from '../src/contentScripts/cursorContentScript';
+} from '../src/contentScripts/editorImageQueries';
 import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, type ViewerImageTarget } from '../src/viewerImageTarget';
 
 vi.mock('../src/logger', () => ({
