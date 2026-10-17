@@ -40,6 +40,8 @@ This plugin detects a single image embed in Joplin's Markdown editor, gathers th
 - `src/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output.
 - Quick resize commands use five stable command slots with default values `100%, 75%, 50%, 33%, 25%`.
 
+The dialog script focuses the Alt text input after initializing the form on each open. Joplin focuses the dialog iframe for keyboard shortcuts; the plugin selects the initial input explicitly.
+
 ### Shared Utilities
 
 - `src/utils/imageDimensionUtils.ts` contains shared DOM image measurement and dimension-validation logic plus the image load timeouts, kept runtime dependency-free so both execution contexts can import them.

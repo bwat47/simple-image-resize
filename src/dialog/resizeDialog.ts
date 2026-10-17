@@ -198,6 +198,7 @@ function initializeResizeDialog(): void {
     });
 
     applySyntaxMode(initialSyntax);
+    document.getElementById('altText')?.focus();
 }
 
 // Joplin remounts the dialog webview on every open and applies the new HTML before
