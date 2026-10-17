@@ -1,15 +1,15 @@
 import MarkdownIt from 'markdown-it';
 import { EditorState } from '@codemirror/state';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { installImagePositions } from '../src/contentScripts/viewerContentScript';
+import { installImagePositions } from '../src/viewer/viewerContentScript';
 import {
     findImageForViewerTarget,
     getImageAtCursor,
     viewerImageCursorPosition,
-} from '../src/contentScripts/cursorContentScript';
-import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, type ViewerImageTarget } from '../src/viewerImageTarget';
+} from '../src/editor/editorImageQueries';
+import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, type ViewerImageTarget } from '../src/shared/viewerImageTarget';
 
-vi.mock('../src/logger', () => ({
+vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
 }));
 

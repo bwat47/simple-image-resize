@@ -1,4 +1,4 @@
-import { getDialogFieldState } from '../src/dialog/dialogFieldState';
+import { getDialogFieldState } from '../src/shared/dialogFieldState';
 
 describe('getDialogFieldState', () => {
     it('enables only the percentage input in HTML percentage mode', () => {

@@ -1,4 +1,4 @@
-import { extractImageDetails } from '../src/imageSyntaxParser';
+import { extractImageDetails } from '../src/editor/imageSyntaxParser';
 
 describe('Image Extraction Patterns', () => {
     test('extracts markdown image details', () => {

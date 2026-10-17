@@ -14,10 +14,14 @@
 
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
-import { isViewerImageTarget, VIEWER_CONTENT_SCRIPT_ID, type ViewerImageTarget } from './viewerImageTarget';
+import {
+    isViewerImageTarget,
+    VIEWER_CONTENT_SCRIPT_ID,
+    type ViewerContextMenuMessage as ViewerMessage,
+    type ViewerImageTarget,
+} from '../shared/viewerImageTarget';
 import { matchesViewerImageInEditor } from './editorBridge';
-import { logger } from './logger';
-import type { ViewerContextMenuMessage as ViewerMessage } from './contentScripts/viewerContextMenuTypes';
+import { logger } from '../shared/logger';
 
 /** Maximum time between a viewer click and the start of its menu request. */
 const VIEWER_MESSAGE_GRACE_MS = 400;
@@ -111,7 +115,7 @@ export async function registerViewerContentScript(): Promise<void> {
     await joplin.contentScripts.register(
         ContentScriptType.MarkdownItPlugin,
         VIEWER_CONTENT_SCRIPT_ID,
-        './contentScripts/viewerContentScript.js'
+        './viewer/viewerContentScript.js'
     );
 
     await joplin.contentScripts.onMessage(VIEWER_CONTENT_SCRIPT_ID, receiveViewerMessage);

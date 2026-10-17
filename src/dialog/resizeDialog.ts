@@ -5,9 +5,9 @@
  * So runtime imports are only safe when the imported module is browser-compatible.
  */
 
-import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../types';
-import { logger } from '../logger';
-import { getDialogFieldState } from './dialogFieldState';
+import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../shared/types';
+import { logger } from '../shared/logger';
+import { getDialogFieldState } from '../shared/dialogFieldState';
 
 // The generated bundle ends with `exports.default = ...`, but Joplin executes
 // dialog scripts as browser scripts without providing `exports`.

@@ -1,5 +1,5 @@
-import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from './types';
-import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from './utils/stringUtils';
+import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from '../shared/types';
+import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from '../shared/stringUtils';
 
 function buildSourcePath(context: ImageContext): string {
     return context.sourceType === 'resource' ? `:/${context.source}` : context.source;

@@ -5,12 +5,13 @@
  * The viewer markdown-it plugin stamps each rendered image with the source line
  * range of the block it came from and its position among the images in that
  * range. When an image is right-clicked, the viewer script sends those values
- * to the plugin, which asks the editor to move the cursor onto the same image.
+ * to the plugin as a `ViewerContextMenuMessage`, and the plugin asks the editor
+ * to move the cursor onto the same image.
  *
  * Kept runtime dependency-free so the plugin, the CodeMirror content script,
  * and the markdown-it content script can all import it.
  *
- * `src/contentScripts/viewerContextMenu.js` runs as a plain script in the
+ * `src/viewer/viewerContextMenu.js` runs as a plain script in the
  * viewer and cannot import this module, so it repeats the content script ID
  * and attribute names. Keep them in sync.
  */
@@ -37,6 +38,12 @@ export interface ViewerImageTarget {
     lineEnd: number;
     index: number;
     resourceId: string;
+}
+
+/** Message posted by the viewer asset on every right-click; `target` is null off an image. */
+export interface ViewerContextMenuMessage {
+    target: ViewerImageTarget | null;
+    clickedAt: number;
 }
 
 const isNonNegativeInteger = (value: unknown): value is number =>

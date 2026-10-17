@@ -1,16 +1,16 @@
 import joplin from 'api';
 import type { MockInstance } from 'vitest';
-import type * as ImageDimensionUtils from '../src/utils/imageDimensionUtils';
-import { getResourceBlob } from '../src/utils/resourceUtils';
-import { measureBlobImageDimensions, measureImageDimensions } from '../src/utils/imageDimensionUtils';
-import { getOriginalImageDimensions } from '../src/originalImageDimensions';
+import type * as ImageDimensionUtils from '../src/shared/imageDimensionUtils';
+import { getResourceBlob } from '../src/host/resourceUtils';
+import { measureBlobImageDimensions, measureImageDimensions } from '../src/shared/imageDimensionUtils';
+import { getOriginalImageDimensions } from '../src/host/originalImageDimensions';
 
-vi.mock('../src/utils/resourceUtils', () => ({
+vi.mock('../src/host/resourceUtils', () => ({
     getResourceBlob: vi.fn(),
     validateResourceId: vi.fn((id: string) => /^[a-f0-9]{32}$/i.test(id)),
 }));
 
-vi.mock('../src/utils/imageDimensionUtils', async (importOriginal) => {
+vi.mock('../src/shared/imageDimensionUtils', async (importOriginal) => {
     const actual = await importOriginal<typeof ImageDimensionUtils>();
     return {
         ...actual,

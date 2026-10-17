@@ -17,7 +17,7 @@
 
 import type MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
-import { VIEWER_IMAGE_ATTRIBUTES } from '../viewerImageTarget';
+import { VIEWER_IMAGE_ATTRIBUTES } from '../shared/viewerImageTarget';
 
 type LineMap = [number, number];
 

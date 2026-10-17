@@ -1,5 +1,5 @@
-import type { ImageDetails, ImageSyntax } from './types';
-import { decodeHtmlEntities } from './utils/stringUtils';
+import type { ImageDetails, ImageSyntax } from '../shared/types';
+import { decodeHtmlEntities } from '../shared/stringUtils';
 
 // Matches a syntax-tree-validated Markdown image, for example:
 // ![Alt text](:/0123456789abcdef0123456789abcdef "Optional title")

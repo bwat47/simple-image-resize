@@ -4,7 +4,7 @@
  *
  * Loaded as a plain script by viewerContentScript.ts, so it cannot import
  * shared modules (JSDoc type imports are erased). The content script ID and attribute names below must match
- * src/viewerImageTarget.ts.
+ * src/shared/viewerImageTarget.ts.
  *
  * Every right-click in the viewer posts its click time and image target, with
  * a null target when the click is not on an annotated resource image. That

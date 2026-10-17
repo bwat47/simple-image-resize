@@ -33,7 +33,7 @@ image-resize-documentation.md
 
 ## Log messages
 
-- Use `src\logger.ts` wrapper
+- Use `src/shared/logger.ts` wrapper
 
 ## Git
 
