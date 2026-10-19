@@ -19,8 +19,23 @@ export const resizeDialogCss = css`
         margin: 0;
         padding: 0;
         min-width: 380px;
-        background-color: var(--joplin-background-color, #ffffff);
+        background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
+    }
+    /* Hidden until revealWhenSized confirms Joplin has shrunk the webview to fit.
+       The animation is a fail-safe that reveals the content anyway after a second. */
+    #dialog-root {
+        opacity: 0;
+        animation: dialog-reveal 0s 1s forwards;
+    }
+    #dialog-root.is-sized {
+        opacity: 1;
+        animation: none;
+    }
+    @keyframes dialog-reveal {
+        to {
+            opacity: 1;
+        }
     }
     .container {
         padding: 22px 26px 30px;
@@ -84,7 +99,7 @@ export const resizeDialogCss = css`
     input[type='number'] {
         width: 92px;
         padding: 4px 6px;
-        background-color: var(--joplin-background-color, #ffffff);
+        background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
@@ -97,7 +112,7 @@ export const resizeDialogCss = css`
         width: 100%;
         padding: 6px 8px;
         min-width: 0;
-        background-color: var(--joplin-background-color, #ffffff);
+        background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
@@ -115,7 +130,7 @@ export const resizeDialogCss = css`
         height: 16px;
         border: 2px solid var(--joplin-divider-color, #dddddd);
         border-radius: 50%;
-        background-color: var(--joplin-background-color, #ffffff);
+        background-color: var(--joplin-background-color, transparent);
         cursor: pointer;
         position: relative;
         transition: all 0.15s ease;
@@ -129,7 +144,7 @@ export const resizeDialogCss = css`
 
     input[type='radio']:checked {
         border-color: var(--joplin-color4, #2d6bdc);
-        background-color: var(--joplin-background-color, #ffffff);
+        background-color: var(--joplin-background-color, transparent);
     }
 
     input[type='radio']:checked::before {
