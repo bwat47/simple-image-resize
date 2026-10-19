@@ -2,6 +2,7 @@ import type { ButtonSpec, DialogResult, ViewHandle } from 'api/types';
 import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from '../shared/types';
 import { getDialogFieldState } from '../shared/dialogFieldState';
 import { escapeHtmlAttribute } from '../shared/stringUtils';
+import { resizeDialogCss } from './resizeDialogStyles';
 
 const DIALOG_ID = 'image-resize-dialog';
 
@@ -128,6 +129,7 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
     };
 
     return `
+    <style>${resizeDialogCss}</style>
     <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
       <div class="container">
         <div>
@@ -232,7 +234,6 @@ export class ResizeDialog {
 
     private async configureHandle(handle: ViewHandle): Promise<void> {
         await this.dialogs.setFitToContent(handle, true);
-        await this.dialogs.addScript(handle, './dialog/resizeDialog.css');
         await this.dialogs.addScript(handle, './dialog/resizeDialog.js');
         await this.dialogs.setButtons(handle, [
             { id: 'ok', title: 'Resize image' },

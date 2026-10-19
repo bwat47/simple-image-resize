@@ -18,7 +18,7 @@ Code under `src/` is grouped by the runtime it is bundled into, because that dec
 - `src/host/` runs in the plugin sandbox and is the only place that may use the Joplin plugin API (`api`).
 - `src/editor/` is the CodeMirror content script, bundled for the editor webview.
 - `src/viewer/` is the markdown-it content script and its plain-script asset, bundled for the note viewer.
-- `src/dialog/` is the resize dialog's webview script and stylesheet.
+- `src/dialog/` is the resize dialog's webview script. The dialog stylesheet (`src/host/resizeDialogStyles.ts`) is a `css`-tagged string that `renderDialogHtml` embeds in a `<style>` element, so it arrives with the markup; loading it via `addScript` let the dialog render unstyled first, which caused a visible layout adjustment after the dialog opens on mobile.
 - `src/shared/` holds runtime-neutral code (types, logger, cross-runtime contracts, pure helpers) bundled into more than one of the above.
 
 `eslint.config.mjs` enforces this with `@typescript-eslint/no-restricted-imports`: a runtime folder cannot import values from another runtime folder, and only `src/host/` may import values from `api` or `api/types`. Type-only imports may cross boundaries since they are erased at build time. Code needed by two runtimes belongs in `src/shared/`.
