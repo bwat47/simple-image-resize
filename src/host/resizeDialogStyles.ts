@@ -38,16 +38,15 @@ export const resizeDialogCss = css`
         }
     }
     .container {
-        padding: 22px 26px 30px;
+        padding: 16px 20px 24px;
         display: flex;
         flex-direction: column;
-        gap: 18px;
+        gap: 14px;
         width: 100%;
     }
     h4 {
         margin: 0 0 10px;
         font-size: 16px;
-        color: var(--joplin-color, #32373f);
     }
     form {
         display: flex;
@@ -68,12 +67,11 @@ export const resizeDialogCss = css`
     }
     legend {
         font-weight: 600;
-        color: var(--joplin-color, #32373f);
     }
     .grid {
         display: grid;
-        grid-template-columns: 140px 1fr;
-        gap: 10px 18px;
+        grid-template-columns: 120px 1fr;
+        gap: 8px 12px;
         align-items: center;
         width: 100%;
     }
@@ -94,7 +92,6 @@ export const resizeDialogCss = css`
     label {
         user-select: none;
         cursor: pointer;
-        color: var(--joplin-color, #32373f);
     }
     input[type='number'] {
         width: 92px;
@@ -103,9 +100,7 @@ export const resizeDialogCss = css`
         color: var(--joplin-color, #32373f);
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
-        transition:
-            background-color 0.2s ease,
-            opacity 0.2s ease;
+        transition: background-color 0.2s ease;
         outline: none;
     }
     input[type='text'] {
@@ -116,7 +111,6 @@ export const resizeDialogCss = css`
         color: var(--joplin-color, #32373f);
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
-        transition: background-color 0.2s ease;
         outline: none;
         white-space: nowrap;
         overflow: hidden;
@@ -125,7 +119,6 @@ export const resizeDialogCss = css`
     input[type='radio'] {
         appearance: none;
         -webkit-appearance: none;
-        -moz-appearance: none;
         width: 16px;
         height: 16px;
         border: 2px solid var(--joplin-divider-color, #dddddd);
@@ -144,7 +137,6 @@ export const resizeDialogCss = css`
 
     input[type='radio']:checked {
         border-color: var(--joplin-color4, #2d6bdc);
-        background-color: var(--joplin-background-color, transparent);
     }
 
     input[type='radio']:checked::before {
@@ -183,36 +175,17 @@ export const resizeDialogCss = css`
         background-color: var(--joplin-raised-background-color, #e5e5e5);
         cursor: not-allowed;
     }
-    .stack.is-disabled .hint {
-        opacity: 0.4;
-    }
     .resize-fieldset.is-locked {
         opacity: 0.4;
         pointer-events: none;
         background-color: var(--joplin-background-color3, #f4f5f6);
-    }
-    .resize-fieldset.is-locked input {
-        cursor: not-allowed;
     }
 
     /* Utility classes for repeated patterns */
     .label-nowrap {
         white-space: nowrap;
     }
-    .syntax-option {
-        display: flex;
-        flex-direction: column;
-        gap: 2px;
-    }
     .label-fixed {
         width: 55px;
-    }
-    .grid {
-        grid-template-columns: 120px 1fr;
-        gap: 8px 12px;
-    }
-    .container {
-        padding: 16px 20px 24px;
-        gap: 14px;
     }
 `;

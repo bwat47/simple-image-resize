@@ -17,7 +17,7 @@ describe('getInitialDialogState', () => {
             expect(state.resizeFieldsetClass).toBe('resize-fieldset');
             expect(state.percentageModeRowClass).toBe('row');
             expect(state.percentageRowClass).toBe('row');
-            expect(state.absoluteGroupClass).toBe('stack absolute-size-group is-disabled');
+            expect(state.absoluteGroupClass).toBe('stack is-disabled');
             expect(state.heightRowClass).toBe('row');
 
             // Checked attributes
@@ -41,7 +41,7 @@ describe('getInitialDialogState', () => {
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset');
             expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack absolute-size-group');
+            expect(state.absoluteGroupClass).toBe('stack');
             expect(state.heightRowClass).toBe('row');
 
             // Checked attributes
@@ -64,7 +64,7 @@ describe('getInitialDialogState', () => {
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
             expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack absolute-size-group is-disabled');
+            expect(state.absoluteGroupClass).toBe('stack is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe('');
@@ -85,7 +85,7 @@ describe('getInitialDialogState', () => {
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
             expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack absolute-size-group is-disabled');
+            expect(state.absoluteGroupClass).toBe('stack is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe('');
@@ -108,7 +108,7 @@ describe('getInitialDialogState', () => {
             expect(state.percentageModeDisabledAttr).toBe(' disabled');
             expect(state.percentageRowClass).toBe('row is-disabled');
             expect(state.absoluteModeCheckedAttr).toBe(' checked');
-            expect(state.absoluteGroupClass).toBe('stack absolute-size-group');
+            expect(state.absoluteGroupClass).toBe('stack');
             expect(state.absoluteDisabledAttr).toBe('');
             expect(state.heightRowClass).toBe('row is-disabled');
             expect(state.heightDisabledAttr).toBe(' disabled');

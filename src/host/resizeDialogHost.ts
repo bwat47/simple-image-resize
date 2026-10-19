@@ -63,7 +63,7 @@ export function getInitialDialogState(
         resizeFieldsetClass: `resize-fieldset${state.resizeLocked ? ' is-locked' : ''}`,
         percentageModeRowClass: `row${disabledClass(state.percentageModeDisabled)}`,
         percentageRowClass: `row${disabledClass(state.percentageDisabled)}`,
-        absoluteGroupClass: `stack absolute-size-group${disabledClass(state.absoluteDisabled)}`,
+        absoluteGroupClass: `stack${disabledClass(state.absoluteDisabled)}`,
         heightRowClass: `row${disabledClass(state.heightDimmed)}`,
         // HTML checked attributes
         htmlCheckedAttr: checkedAttr(htmlSyntaxSelected),
@@ -141,22 +141,18 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
             <legend>Output</legend>
             <div class="grid narrow">
               <label for="altText" class="label-nowrap">Alt text</label>
-              <div class="row" style="padding:0;min-width:0;">
+              <div class="row">
                 <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
               </div>
               <label class="label-nowrap">Syntax</label>
               <div class="stack">
                 <label class="row">
                   <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
-                  <span class="syntax-option">
-                    <span>HTML (supports resizing)</span>
-                  </span>
+                  <span>HTML (supports resizing)</span>
                 </label>
                 <label class="row">
                   <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
-                  <span class="syntax-option">
-                    <span>Markdown (original size only)</span>
-                  </span>
+                  <span>Markdown (original size only)</span>
                 </label>
               </div>
             </div>
