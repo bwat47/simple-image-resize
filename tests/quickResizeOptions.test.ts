@@ -44,9 +44,7 @@ describe('parseQuickResizeOptions', () => {
 
 describe('normalizeQuickResizeOptionsSetting', () => {
     it('removes invalid quick resize options and keeps valid options', () => {
-        expect(normalizeQuickResizeOptionsSetting('100%, 500inches, 300px, 900%, 75%')).toBe(
-            '100%, 300px, 75%'
-        );
+        expect(normalizeQuickResizeOptionsSetting('100%, 500inches, 300px, 900%, 75%')).toBe('100%, 300px, 75%');
     });
 
     it('resets empty settings to the default quick resize options', () => {
