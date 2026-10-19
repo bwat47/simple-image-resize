@@ -8,6 +8,7 @@
 import type { ImageSyntax, ResizeDialogConfig, ResizeMode } from '../shared/types';
 import { logger } from '../shared/logger';
 import { getDialogFieldState } from '../shared/dialogFieldState';
+import { revealWhenSized } from './revealWhenSized';
 
 // The generated bundle ends with `exports.default = ...`, but Joplin executes
 // dialog scripts as browser scripts without providing `exports`.
@@ -199,6 +200,7 @@ function initializeResizeDialog(): void {
 
     applySyntaxMode(initialSyntax);
     document.getElementById('altText')?.focus();
+    revealWhenSized(root);
 }
 
 // Joplin remounts the dialog webview on every open and applies the new HTML before

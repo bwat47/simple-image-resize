@@ -231,7 +231,7 @@ describe('ResizeDialog', () => {
 
         expect(dialogs.create).toHaveBeenCalledExactlyOnceWith('image-resize-dialog');
         expect(dialogs.setFitToContent).toHaveBeenCalledOnce();
-        expect(dialogs.addScript).toHaveBeenCalledTimes(2);
+        expect(dialogs.addScript).toHaveBeenCalledExactlyOnceWith('handle', './dialog/resizeDialog.js');
         expect(dialogs.setButtons).toHaveBeenCalledOnce();
         expect(dialogs.setHtml).toHaveBeenCalledTimes(2);
         expect(dialogs.setHtml.mock.calls[1][1]).toContain('value="Second image"');
