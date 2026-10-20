@@ -14,7 +14,7 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('html', 'percentage', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section');
             expect(state.percentageModeRowClass).toBe('segment');
             expect(state.percentageRowClass).toBe('subgrid');
             expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
@@ -39,7 +39,7 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('html', 'absolute', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section');
             expect(state.percentageRowClass).toBe('subgrid is-disabled');
             expect(state.absoluteGroupClass).toBe('subgrid');
             expect(state.heightRowClass).toBe('subgrid');
@@ -62,7 +62,7 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('markdown', 'percentage', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section is-locked');
             expect(state.percentageRowClass).toBe('subgrid is-disabled');
             expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
 
@@ -83,7 +83,7 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('markdown', 'absolute', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section is-locked');
             expect(state.percentageRowClass).toBe('subgrid is-disabled');
             expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
 
@@ -157,16 +157,16 @@ describe('getInitialDialogState', () => {
             const markdownPercentage = getInitialDialogState('markdown', 'percentage', true);
             const markdownAbsolute = getInitialDialogState('markdown', 'absolute', true);
 
-            expect(markdownPercentage.resizeFieldsetClass).toContain('is-locked');
-            expect(markdownAbsolute.resizeFieldsetClass).toContain('is-locked');
+            expect(markdownPercentage.resizeSectionClass).toContain('is-locked');
+            expect(markdownAbsolute.resizeSectionClass).toContain('is-locked');
         });
 
         it('should not lock resize fieldset when HTML syntax is selected', () => {
             const htmlPercentage = getInitialDialogState('html', 'percentage', true);
             const htmlAbsolute = getInitialDialogState('html', 'absolute', true);
 
-            expect(htmlPercentage.resizeFieldsetClass).not.toContain('is-locked');
-            expect(htmlAbsolute.resizeFieldsetClass).not.toContain('is-locked');
+            expect(htmlPercentage.resizeSectionClass).not.toContain('is-locked');
+            expect(htmlAbsolute.resizeSectionClass).not.toContain('is-locked');
         });
     });
 

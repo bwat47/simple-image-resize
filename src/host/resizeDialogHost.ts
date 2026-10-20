@@ -24,7 +24,7 @@ export interface ResizeDialogDefaults {
 /** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
 export interface InitialDialogState {
     // CSS classes
-    resizeFieldsetClass: string;
+    resizeSectionClass: string;
     percentageModeRowClass: string;
     percentageRowClass: string;
     absoluteGroupClass: string;
@@ -60,7 +60,7 @@ export function getInitialDialogState(
 
     return {
         // CSS classes
-        resizeFieldsetClass: `resize-fieldset${state.resizeLocked ? ' is-locked' : ''}`,
+        resizeSectionClass: `subgrid resize-section${state.resizeLocked ? ' is-locked' : ''}`,
         percentageModeRowClass: `segment${disabledClass(state.percentageModeDisabled)}`,
         percentageRowClass: `subgrid${disabledClass(state.percentageDisabled)}`,
         absoluteGroupClass: `subgrid${disabledClass(state.absoluteDisabled)}`,
@@ -101,7 +101,7 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
     const { defaultResizeMode, defaultPercentage } = defaults;
 
     const {
-        resizeFieldsetClass,
+        resizeSectionClass,
         percentageRowClass,
         percentageModeRowClass,
         absoluteGroupClass,
@@ -136,71 +136,60 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
           <h4>Resize Image</h4>
           <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
         </div>
-        <form name="resizeForm" autocomplete="off">
-          <fieldset>
-            <legend>Output</legend>
-            <div class="grid">
-              <label for="altText" class="label-nowrap">Alt text</label>
-              <div class="row">
-                <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
-              </div>
-              <span id="syntaxLabel" class="label-nowrap">Syntax</span>
-              <div class="stack">
-                <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
-                  <label class="segment">
-                    <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
-                    <span>HTML</span>
-                  </label>
-                  <label class="segment">
-                    <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
-                    <span>Markdown</span>
-                  </label>
-                </div>
-                <p class="hint">Only HTML supports resizing.</p>
-              </div>
+        <form name="resizeForm" autocomplete="off" class="grid">
+          <label for="altText" class="label-nowrap">Alt text</label>
+          <div class="row">
+            <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
+          </div>
+          <span id="syntaxLabel" class="label-nowrap">Syntax</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
+            <label class="segment">
+              <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
+              <span>HTML</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
+              <span>Markdown</span>
+            </label>
+          </div>
+          <p class="hint">Only HTML supports resizing.</p>
+          <div class="${resizeSectionClass}" data-resize-section>
+            <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
+            <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
+              <label class="${percentageModeRowClass}" data-percentage-mode-row>
+                <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
+                <span>Percentage</span>
+              </label>
+              <label class="segment">
+                <input type="radio" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
+                <span>Pixels</span>
+              </label>
             </div>
-          </fieldset>
-
-          <fieldset class="${resizeFieldsetClass}" data-resize-fieldset>
-            <legend>Resizing</legend>
-            <div class="grid">
-              <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
-              <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
-                <label class="${percentageModeRowClass}" data-percentage-mode-row>
-                  <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
-                  <span>Percentage</span>
-                </label>
-                <label class="segment">
-                  <input type="radio" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
-                  <span>Pixels</span>
-                </label>
-              </div>
-              <div class="subgrid mode-panels">
-                <div class="${percentageRowClass}" data-percentage-row>
-                  <label for="percentage">Scale</label>
-                  <div class="row">
-                    <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
-                    <span>%</span>
-                  </div>
-                  <p class="hint" data-percentage-preview></p>
+            <div class="subgrid mode-panels">
+              <div class="${percentageRowClass}" data-percentage-row>
+                <label for="percentage">Scale</label>
+                <div class="row">
+                  <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
+                  <span>%</span>
                 </div>
-                <div class="${absoluteGroupClass}" data-absolute-group>
-                  <label for="absoluteWidth">Width</label>
+                <p class="hint" data-percentage-preview></p>
+              </div>
+              <div class="${absoluteGroupClass}" data-absolute-group>
+                <label for="absoluteWidth">Width</label>
+                <div class="row">
+                  <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
+                  <span>px</span>
+                </div>
+                <div class="${heightRowClass}" data-height-row>
+                  <label for="absoluteHeight">Height</label>
                   <div class="row">
-                    <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
+                    <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
                     <span>px</span>
                   </div>
-                  <div class="${heightRowClass}" data-height-row>
-                    <label for="absoluteHeight">Height</label>
-                    <div class="row">
-                      <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
-                      <span>px</span>
-                    </div>
-                  </div>
                 </div>
               </div>
             </div>
-          </fieldset>
+          </div>
         </form>
       </div>
     </div>

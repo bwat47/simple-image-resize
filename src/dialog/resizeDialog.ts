@@ -49,7 +49,7 @@ function initializeResizeDialog(): void {
     const absoluteHeightInput = form.querySelector<HTMLInputElement>('input[name="absoluteHeight"]');
     const heightRow = form.querySelector<HTMLElement>('[data-height-row]');
     const absoluteGroup = form.querySelector<HTMLElement>('[data-absolute-group]');
-    const resizeFieldset = form.querySelector<HTMLElement>('[data-resize-fieldset]');
+    const resizeSection = form.querySelector<HTMLElement>('[data-resize-section]');
 
     if (
         !percentageInput ||
@@ -60,7 +60,7 @@ function initializeResizeDialog(): void {
         !absoluteHeightInput ||
         !heightRow ||
         !absoluteGroup ||
-        !resizeFieldset
+        !resizeSection
     ) {
         return;
     }
@@ -160,7 +160,7 @@ function initializeResizeDialog(): void {
         const htmlActive = currentSyntax === 'html';
         const isPercentage = state.resizeMode === 'percentage';
 
-        resizeFieldset.classList.toggle('is-locked', state.resizeLocked);
+        resizeSection.classList.toggle('is-locked', state.resizeLocked);
         setRowDisabled(percentageModeRow, state.percentageModeDisabled);
         setRowDisabled(percentageRow, state.percentageDisabled);
         setRowDisabled(absoluteGroup, state.absoluteDisabled);

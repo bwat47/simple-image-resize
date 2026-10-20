@@ -53,37 +53,12 @@ export const resizeDialogCss = css`
         margin: 0 0 10px;
         font-size: 16px;
     }
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-        width: 100%;
-    }
-    fieldset {
-        border: 1px solid var(--joplin-divider-color, #dddddd);
-        border-radius: 6px;
-        padding: 18px 14px 20px;
-        margin: 0;
-        min-width: 0;
-        width: 100%;
-        transition:
-            opacity 0.2s ease,
-            background-color 0.2s ease;
-    }
-    legend {
-        font-weight: 600;
-    }
     .grid {
         display: grid;
         grid-template-columns: max-content 1fr;
         gap: 8px 12px;
         align-items: center;
         width: 100%;
-    }
-    .stack {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
     }
     .row {
         display: flex;
@@ -172,8 +147,10 @@ export const resizeDialogCss = css`
     .segment.is-disabled {
         cursor: not-allowed;
     }
+    /* Sits in the control column under the control it annotates, tucked closer than a normal row. */
     .hint {
-        margin: 0;
+        grid-column: 2;
+        margin: -4px 0 0;
         font-size: 12px;
         color: var(--joplin-color-faded, #7c8b9e);
     }
@@ -193,12 +170,9 @@ export const resizeDialogCss = css`
         grid-row: 1;
         align-self: start;
     }
-    .resize-fieldset:has(input[name='resizeMode'][value='absolute']:checked) [data-percentage-row],
-    .resize-fieldset:has(input[name='resizeMode'][value='percentage']:checked) [data-absolute-group] {
+    .resize-section:has(input[name='resizeMode'][value='absolute']:checked) [data-percentage-row],
+    .resize-section:has(input[name='resizeMode'][value='percentage']:checked) [data-absolute-group] {
         visibility: hidden;
-    }
-    [data-percentage-preview] {
-        grid-column: 2;
     }
 
     .is-disabled {
@@ -208,10 +182,18 @@ export const resizeDialogCss = css`
         background-color: var(--joplin-raised-background-color, #e5e5e5);
         cursor: not-allowed;
     }
-    .resize-fieldset.is-locked {
+    /* Extra space separates the output options from the sizing options. */
+    .resize-section {
+        margin-top: 8px;
+        transition: opacity 0.2s ease;
+    }
+    .resize-section.is-locked {
         opacity: 0.4;
         pointer-events: none;
-        background-color: var(--joplin-background-color3, #f4f5f6);
+    }
+    /* Opacity compounds, so rows already dimmed inside a locked section would almost vanish. */
+    .resize-section.is-locked .is-disabled {
+        opacity: 1;
     }
 
     /* Utility classes for repeated patterns */
