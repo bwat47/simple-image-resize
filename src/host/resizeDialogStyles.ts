@@ -22,7 +22,6 @@ export const resizeDialogCss = css`
         font-size: 14px;
         margin: 0;
         padding: 0;
-        background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
     }
     /* Joplin mobile sizes the dialog to this wrapper's measured width, which otherwise
