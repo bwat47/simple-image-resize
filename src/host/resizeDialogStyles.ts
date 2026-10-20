@@ -106,7 +106,6 @@ export const resizeDialogCss = css`
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
         transition: background-color 0.2s ease;
-        outline: none;
     }
     input[type='text'] {
         width: 100%;
@@ -116,7 +115,6 @@ export const resizeDialogCss = css`
         color: var(--joplin-color, #32373f);
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 3px;
-        outline: none;
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -162,9 +160,16 @@ export const resizeDialogCss = css`
         border-color: var(--joplin-divider-color, #dddddd);
     }
 
-    input[type='radio']:focus-visible {
+    input[type='radio']:focus-visible,
+    input[type='number']:focus-visible,
+    input[type='text']:focus-visible {
         outline: 2px solid var(--joplin-focus-outline-color, rgb(228, 86, 0));
         outline-offset: 2px;
+    }
+    /* Pull the ring inward so it sits on top of the 1px border rather than around it. */
+    input[type='number']:focus-visible,
+    input[type='text']:focus-visible {
+        outline-offset: -1px;
     }
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
