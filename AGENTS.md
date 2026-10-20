@@ -31,6 +31,12 @@ image-resize-documentation.md
 - **Style enforcement**: Run `npm run format` before commits or if you encounter formatting errors from prettier.
 - **Documentation**: Use JSDoc for complex functions; document regex patterns with examples.
 
+## Line endings
+
+- All text files use LF. If you must fall back to a Python script for file editing, write LF explicitly
+  (Python: `open(path, 'w', newline='\n')` or `write_text(..., newline='\n')`).
+- Don't manually repair incidental CRLF changes. Git normalizes text to LF when staging; Prettier also normalizes files when formatting.
+
 ## Log messages
 
 - Use `src/shared/logger.ts` wrapper
@@ -39,8 +45,4 @@ image-resize-documentation.md
 
 - Use conventional commit format for commit messages
 - Never run git commit proactively; always wait for explicit user consent.
-
-## Codex working instructions
-
-- GitHub credentials are stored in the OS keyring.
-- If `gh auth status` fails inside the sandbox, retry it with escalated permissions before asking me to authenticate.
+- GitHub credentials are stored in the OS keyring. If `gh auth status` fails inside the sandbox, retry it with escalated permissions before asking me to authenticate.
