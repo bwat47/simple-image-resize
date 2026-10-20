@@ -8,7 +8,7 @@
 
 A Joplin plugin that provides a simple dialogue to switch image syntax between markdown/html and losslessly resize images by adjusting the width/height attributes.
 
-![image-resize-demo](https://github.com/user-attachments/assets/8c527622-fe50-4c0e-b78a-34f5d7349b41)
+![image-resize-demo](images/simple_image_resize_example.gif)
 
 > [!note]
 > To render HTML image embeds in the markdown editor (as seen in the above example), you can either enable "Markdown editor: Render images" under Tools | Options | Note (note that HTML images are only supported in Joplin 3.5.7 or newer) or use the "Rich Markdown" plugin and enable its option to render images.
