@@ -4,6 +4,10 @@
  * as a visible layout adjustment after the dialog opens on Joplin mobile.
  *
  * The `css` tag lets Prettier format the template as CSS; String.raw keeps CSS escapes intact.
+ *
+ * Joplin's theme variables can arrive after the first paint, so fallbacks for fills and
+ * borders are translucent greys that read on light and dark themes alike; an opaque light
+ * fallback flashes on a dark theme.
  */
 const css = String.raw;
 
@@ -74,7 +78,7 @@ export const resizeDialogCss = css`
         padding: 4px 6px;
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
-        border: 1px solid var(--joplin-divider-color, #dddddd);
+        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
         border-radius: 3px;
         transition: background-color 0.2s ease;
     }
@@ -84,7 +88,7 @@ export const resizeDialogCss = css`
         min-width: 0;
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
-        border: 1px solid var(--joplin-divider-color, #dddddd);
+        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
         border-radius: 3px;
         white-space: nowrap;
         overflow: hidden;
@@ -108,7 +112,7 @@ export const resizeDialogCss = css`
         display: inline-flex;
         justify-self: start;
         align-self: flex-start;
-        border: 1px solid var(--joplin-divider-color, #dddddd);
+        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
         border-radius: 4px;
         overflow: hidden;
     }
@@ -117,7 +121,7 @@ export const resizeDialogCss = css`
         display: flex;
     }
     .segment + .segment {
-        border-left: 1px solid var(--joplin-divider-color, #dddddd);
+        border-left: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
     }
     .segment input {
         position: absolute;
@@ -135,7 +139,7 @@ export const resizeDialogCss = css`
         background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
     }
     .segment input:checked + span {
-        background-color: var(--joplin-raised-background-color, #e5e5e5);
+        background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
         color: var(--joplin-color4, #2d6bdc);
     }
     /* Inset, because the group's overflow: hidden clips anything drawn outside a segment. */
@@ -178,7 +182,7 @@ export const resizeDialogCss = css`
         opacity: 0.6;
     }
     .is-disabled input[type='number'] {
-        background-color: var(--joplin-raised-background-color, #e5e5e5);
+        background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
         cursor: not-allowed;
     }
     /* Extra space separates the output options from the sizing options. */
