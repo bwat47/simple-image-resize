@@ -44,21 +44,23 @@ function initializeResizeDialog(): void {
     const percentageInput = form.querySelector<HTMLInputElement>('input[name="percentage"]');
     const percentageModeRow = form.querySelector<HTMLElement>('[data-percentage-mode-row]');
     const percentageRow = form.querySelector<HTMLElement>('[data-percentage-row]');
+    const percentagePreview = form.querySelector<HTMLElement>('[data-percentage-preview]');
     const absoluteWidthInput = form.querySelector<HTMLInputElement>('input[name="absoluteWidth"]');
     const absoluteHeightInput = form.querySelector<HTMLInputElement>('input[name="absoluteHeight"]');
     const heightRow = form.querySelector<HTMLElement>('[data-height-row]');
     const absoluteGroup = form.querySelector<HTMLElement>('[data-absolute-group]');
-    const resizeFieldset = form.querySelector<HTMLElement>('[data-resize-fieldset]');
+    const resizeSection = form.querySelector<HTMLElement>('[data-resize-section]');
 
     if (
         !percentageInput ||
         !percentageModeRow ||
         !percentageRow ||
+        !percentagePreview ||
         !absoluteWidthInput ||
         !absoluteHeightInput ||
         !heightRow ||
         !absoluteGroup ||
-        !resizeFieldset
+        !resizeSection
     ) {
         return;
     }
@@ -115,27 +117,30 @@ function initializeResizeDialog(): void {
         syncDimension(absoluteHeightInput, absoluteWidthInput, originalHeightValue, originalWidthValue);
     };
 
+    const setPercentagePreview = (width: string, height: string): void => {
+        absoluteWidthInput.value = width;
+        absoluteHeightInput.value = height;
+        percentagePreview.textContent = width && height ? `= ${width} × ${height} px` : '';
+    };
+
     const syncAbsoluteFromPercentage = (): void => {
         if (!shouldPreviewPercentage()) {
             return;
         }
         const raw = percentageInput.value.trim();
         if (!raw) {
-            absoluteWidthInput.value = '';
-            absoluteHeightInput.value = '';
+            setPercentagePreview('', '');
             return;
         }
         const percentageValue = Number.parseFloat(raw);
         if (!Number.isFinite(percentageValue) || percentageValue <= 0) {
-            absoluteWidthInput.value = '';
-            absoluteHeightInput.value = '';
+            setPercentagePreview('', '');
             return;
         }
         const ratio = percentageValue / 100;
         const width = Math.max(1, Math.round(originalWidthValue * ratio));
         const height = Math.max(1, Math.round(originalHeightValue * ratio));
-        absoluteWidthInput.value = String(width);
-        absoluteHeightInput.value = String(height);
+        setPercentagePreview(String(width), String(height));
     };
 
     const setRowDisabled = (element: HTMLElement, disabled: boolean, visuallyDisabled = disabled): void => {
@@ -155,7 +160,7 @@ function initializeResizeDialog(): void {
         const htmlActive = currentSyntax === 'html';
         const isPercentage = state.resizeMode === 'percentage';
 
-        resizeFieldset.classList.toggle('is-locked', state.resizeLocked);
+        resizeSection.classList.toggle('is-locked', state.resizeLocked);
         setRowDisabled(percentageModeRow, state.percentageModeDisabled);
         setRowDisabled(percentageRow, state.percentageDisabled);
         setRowDisabled(absoluteGroup, state.absoluteDisabled);

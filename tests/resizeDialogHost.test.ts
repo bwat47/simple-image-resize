@@ -2,10 +2,12 @@ import type { DialogResult } from 'api/types';
 import {
     getInitialDialogState,
     getOriginalDimensionsSummaryHtml,
+    renderDialogHtml,
     ResizeDialog,
     type JoplinDialogApi,
     type ResizeDialogDefaults,
 } from '../src/host/resizeDialogHost';
+import { desktopDialogCss } from '../src/host/resizeDialogStyles';
 import type { ImageContext } from '../src/shared/types';
 
 describe('getInitialDialogState', () => {
@@ -14,11 +16,11 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('html', 'percentage', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset');
-            expect(state.percentageModeRowClass).toBe('row');
-            expect(state.percentageRowClass).toBe('row');
-            expect(state.absoluteGroupClass).toBe('stack is-disabled');
-            expect(state.heightRowClass).toBe('row');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section');
+            expect(state.percentageModeRowClass).toBe('segment');
+            expect(state.percentageRowClass).toBe('subgrid');
+            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
+            expect(state.heightRowClass).toBe('subgrid');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
@@ -39,10 +41,10 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('html', 'absolute', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset');
-            expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack');
-            expect(state.heightRowClass).toBe('row');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
+            expect(state.absoluteGroupClass).toBe('subgrid');
+            expect(state.heightRowClass).toBe('subgrid');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
@@ -62,9 +64,9 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('markdown', 'percentage', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
-            expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack is-disabled');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section is-locked');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
+            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe('');
@@ -83,9 +85,9 @@ describe('getInitialDialogState', () => {
             const state = getInitialDialogState('markdown', 'absolute', true);
 
             // CSS classes
-            expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
-            expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack is-disabled');
+            expect(state.resizeSectionClass).toBe('subgrid resize-section is-locked');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
+            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe('');
@@ -103,14 +105,14 @@ describe('getInitialDialogState', () => {
         it('disables percentage mode and defaults to absolute when dimensions are unknown', () => {
             const state = getInitialDialogState('html', 'percentage', false);
 
-            expect(state.percentageModeRowClass).toBe('row is-disabled');
+            expect(state.percentageModeRowClass).toBe('segment is-disabled');
             expect(state.percentageModeCheckedAttr).toBe('');
             expect(state.percentageModeDisabledAttr).toBe(' disabled');
-            expect(state.percentageRowClass).toBe('row is-disabled');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
             expect(state.absoluteModeCheckedAttr).toBe(' checked');
-            expect(state.absoluteGroupClass).toBe('stack');
+            expect(state.absoluteGroupClass).toBe('subgrid');
             expect(state.absoluteDisabledAttr).toBe('');
-            expect(state.heightRowClass).toBe('row is-disabled');
+            expect(state.heightRowClass).toBe('subgrid is-disabled');
             expect(state.heightDisabledAttr).toBe(' disabled');
         });
 
@@ -153,20 +155,20 @@ describe('getInitialDialogState', () => {
             expect(absoluteState.absoluteDisabledAttr).toBe('');
         });
 
-        it('should lock resize fieldset when Markdown syntax is selected', () => {
+        it('should lock resize section when Markdown syntax is selected', () => {
             const markdownPercentage = getInitialDialogState('markdown', 'percentage', true);
             const markdownAbsolute = getInitialDialogState('markdown', 'absolute', true);
 
-            expect(markdownPercentage.resizeFieldsetClass).toContain('is-locked');
-            expect(markdownAbsolute.resizeFieldsetClass).toContain('is-locked');
+            expect(markdownPercentage.resizeSectionClass).toContain('is-locked');
+            expect(markdownAbsolute.resizeSectionClass).toContain('is-locked');
         });
 
-        it('should not lock resize fieldset when HTML syntax is selected', () => {
+        it('should not lock resize section when HTML syntax is selected', () => {
             const htmlPercentage = getInitialDialogState('html', 'percentage', true);
             const htmlAbsolute = getInitialDialogState('html', 'absolute', true);
 
-            expect(htmlPercentage.resizeFieldsetClass).not.toContain('is-locked');
-            expect(htmlAbsolute.resizeFieldsetClass).not.toContain('is-locked');
+            expect(htmlPercentage.resizeSectionClass).not.toContain('is-locked');
+            expect(htmlAbsolute.resizeSectionClass).not.toContain('is-locked');
         });
     });
 
@@ -224,7 +226,7 @@ function createDialogApi() {
 describe('ResizeDialog', () => {
     it('reuses one configured handle while rendering fresh content', async () => {
         const dialogs = createDialogApi();
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await dialog.open(dialogContext, dialogDefaults);
         await dialog.open({ ...dialogContext, altText: 'Second image' }, dialogDefaults);
@@ -246,7 +248,7 @@ describe('ResizeDialog', () => {
                 pending.close = resolve;
             })
         );
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         const first = dialog.open(dialogContext, dialogDefaults);
         await vi.waitFor(() => expect(dialogs.open).toHaveBeenCalledOnce());
@@ -260,7 +262,7 @@ describe('ResizeDialog', () => {
 
     it('returns null for cancellation and an unexpected null result', async () => {
         const dialogs = createDialogApi();
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
         dialogs.open.mockResolvedValueOnce(null);
@@ -270,7 +272,7 @@ describe('ResizeDialog', () => {
     it('reconfigures the existing handle after configuration fails', async () => {
         const dialogs = createDialogApi();
         dialogs.setButtons.mockRejectedValueOnce(new Error('buttons failed'));
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('buttons failed');
         await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
@@ -285,7 +287,7 @@ describe('ResizeDialog', () => {
     it('does not create a second view after creation fails', async () => {
         const dialogs = createDialogApi();
         dialogs.create.mockRejectedValue(new Error('view creation failed'));
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
@@ -297,7 +299,7 @@ describe('ResizeDialog', () => {
     it('releases the open guard after an open failure', async () => {
         const dialogs = createDialogApi();
         dialogs.open.mockRejectedValueOnce(new Error('dialog failed'));
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('dialog failed');
         await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
@@ -322,7 +324,7 @@ describe('ResizeDialog', () => {
             },
         });
 
-        await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toEqual({
+        await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
             targetSyntax: 'html',
             altText: 'Updated alt',
             resizeMode: 'absolute',
@@ -338,7 +340,7 @@ describe('ResizeDialog', () => {
             const dialogs = createDialogApi();
             dialogs.open.mockResolvedValue({ id: 'ok', formData });
 
-            await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toBeNull();
+            await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toBeNull();
         }
     );
 
@@ -358,7 +360,7 @@ describe('ResizeDialog', () => {
             },
         });
 
-        await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toEqual({
+        await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
             targetSyntax: 'html',
             altText: '',
             resizeMode: dialogDefaults.defaultResizeMode,
@@ -366,5 +368,12 @@ describe('ResizeDialog', () => {
             absoluteWidth: undefined,
             absoluteHeight: undefined,
         });
+    });
+});
+
+describe('renderDialogHtml', () => {
+    it('fixes the dialog width on desktop only', () => {
+        expect(renderDialogHtml(dialogContext, dialogDefaults, 'desktop')).toContain(desktopDialogCss);
+        expect(renderDialogHtml(dialogContext, dialogDefaults, 'mobile')).not.toContain(desktopDialogCss);
     });
 });

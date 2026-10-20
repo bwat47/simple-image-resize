@@ -1,8 +1,8 @@
-import type { ButtonSpec, DialogResult, ViewHandle } from 'api/types';
+import type { ButtonSpec, DialogResult, VersionInfo, ViewHandle } from 'api/types';
 import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from '../shared/types';
 import { getDialogFieldState } from '../shared/dialogFieldState';
 import { escapeHtmlAttribute } from '../shared/stringUtils';
-import { resizeDialogCss } from './resizeDialogStyles';
+import { desktopDialogCss, resizeDialogCss } from './resizeDialogStyles';
 
 const DIALOG_ID = 'image-resize-dialog';
 
@@ -16,6 +16,8 @@ export interface JoplinDialogApi {
     open(handle: ViewHandle): Promise<DialogResult | null>;
 }
 
+export type DialogPlatform = VersionInfo['platform'];
+
 export interface ResizeDialogDefaults {
     defaultResizeMode: ResizeMode;
     defaultPercentage: number;
@@ -24,7 +26,7 @@ export interface ResizeDialogDefaults {
 /** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
 export interface InitialDialogState {
     // CSS classes
-    resizeFieldsetClass: string;
+    resizeSectionClass: string;
     percentageModeRowClass: string;
     percentageRowClass: string;
     absoluteGroupClass: string;
@@ -60,11 +62,11 @@ export function getInitialDialogState(
 
     return {
         // CSS classes
-        resizeFieldsetClass: `resize-fieldset${state.resizeLocked ? ' is-locked' : ''}`,
-        percentageModeRowClass: `row${disabledClass(state.percentageModeDisabled)}`,
-        percentageRowClass: `row${disabledClass(state.percentageDisabled)}`,
-        absoluteGroupClass: `stack${disabledClass(state.absoluteDisabled)}`,
-        heightRowClass: `row${disabledClass(state.heightDimmed)}`,
+        resizeSectionClass: `subgrid resize-section${state.resizeLocked ? ' is-locked' : ''}`,
+        percentageModeRowClass: `segment${disabledClass(state.percentageModeDisabled)}`,
+        percentageRowClass: `subgrid${disabledClass(state.percentageDisabled)}`,
+        absoluteGroupClass: `subgrid${disabledClass(state.absoluteDisabled)}`,
+        heightRowClass: `subgrid${disabledClass(state.heightDimmed)}`,
         // HTML checked attributes
         htmlCheckedAttr: checkedAttr(htmlSyntaxSelected),
         markdownCheckedAttr: checkedAttr(!htmlSyntaxSelected),
@@ -94,14 +96,18 @@ function getHeightPlaceholderAttribute(context: ImageContext): string {
  * Renders the dialog markup for one image. Exported so webview tests can drive the
  * real markup instead of a hand-maintained copy of it.
  */
-export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDefaults): string {
+export function renderDialogHtml(
+    context: ImageContext,
+    defaults: ResizeDialogDefaults,
+    platform: DialogPlatform
+): string {
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
     const defaultSyntax: ImageSyntax = 'html';
     const { defaultResizeMode, defaultPercentage } = defaults;
 
     const {
-        resizeFieldsetClass,
+        resizeSectionClass,
         percentageRowClass,
         percentageModeRowClass,
         absoluteGroupClass,
@@ -129,66 +135,67 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
     };
 
     return `
-    <style>${resizeDialogCss}</style>
-    <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
-      <div class="container">
-        <div>
-          <h4>Resize Image</h4>
-          <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
+    <style>${resizeDialogCss}${platform === 'desktop' ? desktopDialogCss : ''}</style>
+    <div id="dialog-root" class="container" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
+      <div>
+        <h4>Resize Image</h4>
+        <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
+      </div>
+      <form name="resizeForm" autocomplete="off" class="grid">
+        <label for="altText" class="label-nowrap">Alt text</label>
+        <div class="row">
+          <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
         </div>
-        <form name="resizeForm" autocomplete="off">
-          <fieldset>
-            <legend>Output</legend>
-            <div class="grid">
-              <label for="altText" class="label-nowrap">Alt text</label>
+        <span id="syntaxLabel" class="label-nowrap">Syntax</span>
+        <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
+          <label class="segment">
+            <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
+            <span>HTML</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
+            <span>Markdown</span>
+          </label>
+        </div>
+        <p class="hint">Only HTML supports resizing.</p>
+        <div class="${resizeSectionClass}" data-resize-section>
+          <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
+            <label class="${percentageModeRowClass}" data-percentage-mode-row>
+              <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
+              <span>Percentage</span>
+            </label>
+            <label class="segment">
+              <input type="radio" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
+              <span>Pixels</span>
+            </label>
+          </div>
+          <div class="subgrid mode-panels">
+            <div class="${percentageRowClass}" data-percentage-row>
+              <label for="percentage">Scale</label>
               <div class="row">
-                <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
-              </div>
-              <label class="label-nowrap">Syntax</label>
-              <div class="stack">
-                <label class="row">
-                  <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
-                  <span>HTML (supports resizing)</span>
-                </label>
-                <label class="row">
-                  <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
-                  <span>Markdown (original size only)</span>
-                </label>
-              </div>
-            </div>
-          </fieldset>
-
-          <fieldset class="${resizeFieldsetClass}" data-resize-fieldset>
-            <legend>Resizing</legend>
-            <div class="grid">
-              <div class="${percentageModeRowClass}" data-percentage-mode-row>
-                <input type="radio" id="percentageMode" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
-                <label for="percentageMode">Percentage</label>
-              </div>
-              <div class="${percentageRowClass}" data-percentage-row>
-                <input type="number" name="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
+                <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
                 <span>%</span>
               </div>
+              <p class="hint" data-percentage-preview></p>
+            </div>
+            <div class="${absoluteGroupClass}" data-absolute-group>
+              <label for="absoluteWidth">Width</label>
               <div class="row">
-                <input type="radio" id="absoluteMode" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
-                <label for="absoluteMode">Pixels</label>
+                <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
+                <span>px</span>
               </div>
-              <div class="${absoluteGroupClass}" data-absolute-group>
+              <div class="${heightRowClass}" data-height-row>
+                <label for="absoluteHeight">Height</label>
                 <div class="row">
-                  <label for="absoluteWidth" class="label-fixed">Width</label>
-                  <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
-                  <span>px</span>
-                </div>
-                <div class="${heightRowClass}" data-height-row>
-                  <label for="absoluteHeight" class="label-fixed">Height</label>
                   <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
                   <span>px</span>
                 </div>
               </div>
             </div>
-          </fieldset>
-        </form>
-      </div>
+          </div>
+        </div>
+      </form>
     </div>
         `;
 }
@@ -199,7 +206,10 @@ export class ResizeDialog {
     private configured: Promise<void> | null = null;
     private isOpen = false;
 
-    public constructor(private readonly dialogs: JoplinDialogApi) {}
+    public constructor(
+        private readonly dialogs: JoplinDialogApi,
+        private readonly platform: DialogPlatform
+    ) {}
 
     /**
      * Creates the dialog once and shares it with every caller.
@@ -247,7 +257,7 @@ export class ResizeDialog {
 
         try {
             const handle = await this.ensureHandle();
-            await this.dialogs.setHtml(handle, renderDialogHtml(context, defaults));
+            await this.dialogs.setHtml(handle, renderDialogHtml(context, defaults, this.platform));
             const result = await this.dialogs.open(handle);
 
             if (result?.id !== 'ok' || !result.formData) return null;

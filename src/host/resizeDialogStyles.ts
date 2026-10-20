@@ -4,6 +4,10 @@
  * as a visible layout adjustment after the dialog opens on Joplin mobile.
  *
  * The `css` tag lets Prettier format the template as CSS; String.raw keeps CSS escapes intact.
+ *
+ * Joplin's theme variables can arrive after the first paint, so fallbacks for fills and
+ * borders are translucent greys that read on light and dark themes alike; an opaque light
+ * fallback flashes on a dark theme.
  */
 const css = String.raw;
 
@@ -18,8 +22,6 @@ export const resizeDialogCss = css`
         font-size: 14px;
         margin: 0;
         padding: 0;
-        min-width: 340px;
-        background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
     }
     /* Joplin mobile sizes the dialog to this wrapper's measured width, which otherwise
@@ -53,37 +55,12 @@ export const resizeDialogCss = css`
         margin: 0 0 10px;
         font-size: 16px;
     }
-    form {
-        display: flex;
-        flex-direction: column;
-        gap: 22px;
-        width: 100%;
-    }
-    fieldset {
-        border: 1px solid var(--joplin-divider-color, #dddddd);
-        border-radius: 6px;
-        padding: 18px 14px 20px;
-        margin: 0;
-        min-width: 0;
-        width: 100%;
-        transition:
-            opacity 0.2s ease,
-            background-color 0.2s ease;
-    }
-    legend {
-        font-weight: 600;
-    }
     .grid {
         display: grid;
         grid-template-columns: max-content 1fr;
         gap: 8px 12px;
         align-items: center;
         width: 100%;
-    }
-    .stack {
-        display: flex;
-        flex-direction: column;
-        gap: 6px;
     }
     .row {
         display: flex;
@@ -95,77 +72,29 @@ export const resizeDialogCss = css`
         user-select: none;
         cursor: pointer;
     }
+    input[type='number'],
+    input[type='text'] {
+        background-color: var(--joplin-background-color, transparent);
+        color: var(--joplin-color, #32373f);
+        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        border-radius: 3px;
+    }
     input[type='number'] {
         width: 80px;
         padding: 4px 6px;
-        background-color: var(--joplin-background-color, transparent);
-        color: var(--joplin-color, #32373f);
-        border: 1px solid var(--joplin-divider-color, #dddddd);
-        border-radius: 3px;
         transition: background-color 0.2s ease;
     }
     input[type='text'] {
         width: 100%;
         padding: 6px 8px;
         min-width: 0;
-        background-color: var(--joplin-background-color, transparent);
-        color: var(--joplin-color, #32373f);
-        border: 1px solid var(--joplin-divider-color, #dddddd);
-        border-radius: 3px;
-        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
-    }
-    input[type='radio'] {
-        appearance: none;
-        -webkit-appearance: none;
-        width: 16px;
-        height: 16px;
-        border: 2px solid var(--joplin-divider-color, #dddddd);
-        border-radius: 50%;
-        background-color: var(--joplin-background-color, transparent);
-        cursor: pointer;
-        position: relative;
-        transition: all 0.15s ease;
-        flex-shrink: 0;
-    }
-
-    input[type='radio']:hover:not(:disabled) {
-        border-color: var(--joplin-color4, #2d6bdc);
-        background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
-    }
-
-    input[type='radio']:checked {
-        border-color: var(--joplin-color4, #2d6bdc);
-    }
-
-    input[type='radio']:checked::before {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background-color: var(--joplin-color4, #2d6bdc);
-    }
-
-    input[type='radio']:disabled {
-        cursor: not-allowed;
-        opacity: 0.4;
-        border-color: var(--joplin-divider-color, #dddddd);
-    }
-
-    input[type='radio']:focus-visible,
-    input[type='number']:focus-visible,
-    input[type='text']:focus-visible {
-        outline: 2px solid var(--joplin-focus-outline-color, rgb(228, 86, 0));
-        outline-offset: 2px;
     }
     /* Pull the ring inward so it sits on top of the 1px border rather than around it. */
     input[type='number']:focus-visible,
     input[type='text']:focus-visible {
+        outline: 2px solid var(--joplin-focus-outline-color, rgb(228, 86, 0));
         outline-offset: -1px;
     }
     input::-webkit-outer-spin-button,
@@ -173,26 +102,113 @@ export const resizeDialogCss = css`
         -webkit-appearance: none;
         margin: 0;
     }
-    .row.is-disabled,
-    .stack.is-disabled {
-        opacity: 0.6;
+
+    /* Segmented toggle: each segment is a label wrapping a visually hidden native radio,
+       so keyboard navigation, form values and change events work as with plain radios. */
+    .segmented {
+        display: inline-flex;
+        justify-self: start;
+        align-self: flex-start;
+        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        border-radius: 4px;
+        overflow: hidden;
     }
-    .row.is-disabled input,
-    .stack.is-disabled input {
-        background-color: var(--joplin-raised-background-color, #e5e5e5);
+    .segment {
+        position: relative;
+        display: flex;
+    }
+    .segment + .segment {
+        border-left: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+    }
+    .segment input {
+        position: absolute;
+        inset: 0;
+        margin: 0;
+        opacity: 0;
+        pointer-events: none;
+    }
+    .segment span {
+        padding: 4px 12px;
+        white-space: nowrap;
+        transition: background-color 0.15s ease;
+    }
+    .segment input:not(:checked):not(:disabled) + span:hover {
+        background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
+    }
+    .segment input:checked + span {
+        background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
+        color: var(--joplin-color4, #2d6bdc);
+    }
+    /* Inset, because the group's overflow: hidden clips anything drawn outside a segment. */
+    .segment input:focus-visible + span {
+        outline: 2px solid var(--joplin-focus-outline-color, rgb(228, 86, 0));
+        outline-offset: -2px;
+    }
+    .segment.is-disabled {
         cursor: not-allowed;
     }
-    .resize-fieldset.is-locked {
+    /* Sits in the control column under the control it annotates, tucked closer than a normal row. */
+    .hint {
+        grid-column: 2;
+        margin: -4px 0 0;
+        font-size: 12px;
+        color: var(--joplin-color-faded, #7c8b9e);
+    }
+
+    /* A label + control pair that toggles as one unit, while staying aligned to the
+       parent grid's columns. */
+    .subgrid {
+        grid-column: 1 / -1;
+        display: grid;
+        grid-template-columns: subgrid;
+        row-gap: 8px;
+        align-items: center;
+    }
+    /* Both mode panels share one cell and only the active one is visible, so the
+       dialog keeps the same height (and Joplin doesn't refit it) when the mode changes. */
+    .mode-panels > * {
+        grid-row: 1;
+        align-self: start;
+    }
+    .resize-section:has(input[name='resizeMode'][value='absolute']:checked) [data-percentage-row],
+    .resize-section:has(input[name='resizeMode'][value='percentage']:checked) [data-absolute-group] {
+        visibility: hidden;
+    }
+
+    .is-disabled {
+        opacity: 0.6;
+    }
+    .is-disabled input[type='number'] {
+        background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
+        cursor: not-allowed;
+    }
+    /* Extra space separates the output options from the sizing options. */
+    .resize-section {
+        margin-top: 8px;
+        transition: opacity 0.2s ease;
+    }
+    .resize-section.is-locked {
         opacity: 0.4;
         pointer-events: none;
-        background-color: var(--joplin-background-color3, #f4f5f6);
+    }
+    /* Opacity compounds, so rows already dimmed inside a locked section would almost vanish. */
+    .resize-section.is-locked .is-disabled {
+        opacity: 1;
     }
 
     /* Utility classes for repeated patterns */
     .label-nowrap {
         white-space: nowrap;
     }
-    .label-fixed {
-        width: 48px;
+`;
+
+/**
+ * Desktop-only wrapper width. Joplin desktop sizes a fit-to-content dialog from this
+ * wrapper, which otherwise shrinks to the iframe's small starting width and cuts fields
+ * off. Mobile already picks a sensible width on its own, so it gets no fixed width.
+ */
+export const desktopDialogCss = css`
+    #joplin-plugin-content {
+        width: 360px;
     }
 `;

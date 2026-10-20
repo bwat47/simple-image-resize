@@ -21,7 +21,8 @@ void joplin.plugins.register({
 
         await registerViewerContentScript();
 
-        const resizeDialog = new ResizeDialog(joplin.views.dialogs);
+        const { platform } = await joplin.versionInfo();
+        const resizeDialog = new ResizeDialog(joplin.views.dialogs, platform);
         await registerCommands(resizeDialog);
 
         await registerMenus();
