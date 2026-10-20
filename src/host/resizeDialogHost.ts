@@ -139,7 +139,7 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
         <form name="resizeForm" autocomplete="off">
           <fieldset>
             <legend>Output</legend>
-            <div class="grid narrow">
+            <div class="grid">
               <label for="altText" class="label-nowrap">Alt text</label>
               <div class="row">
                 <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
@@ -171,7 +171,7 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
               </div>
               <div class="row">
                 <input type="radio" id="absoluteMode" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
-                <label for="absoluteMode">Absolute size</label>
+                <label for="absoluteMode">Pixels</label>
               </div>
               <div class="${absoluteGroupClass}" data-absolute-group>
                 <div class="row">

@@ -38,7 +38,7 @@ HTML Syntax is selected by default (and resizing is only supported using HTML sy
 
 ### Resize Image
 
-With image syntax set to HTML, you can resize the image by Percentage (default) or Absolute size.
+With image syntax set to HTML, you can resize the image by Percentage (default) or Pixels.
 
 Enter the desired image size (in percentage or pixels) and click OK, and the plugin will automatically update the image embed with the new image syntax.
 
@@ -48,7 +48,7 @@ You can configure up to 5 quick resize slots (using percentage or pixel sizes), 
 
 ### Settings
 
-**Default resize mode** - You can choose if the default resize mode is Percentage or Absolute in the plugin settings (default is Percentage).
+**Default resize mode** - You can choose if the default resize mode is Percentage or Pixels in the plugin settings (default is Percentage).
 
 **Default percentage** - The default percentage value (1-100) when using percentage resize mode.
 

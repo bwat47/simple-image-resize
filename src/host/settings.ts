@@ -26,7 +26,7 @@ const SETTINGS_CONFIG = {
         isEnum: true,
         options: {
             percentage: 'Percentage',
-            absolute: 'Absolute size',
+            absolute: 'Pixels',
         },
     },
     defaultPercentage: {

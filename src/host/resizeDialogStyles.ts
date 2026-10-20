@@ -18,7 +18,7 @@ export const resizeDialogCss = css`
         font-size: 14px;
         margin: 0;
         padding: 0;
-        min-width: 380px;
+        min-width: 340px;
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
     }
@@ -43,7 +43,7 @@ export const resizeDialogCss = css`
         }
     }
     .container {
-        padding: 16px 20px 24px;
+        padding: 16px 14px 24px;
         display: flex;
         flex-direction: column;
         gap: 14px;
@@ -62,7 +62,7 @@ export const resizeDialogCss = css`
     fieldset {
         border: 1px solid var(--joplin-divider-color, #dddddd);
         border-radius: 6px;
-        padding: 18px 20px 20px;
+        padding: 18px 14px 20px;
         margin: 0;
         min-width: 0;
         width: 100%;
@@ -75,13 +75,10 @@ export const resizeDialogCss = css`
     }
     .grid {
         display: grid;
-        grid-template-columns: 120px 1fr;
+        grid-template-columns: max-content 1fr;
         gap: 8px 12px;
         align-items: center;
         width: 100%;
-    }
-    .grid.narrow {
-        grid-template-columns: max-content 1fr;
     }
     .stack {
         display: flex;
@@ -99,7 +96,7 @@ export const resizeDialogCss = css`
         cursor: pointer;
     }
     input[type='number'] {
-        width: 92px;
+        width: 80px;
         padding: 4px 6px;
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
@@ -196,6 +193,6 @@ export const resizeDialogCss = css`
         white-space: nowrap;
     }
     .label-fixed {
-        width: 55px;
+        width: 48px;
     }
 `;
