@@ -72,24 +72,22 @@ export const resizeDialogCss = css`
         user-select: none;
         cursor: pointer;
     }
-    input[type='number'] {
-        width: 80px;
-        padding: 4px 6px;
+    input[type='number'],
+    input[type='text'] {
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
         border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
         border-radius: 3px;
+    }
+    input[type='number'] {
+        width: 80px;
+        padding: 4px 6px;
         transition: background-color 0.2s ease;
     }
     input[type='text'] {
         width: 100%;
         padding: 6px 8px;
         min-width: 0;
-        background-color: var(--joplin-background-color, transparent);
-        color: var(--joplin-color, #32373f);
-        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
-        border-radius: 3px;
-        white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
     }
