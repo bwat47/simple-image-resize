@@ -15,10 +15,10 @@ describe('getInitialDialogState', () => {
 
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset');
-            expect(state.percentageModeRowClass).toBe('row');
-            expect(state.percentageRowClass).toBe('row');
-            expect(state.absoluteGroupClass).toBe('stack is-disabled');
-            expect(state.heightRowClass).toBe('row');
+            expect(state.percentageModeRowClass).toBe('segment');
+            expect(state.percentageRowClass).toBe('subgrid');
+            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
+            expect(state.heightRowClass).toBe('subgrid');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
@@ -40,9 +40,9 @@ describe('getInitialDialogState', () => {
 
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset');
-            expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack');
-            expect(state.heightRowClass).toBe('row');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
+            expect(state.absoluteGroupClass).toBe('subgrid');
+            expect(state.heightRowClass).toBe('subgrid');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe(' checked');
@@ -63,8 +63,8 @@ describe('getInitialDialogState', () => {
 
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
-            expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack is-disabled');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
+            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe('');
@@ -84,8 +84,8 @@ describe('getInitialDialogState', () => {
 
             // CSS classes
             expect(state.resizeFieldsetClass).toBe('resize-fieldset is-locked');
-            expect(state.percentageRowClass).toBe('row is-disabled');
-            expect(state.absoluteGroupClass).toBe('stack is-disabled');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
+            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
 
             // Checked attributes
             expect(state.htmlCheckedAttr).toBe('');
@@ -103,14 +103,14 @@ describe('getInitialDialogState', () => {
         it('disables percentage mode and defaults to absolute when dimensions are unknown', () => {
             const state = getInitialDialogState('html', 'percentage', false);
 
-            expect(state.percentageModeRowClass).toBe('row is-disabled');
+            expect(state.percentageModeRowClass).toBe('segment is-disabled');
             expect(state.percentageModeCheckedAttr).toBe('');
             expect(state.percentageModeDisabledAttr).toBe(' disabled');
-            expect(state.percentageRowClass).toBe('row is-disabled');
+            expect(state.percentageRowClass).toBe('subgrid is-disabled');
             expect(state.absoluteModeCheckedAttr).toBe(' checked');
-            expect(state.absoluteGroupClass).toBe('stack');
+            expect(state.absoluteGroupClass).toBe('subgrid');
             expect(state.absoluteDisabledAttr).toBe('');
-            expect(state.heightRowClass).toBe('row is-disabled');
+            expect(state.heightRowClass).toBe('subgrid is-disabled');
             expect(state.heightDisabledAttr).toBe(' disabled');
         });
 

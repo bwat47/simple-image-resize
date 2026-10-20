@@ -61,10 +61,10 @@ export function getInitialDialogState(
     return {
         // CSS classes
         resizeFieldsetClass: `resize-fieldset${state.resizeLocked ? ' is-locked' : ''}`,
-        percentageModeRowClass: `row${disabledClass(state.percentageModeDisabled)}`,
-        percentageRowClass: `row${disabledClass(state.percentageDisabled)}`,
-        absoluteGroupClass: `stack${disabledClass(state.absoluteDisabled)}`,
-        heightRowClass: `row${disabledClass(state.heightDimmed)}`,
+        percentageModeRowClass: `segment${disabledClass(state.percentageModeDisabled)}`,
+        percentageRowClass: `subgrid${disabledClass(state.percentageDisabled)}`,
+        absoluteGroupClass: `subgrid${disabledClass(state.absoluteDisabled)}`,
+        heightRowClass: `subgrid${disabledClass(state.heightDimmed)}`,
         // HTML checked attributes
         htmlCheckedAttr: checkedAttr(htmlSyntaxSelected),
         markdownCheckedAttr: checkedAttr(!htmlSyntaxSelected),
@@ -144,16 +144,19 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
               <div class="row">
                 <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
               </div>
-              <label class="label-nowrap">Syntax</label>
+              <span id="syntaxLabel" class="label-nowrap">Syntax</span>
               <div class="stack">
-                <label class="row">
-                  <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
-                  <span>HTML (supports resizing)</span>
-                </label>
-                <label class="row">
-                  <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
-                  <span>Markdown (original size only)</span>
-                </label>
+                <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
+                  <label class="segment">
+                    <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
+                    <span>HTML</span>
+                  </label>
+                  <label class="segment">
+                    <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
+                    <span>Markdown</span>
+                  </label>
+                </div>
+                <p class="hint">Only HTML supports resizing.</p>
               </div>
             </div>
           </fieldset>
@@ -161,28 +164,39 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
           <fieldset class="${resizeFieldsetClass}" data-resize-fieldset>
             <legend>Resizing</legend>
             <div class="grid">
-              <div class="${percentageModeRowClass}" data-percentage-mode-row>
-                <input type="radio" id="percentageMode" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
-                <label for="percentageMode">Percentage</label>
+              <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
+              <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
+                <label class="${percentageModeRowClass}" data-percentage-mode-row>
+                  <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
+                  <span>Percentage</span>
+                </label>
+                <label class="segment">
+                  <input type="radio" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
+                  <span>Pixels</span>
+                </label>
               </div>
-              <div class="${percentageRowClass}" data-percentage-row>
-                <input type="number" name="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
-                <span>%</span>
-              </div>
-              <div class="row">
-                <input type="radio" id="absoluteMode" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
-                <label for="absoluteMode">Pixels</label>
-              </div>
-              <div class="${absoluteGroupClass}" data-absolute-group>
-                <div class="row">
-                  <label for="absoluteWidth" class="label-fixed">Width</label>
-                  <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
-                  <span>px</span>
+              <div class="subgrid mode-panels">
+                <div class="${percentageRowClass}" data-percentage-row>
+                  <label for="percentage">Scale</label>
+                  <div class="row">
+                    <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
+                    <span>%</span>
+                  </div>
+                  <p class="hint" data-percentage-preview></p>
                 </div>
-                <div class="${heightRowClass}" data-height-row>
-                  <label for="absoluteHeight" class="label-fixed">Height</label>
-                  <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
-                  <span>px</span>
+                <div class="${absoluteGroupClass}" data-absolute-group>
+                  <label for="absoluteWidth">Width</label>
+                  <div class="row">
+                    <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
+                    <span>px</span>
+                  </div>
+                  <div class="${heightRowClass}" data-height-row>
+                    <label for="absoluteHeight">Height</label>
+                    <div class="row">
+                      <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
+                      <span>px</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

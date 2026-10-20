@@ -90,7 +90,13 @@ describe('resize dialog webview', () => {
 
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteWidth"]')?.value).toBe('200');
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.value).toBe('100');
+        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('= 200 × 100 px');
         expect(document.querySelector('[data-absolute-group]')?.classList).toContain('is-disabled');
+
+        setInputValue('percentage', '');
+        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('');
+        setInputValue('percentage', '50');
+        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('= 400 × 200 px');
         expect(document.querySelector('[data-height-row]')?.classList).not.toContain('is-disabled');
 
         const absoluteMode = document.querySelector<HTMLInputElement>('input[name="resizeMode"][value="absolute"]');
