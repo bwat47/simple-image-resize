@@ -155,7 +155,7 @@ describe('getInitialDialogState', () => {
             expect(absoluteState.absoluteDisabledAttr).toBe('');
         });
 
-        it('should lock resize fieldset when Markdown syntax is selected', () => {
+        it('should lock resize section when Markdown syntax is selected', () => {
             const markdownPercentage = getInitialDialogState('markdown', 'percentage', true);
             const markdownAbsolute = getInitialDialogState('markdown', 'absolute', true);
 
@@ -163,7 +163,7 @@ describe('getInitialDialogState', () => {
             expect(markdownAbsolute.resizeSectionClass).toContain('is-locked');
         });
 
-        it('should not lock resize fieldset when HTML syntax is selected', () => {
+        it('should not lock resize section when HTML syntax is selected', () => {
             const htmlPercentage = getInitialDialogState('html', 'percentage', true);
             const htmlAbsolute = getInitialDialogState('html', 'absolute', true);
 

@@ -11,7 +11,7 @@ import type { ImageSyntax, ResizeMode } from './types';
 export interface DialogFieldState {
     /** The mode actually in effect: percentage falls back to absolute without original dimensions. */
     resizeMode: ResizeMode;
-    /** The resizing fieldset is locked because Markdown syntax cannot carry a size. */
+    /** The resizing section is locked because Markdown syntax cannot carry a size. */
     resizeLocked: boolean;
     percentageModeDisabled: boolean;
     percentageDisabled: boolean;
