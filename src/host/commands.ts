@@ -3,7 +3,8 @@
  *
  * Registers all resize commands:
  * - resizeImage: Opens dialog for custom resize
- * - resize100/75/50/33/25: Stable quick resize slots
+ * - resize100/75/50/33/25: Quick resize slots 1-5. The names are stable IDs
+ *   (bound to shortcuts); each slot's size comes from the quick resize setting.
  *
  * All commands share common logic for image detection, dimension fetching,
  * and editor replacement.
@@ -31,7 +32,9 @@ import {
 const IMAGE_CHANGED_MESSAGE = 'The image changed before it could be resized. Try again.';
 
 /**
- * Shared function to handle image detection and dimension fetching
+ * Find the target image and load its original dimensions. A viewer target is
+ * first selected in the editor. Shows a toast and returns null when there is
+ * no image to resize.
  */
 async function detectAndPrepareImage(viewerTarget?: unknown) {
     if (viewerTarget !== undefined) {
@@ -51,7 +54,6 @@ async function detectAndPrepareImage(viewerTarget?: unknown) {
     const partialContext = cursorDetection.context;
     const replacementRange = cursorDetection.range;
 
-    // Get original dimensions
     logger.debug(`Processing ${partialContext.sourceType}: ${partialContext.source}`);
 
     const { dimensions: originalDimensions, determined: originalDimensionsDetermined } =
@@ -125,7 +127,6 @@ async function registerQuickResizeCommand(slotIndex: number, commandName: string
 }
 
 export async function registerCommands(resizeDialog: ResizeDialog): Promise<void> {
-    // Enhanced resize command with intelligent detection
     await joplin.commands.register({
         name: 'resizeImage',
         label: 'Resize Image',
@@ -137,7 +138,6 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
 
                 const { fullContext, replacementRange } = prepared;
 
-                // Show dialog
                 const result = await resizeDialog.open(fullContext, {
                     defaultResizeMode: settingsCache.defaultResizeMode,
                     defaultPercentage: settingsCache.defaultPercentage,

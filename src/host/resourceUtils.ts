@@ -54,10 +54,8 @@ function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<A
  *   covers only ArrayBuffer, Blob, and FileSystemHandle), so it deep-copies the
  *   Buffer with for...in, yielding {0: 137, 1: 80, ...}.
  *
- * Desktop and the web app each produce one of those. The ArrayBuffer branch is defensive,
- * as is the Blob guard in getResourceBlob: those are two of the three types Joplin's
- * IPC passes through untouched, so either could appear if the transport ever stops
- * deep-copying the Buffer. Nothing produces them today.
+ * The ArrayBuffer branch is defensive, for the same reason as the Blob guard in
+ * getResourceBlob. Nothing produces an ArrayBuffer today.
  */
 function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
     if (data instanceof ArrayBuffer) {
@@ -103,9 +101,9 @@ export async function getResourceBlob(resourceId: string): Promise<Blob> {
 
         const body = typeof file === 'object' && 'body' in file ? (file.body ?? file) : file;
 
-        // Blob is one of the three types Joplin's plugin IPC passes through untouched,
-        // so it is the likeliest shape to appear if the transport ever stops deep-copying
-        // the Buffer. Nothing produces it today.
+        // Blob and ArrayBuffer are two of the three types Joplin's plugin IPC passes
+        // through untouched, so either could appear if the transport ever stops
+        // deep-copying the Buffer. Nothing produces them today.
         if (body instanceof Blob) {
             if (body.size === 0) {
                 throw new Error('Resource file data is empty.');

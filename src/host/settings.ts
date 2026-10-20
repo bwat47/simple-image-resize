@@ -1,8 +1,5 @@
 /**
- * Joplin settings registration for Simple Image Resize plugin.
- *
- * Integrates resize configuration into Joplin's preferences UI, allowing
- * users to customize default resize mode and context menu behavior through
+ * Joplin settings registration for Simple Image Resize plugin, shown under
  * Settings > Simple Image Resize.
  *
  * Also maintains an in-memory settings cache to avoid async reads on every operation.

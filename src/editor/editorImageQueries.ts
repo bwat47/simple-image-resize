@@ -61,7 +61,6 @@ function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
 
     const { from, to } = candidate;
 
-    // Validate from <= to
     if (from.line > to.line || (from.line === to.line && from.ch > to.ch)) {
         logger.error('REPLACE_RANGE_COMMAND: from must be <= to', { from, to });
         return false;
@@ -102,7 +101,6 @@ function findImagesInRange(state: EditorState, from: number, to: number, tree = 
             // Case 2: Simple HTML tags in Markdown (HTMLTag node)
             if (node.name === 'HTMLTag') {
                 const tagText = state.doc.sliceString(node.from, node.to);
-                // Check if it's an img tag (self-closing or opening tag)
                 if (/^<img\s/i.test(tagText)) {
                     images.push({
                         type: 'html',
@@ -117,13 +115,12 @@ function findImagesInRange(state: EditorState, from: number, to: number, tree = 
             // Example: <div><img src="..."></div>
             if (node.name === 'HTMLBlock') {
                 const blockText = state.doc.sliceString(node.from, node.to);
-                // Find all <img> tags within the block
                 const imgRegex = /<img\s[^>]*>/gi;
                 let match: RegExpExecArray | null;
                 while ((match = imgRegex.exec(blockText)) !== null) {
                     const imgStart = node.from + match.index;
                     const imgEnd = imgStart + match[0].length;
-                    // Only include if the img tag intersects with the range
+                    // The block can extend past the range, so skip tags outside it.
                     if (imgStart <= to && imgEnd >= from) {
                         images.push({
                             type: 'html',
@@ -140,7 +137,7 @@ function findImagesInRange(state: EditorState, from: number, to: number, tree = 
 }
 
 /**
- * Find all image nodes on the current line using syntax tree.
+ * Find all image nodes on the cursor's line.
  */
 export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
     const currentLine = state.doc.lineAt(state.selection.main.head);
@@ -214,14 +211,13 @@ export function isCursorInImageActivationRange(
 }
 
 /**
- * Get the image at cursor position using syntax tree.
- * This is the main detection function that replaces regex-based detection.
+ * Get the image under the cursor, with its range as 0-indexed line/ch
+ * positions for the plugin host.
  */
 export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult | null {
     const cursor = state.selection.main.head;
     const images = findImagesOnLine(state);
 
-    // Find the image that contains the cursor
     for (const imageNode of images) {
         const imageLine = state.doc.lineAt(imageNode.from);
         const lineTextBeforeImage = state.doc.sliceString(imageLine.from, imageNode.from);
@@ -231,7 +227,6 @@ export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult 
             const details = extractImageDetails(imageText, imageNode.type);
 
             if (details) {
-                // Convert absolute positions to line/ch format
                 const fromLine = state.doc.lineAt(imageNode.from);
                 const toLine = state.doc.lineAt(imageNode.to);
 
@@ -256,12 +251,10 @@ export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult 
 }
 
 /**
- * Convert line/ch position to absolute document position.
- * CM6 doc.line() expects 1-indexed line numbers, so we convert
- * from our 0-indexed EditorPosition before calling it.
+ * Convert a 0-indexed line/ch position to a document offset. CM6 lines are
+ * 1-indexed. Out-of-range lines and columns are clamped to the document.
  */
 export function posToOffset(doc: Text, pos: EditorPosition): number {
-    // CM6 line() uses 1-indexed line numbers
     const lineNum = Math.max(1, Math.min(pos.line + 1, doc.lines));
     const lineInfo = doc.line(lineNum);
     const ch = Math.max(0, Math.min(pos.ch, lineInfo.to - lineInfo.from));

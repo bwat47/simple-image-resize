@@ -2,8 +2,10 @@
  * CodeMirror 6 content script for editor operations.
  *
  * Registers custom commands for:
- * - Image detection at cursor using syntax tree
- * - Moving the cursor onto an image right-clicked in the markdown viewer
+ * - Image detection at cursor
+ * - Matching an image right-clicked in the markdown viewer to the note source,
+ *   and moving the cursor onto it
+ * - Telling whether a context menu was opened from the editor
  * - Text replacement at specified ranges
  * - Image dimension measurement (loads images in editor context)
  *
@@ -99,7 +101,6 @@ export default function (): MarkdownEditorContentScriptModule {
                 }
             });
 
-            // Command: Get image at cursor using syntax tree (primary method)
             editorControl.registerCommand(GET_IMAGE_AT_CURSOR_COMMAND, (): EditorImageAtCursorResult | null => {
                 try {
                     return getImageAtCursor(view.state);
@@ -109,7 +110,6 @@ export default function (): MarkdownEditorContentScriptModule {
                 }
             });
 
-            // Command: Replace text in a range
             editorControl.registerCommand(
                 REPLACE_RANGE_COMMAND,
                 (text: unknown, from: unknown, to: unknown, expectedText: unknown): boolean => {
@@ -129,8 +129,7 @@ export default function (): MarkdownEditorContentScriptModule {
                 }
             );
 
-            // Command: Get image dimensions by loading it in the editor context
-            // This runs inside the editor webview which has access to local files
+            // Runs in the editor webview, which can load local files the plugin host cannot on mobile.
             editorControl.registerCommand(
                 GET_IMAGE_DIMENSIONS_COMMAND,
                 async (...args: unknown[]): Promise<ImageDimensions | null> => {

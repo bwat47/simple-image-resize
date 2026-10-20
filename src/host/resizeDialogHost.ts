@@ -61,18 +61,15 @@ export function getInitialDialogState(
     const checkedAttr = (checked: boolean): string => (checked ? ' checked' : '');
 
     return {
-        // CSS classes
         resizeSectionClass: `subgrid resize-section${state.resizeLocked ? ' is-locked' : ''}`,
         percentageModeRowClass: `segment${disabledClass(state.percentageModeDisabled)}`,
         percentageRowClass: `subgrid${disabledClass(state.percentageDisabled)}`,
         absoluteGroupClass: `subgrid${disabledClass(state.absoluteDisabled)}`,
         heightRowClass: `subgrid${disabledClass(state.heightDimmed)}`,
-        // HTML checked attributes
         htmlCheckedAttr: checkedAttr(htmlSyntaxSelected),
         markdownCheckedAttr: checkedAttr(!htmlSyntaxSelected),
         percentageModeCheckedAttr: checkedAttr(percentageModeSelected),
         absoluteModeCheckedAttr: checkedAttr(!percentageModeSelected),
-        // HTML disabled attributes
         percentageDisabledAttr: disabledAttr(state.percentageDisabled),
         percentageModeDisabledAttr: disabledAttr(state.percentageModeDisabled),
         absoluteDisabledAttr: disabledAttr(state.absoluteDisabled),
@@ -124,7 +121,7 @@ export function renderDialogHtml(
     const originalDimensionsSummaryHtml = getOriginalDimensionsSummaryHtml(context);
     const heightPlaceholderAttr = getHeightPlaceholderAttribute(context);
 
-    // Dialog configuration passed as single JSON attribute for cleaner extensibility
+    // Read by the dialog script from the root's `data-config` attribute.
     const dialogConfig: ResizeDialogConfig = {
         defaultResizeMode: getDialogFieldState(defaultSyntax, defaultResizeMode, context.originalDimensionsDetermined)
             .resizeMode,

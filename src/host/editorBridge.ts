@@ -27,8 +27,6 @@ interface CursorDetectionResult {
 /**
  * Detects if the cursor is currently inside a valid image embed.
  * Returns the image context and range for replacement.
- *
- * Uses syntax tree-based detection in the content script for reliable detection.
  */
 export async function detectImageAtCursor(): Promise<CursorDetectionResult | null> {
     try {
@@ -54,7 +52,6 @@ export async function detectImageAtCursor(): Promise<CursorDetectionResult | nul
  */
 export async function isOnImageInMarkdownEditor(): Promise<boolean> {
     try {
-        // Check if cursor is on an image using the content script
         const detection = await detectImageAtCursor();
         return detection !== null;
     } catch {
