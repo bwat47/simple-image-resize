@@ -1,8 +1,8 @@
-import type { ButtonSpec, DialogResult, ViewHandle } from 'api/types';
+import type { ButtonSpec, DialogResult, VersionInfo, ViewHandle } from 'api/types';
 import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from '../shared/types';
 import { getDialogFieldState } from '../shared/dialogFieldState';
 import { escapeHtmlAttribute } from '../shared/stringUtils';
-import { resizeDialogCss } from './resizeDialogStyles';
+import { desktopDialogCss, resizeDialogCss } from './resizeDialogStyles';
 
 const DIALOG_ID = 'image-resize-dialog';
 
@@ -15,6 +15,8 @@ export interface JoplinDialogApi {
     setHtml(handle: ViewHandle, html: string): Promise<unknown>;
     open(handle: ViewHandle): Promise<DialogResult | null>;
 }
+
+export type DialogPlatform = VersionInfo['platform'];
 
 export interface ResizeDialogDefaults {
     defaultResizeMode: ResizeMode;
@@ -94,7 +96,11 @@ function getHeightPlaceholderAttribute(context: ImageContext): string {
  * Renders the dialog markup for one image. Exported so webview tests can drive the
  * real markup instead of a hand-maintained copy of it.
  */
-export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDefaults): string {
+export function renderDialogHtml(
+    context: ImageContext,
+    defaults: ResizeDialogDefaults,
+    platform: DialogPlatform
+): string {
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
     const defaultSyntax: ImageSyntax = 'html';
@@ -129,7 +135,7 @@ export function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDe
     };
 
     return `
-    <style>${resizeDialogCss}</style>
+    <style>${resizeDialogCss}${platform === 'desktop' ? desktopDialogCss : ''}</style>
     <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
       <div class="container">
         <div>
@@ -202,7 +208,10 @@ export class ResizeDialog {
     private configured: Promise<void> | null = null;
     private isOpen = false;
 
-    public constructor(private readonly dialogs: JoplinDialogApi) {}
+    public constructor(
+        private readonly dialogs: JoplinDialogApi,
+        private readonly platform: DialogPlatform
+    ) {}
 
     /**
      * Creates the dialog once and shares it with every caller.
@@ -250,7 +259,7 @@ export class ResizeDialog {
 
         try {
             const handle = await this.ensureHandle();
-            await this.dialogs.setHtml(handle, renderDialogHtml(context, defaults));
+            await this.dialogs.setHtml(handle, renderDialogHtml(context, defaults, this.platform));
             const result = await this.dialogs.open(handle);
 
             if (result?.id !== 'ok' || !result.formData) return null;

@@ -2,10 +2,12 @@ import type { DialogResult } from 'api/types';
 import {
     getInitialDialogState,
     getOriginalDimensionsSummaryHtml,
+    renderDialogHtml,
     ResizeDialog,
     type JoplinDialogApi,
     type ResizeDialogDefaults,
 } from '../src/host/resizeDialogHost';
+import { desktopDialogCss } from '../src/host/resizeDialogStyles';
 import type { ImageContext } from '../src/shared/types';
 
 describe('getInitialDialogState', () => {
@@ -224,7 +226,7 @@ function createDialogApi() {
 describe('ResizeDialog', () => {
     it('reuses one configured handle while rendering fresh content', async () => {
         const dialogs = createDialogApi();
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await dialog.open(dialogContext, dialogDefaults);
         await dialog.open({ ...dialogContext, altText: 'Second image' }, dialogDefaults);
@@ -246,7 +248,7 @@ describe('ResizeDialog', () => {
                 pending.close = resolve;
             })
         );
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         const first = dialog.open(dialogContext, dialogDefaults);
         await vi.waitFor(() => expect(dialogs.open).toHaveBeenCalledOnce());
@@ -260,7 +262,7 @@ describe('ResizeDialog', () => {
 
     it('returns null for cancellation and an unexpected null result', async () => {
         const dialogs = createDialogApi();
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
         dialogs.open.mockResolvedValueOnce(null);
@@ -270,7 +272,7 @@ describe('ResizeDialog', () => {
     it('reconfigures the existing handle after configuration fails', async () => {
         const dialogs = createDialogApi();
         dialogs.setButtons.mockRejectedValueOnce(new Error('buttons failed'));
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('buttons failed');
         await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
@@ -285,7 +287,7 @@ describe('ResizeDialog', () => {
     it('does not create a second view after creation fails', async () => {
         const dialogs = createDialogApi();
         dialogs.create.mockRejectedValue(new Error('view creation failed'));
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
@@ -297,7 +299,7 @@ describe('ResizeDialog', () => {
     it('releases the open guard after an open failure', async () => {
         const dialogs = createDialogApi();
         dialogs.open.mockRejectedValueOnce(new Error('dialog failed'));
-        const dialog = new ResizeDialog(dialogs);
+        const dialog = new ResizeDialog(dialogs, 'desktop');
 
         await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('dialog failed');
         await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
@@ -322,7 +324,7 @@ describe('ResizeDialog', () => {
             },
         });
 
-        await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toEqual({
+        await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
             targetSyntax: 'html',
             altText: 'Updated alt',
             resizeMode: 'absolute',
@@ -338,7 +340,7 @@ describe('ResizeDialog', () => {
             const dialogs = createDialogApi();
             dialogs.open.mockResolvedValue({ id: 'ok', formData });
 
-            await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toBeNull();
+            await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toBeNull();
         }
     );
 
@@ -358,7 +360,7 @@ describe('ResizeDialog', () => {
             },
         });
 
-        await expect(new ResizeDialog(dialogs).open(dialogContext, dialogDefaults)).resolves.toEqual({
+        await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
             targetSyntax: 'html',
             altText: '',
             resizeMode: dialogDefaults.defaultResizeMode,
@@ -366,5 +368,12 @@ describe('ResizeDialog', () => {
             absoluteWidth: undefined,
             absoluteHeight: undefined,
         });
+    });
+});
+
+describe('renderDialogHtml', () => {
+    it('fixes the dialog width on desktop only', () => {
+        expect(renderDialogHtml(dialogContext, dialogDefaults, 'desktop')).toContain(desktopDialogCss);
+        expect(renderDialogHtml(dialogContext, dialogDefaults, 'mobile')).not.toContain(desktopDialogCss);
     });
 });

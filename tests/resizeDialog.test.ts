@@ -20,7 +20,7 @@ function dialogMarkup(width: number, height: number, defaults: ResizeDialogDefau
         originalDimensions: { width, height },
         originalDimensionsDetermined: true,
     };
-    return renderDialogHtml(context, defaults);
+    return renderDialogHtml(context, defaults, 'desktop');
 }
 
 function defaultsFor(defaultResizeMode: ResizeMode, defaultPercentage = 50): ResizeDialogDefaults {

@@ -18,7 +18,6 @@ export const resizeDialogCss = css`
         font-size: 14px;
         margin: 0;
         padding: 0;
-        min-width: 320px;
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
     }
@@ -199,5 +198,16 @@ export const resizeDialogCss = css`
     /* Utility classes for repeated patterns */
     .label-nowrap {
         white-space: nowrap;
+    }
+`;
+
+/**
+ * Desktop-only wrapper width. Joplin desktop sizes a fit-to-content dialog from this
+ * wrapper, which otherwise shrinks to the iframe's small starting width and cuts fields
+ * off. Mobile already picks a sensible width on its own, so it gets no fixed width.
+ */
+export const desktopDialogCss = css`
+    #joplin-plugin-content {
+        width: 360px;
     }
 `;
