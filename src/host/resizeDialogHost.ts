@@ -136,68 +136,66 @@ export function renderDialogHtml(
 
     return `
     <style>${resizeDialogCss}${platform === 'desktop' ? desktopDialogCss : ''}</style>
-    <div id="dialog-root" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
-      <div class="container">
-        <div>
-          <h4>Resize Image</h4>
-          <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
+    <div id="dialog-root" class="container" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
+      <div>
+        <h4>Resize Image</h4>
+        <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
+      </div>
+      <form name="resizeForm" autocomplete="off" class="grid">
+        <label for="altText" class="label-nowrap">Alt text</label>
+        <div class="row">
+          <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
         </div>
-        <form name="resizeForm" autocomplete="off" class="grid">
-          <label for="altText" class="label-nowrap">Alt text</label>
-          <div class="row">
-            <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
-          </div>
-          <span id="syntaxLabel" class="label-nowrap">Syntax</span>
-          <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
-            <label class="segment">
-              <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
-              <span>HTML</span>
+        <span id="syntaxLabel" class="label-nowrap">Syntax</span>
+        <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
+          <label class="segment">
+            <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
+            <span>HTML</span>
+          </label>
+          <label class="segment">
+            <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
+            <span>Markdown</span>
+          </label>
+        </div>
+        <p class="hint">Only HTML supports resizing.</p>
+        <div class="${resizeSectionClass}" data-resize-section>
+          <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
+          <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
+            <label class="${percentageModeRowClass}" data-percentage-mode-row>
+              <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
+              <span>Percentage</span>
             </label>
             <label class="segment">
-              <input type="radio" name="targetSyntax" value="markdown"${markdownCheckedAttr}>
-              <span>Markdown</span>
+              <input type="radio" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
+              <span>Pixels</span>
             </label>
           </div>
-          <p class="hint">Only HTML supports resizing.</p>
-          <div class="${resizeSectionClass}" data-resize-section>
-            <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
-            <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
-              <label class="${percentageModeRowClass}" data-percentage-mode-row>
-                <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
-                <span>Percentage</span>
-              </label>
-              <label class="segment">
-                <input type="radio" name="resizeMode" value="absolute"${absoluteModeCheckedAttr}>
-                <span>Pixels</span>
-              </label>
-            </div>
-            <div class="subgrid mode-panels">
-              <div class="${percentageRowClass}" data-percentage-row>
-                <label for="percentage">Scale</label>
-                <div class="row">
-                  <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
-                  <span>%</span>
-                </div>
-                <p class="hint" data-percentage-preview></p>
+          <div class="subgrid mode-panels">
+            <div class="${percentageRowClass}" data-percentage-row>
+              <label for="percentage">Scale</label>
+              <div class="row">
+                <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
+                <span>%</span>
               </div>
-              <div class="${absoluteGroupClass}" data-absolute-group>
-                <label for="absoluteWidth">Width</label>
+              <p class="hint" data-percentage-preview></p>
+            </div>
+            <div class="${absoluteGroupClass}" data-absolute-group>
+              <label for="absoluteWidth">Width</label>
+              <div class="row">
+                <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
+                <span>px</span>
+              </div>
+              <div class="${heightRowClass}" data-height-row>
+                <label for="absoluteHeight">Height</label>
                 <div class="row">
-                  <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
+                  <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
                   <span>px</span>
                 </div>
-                <div class="${heightRowClass}" data-height-row>
-                  <label for="absoluteHeight">Height</label>
-                  <div class="row">
-                    <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
-                    <span>px</span>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
-        </form>
-      </div>
+        </div>
+      </form>
     </div>
         `;
 }
