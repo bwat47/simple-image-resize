@@ -27,7 +27,7 @@ export const resizeDialogCss = css`
     /* Joplin mobile sizes the dialog to this wrapper's measured width, which otherwise
        fills the whole window on wide screens (e.g. the web app). */
     #joplin-plugin-content {
-        max-width: 440px;
+        max-width: 360px;
     }
     /* Hidden until revealWhenSized confirms Joplin has shrunk the webview to fit.
        The animation is a fail-safe that reveals the content anyway after a second. */
