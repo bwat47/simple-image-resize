@@ -79,10 +79,12 @@ export const resizeDialogCss = css`
         user-select: none;
         cursor: pointer;
     }
+    /* Form controls don't inherit fonts, and would otherwise use the browser's smaller control font. */
     input[type='number'],
     input[type='text'] {
+        font: inherit;
         background-color: var(--joplin-background-color, transparent);
-        color: var(--joplin-color, #32373f);
+        color: inherit;
         border: 1px solid var(--dialog-line);
         border-radius: 3px;
     }
