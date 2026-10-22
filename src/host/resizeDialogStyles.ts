@@ -63,7 +63,8 @@ export const resizeDialogCss = css`
         margin: 0;
         padding-bottom: 8px;
         border-bottom: 1px solid var(--dialog-line);
-        font-size: 15px;
+        font-size: 1.12em;
+        font-weight: 600;
     }
     .grid {
         display: grid;
@@ -163,7 +164,7 @@ export const resizeDialogCss = css`
     .hint {
         grid-column: 2;
         margin: -4px 0 0;
-        font-size: 12px;
+        font-size: 0.85em;
         color: var(--joplin-color-faded, #7c8b9e);
     }
 
