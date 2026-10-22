@@ -189,7 +189,7 @@ describe('getInitialDialogState', () => {
         });
 
         it('does not display fallback values when dimensions are unknown', () => {
-            expect(getOriginalDimensionsText({ ...context, originalDimensionsDetermined: false })).toBe('Unknown');
+            expect(getOriginalDimensionsText({ ...context, originalDimensionsDetermined: false })).toBe('Size unknown');
         });
     });
 });

@@ -79,7 +79,7 @@ export function getInitialDialogState(
 
 export function getOriginalDimensionsText(context: ImageContext): string {
     if (!context.originalDimensionsDetermined) {
-        return 'Unknown';
+        return 'Size unknown';
     }
 
     return `${context.originalDimensions.width} × ${context.originalDimensions.height} px`;
@@ -134,10 +134,11 @@ export function renderDialogHtml(
     return `
     <style>${resizeDialogCss}${platform === 'desktop' ? desktopDialogCss : ''}</style>
     <div id="dialog-root" class="container" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
-      <h4>Resize Image</h4>
+      <div class="dialog-head">
+        <h4>Resize Image</h4>
+        <span class="original-size dimensions" title="Original image size">${originalDimensionsText}</span>
+      </div>
       <form name="resizeForm" autocomplete="off" class="grid">
-        <span class="field-label">Original</span>
-        <span class="dimensions">${originalDimensionsText}</span>
         <label for="altText" class="field-label">Alt text</label>
         <div class="row">
           <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">

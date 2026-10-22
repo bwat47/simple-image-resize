@@ -65,12 +65,23 @@ export const resizeDialogCss = css`
         gap: 14px;
         width: 100%;
     }
-    h4 {
-        margin: 0;
+    /* Title on the left, the original image size on the right. */
+    .dialog-head {
+        display: flex;
+        align-items: baseline;
+        justify-content: space-between;
+        gap: 12px;
         padding-bottom: 8px;
         border-bottom: 1px solid var(--dialog-line);
+    }
+    h4 {
+        margin: 0;
         font-size: 1.12em;
         font-weight: 600;
+    }
+    .original-size {
+        opacity: 0.72;
+        white-space: nowrap;
     }
     .grid {
         display: grid;
@@ -177,8 +188,7 @@ export const resizeDialogCss = css`
     .segment.is-disabled {
         cursor: not-allowed;
     }
-    /* Fixed-width digits, so the percentage preview doesn't jitter while typing and lines up
-       with the original size. */
+    /* Fixed-width digits, so the percentage preview doesn't jitter while typing. */
     .dimensions {
         font-variant-numeric: tabular-nums;
     }
