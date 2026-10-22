@@ -5,8 +5,8 @@
  *
  * The `css` tag lets Prettier format the template as CSS; String.raw keeps CSS escapes intact.
  *
- * Joplin's theme variables can arrive after the first paint, so fallbacks for fills and
- * borders are translucent greys that read on light and dark themes alike; an opaque light
+ * Joplin's theme variables can arrive after the first paint, so neutral fills and borders
+ * fall back to translucent greys that read on light and dark themes alike; an opaque light
  * fallback flashes on a dark theme.
  */
 const css = String.raw;
@@ -22,12 +22,13 @@ export const resizeDialogCss = css`
         --dialog-focus: var(--joplin-focus-outline-color, rgb(228, 86, 0));
         --dialog-raised: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
         /* One height for every control so inputs and toggles line up: one line of text plus
-           padding and border, never under 28px. In em, so it resolves against the control's font. */
+           padding and border, never under 28px. Custom properties are substituted where they're
+           used, so the em is the control's font size, not the root's. */
         --dialog-control: max(28px, calc(1.35em + 10px));
         --dialog-radius: 4px;
     }
     /* Joplin's UI font. The size fallback is mobile's theme value (16px), so the dialog has its
-       final size whether or not the theme variables are in when Joplin first measures it;
+       final size whether or not the theme variables have loaded when Joplin first measures it;
        desktopDialogCss swaps in desktop's. */
     body {
         font-family: var(--joplin-font-family, Roboto, sans-serif);
@@ -65,7 +66,6 @@ export const resizeDialogCss = css`
         gap: 14px;
         width: 100%;
     }
-    /* Title on the left, the original image size on the right. */
     .dialog-head {
         display: flex;
         align-items: baseline;
@@ -100,7 +100,7 @@ export const resizeDialogCss = css`
         user-select: none;
         cursor: pointer;
     }
-    /* Form controls don't inherit fonts, and would otherwise use the browser's smaller control font. */
+    /* Form controls don't inherit fonts by default; they'd use the browser's own control font. */
     input[type='number'],
     input[type='text'] {
         font: inherit;
@@ -128,7 +128,7 @@ export const resizeDialogCss = css`
     input[type='text']:hover:not(:disabled, :focus-visible) {
         border-color: rgba(127, 127, 127, 0.6);
     }
-    /* The border takes the focus colour and a 1px shadow thickens it, so focus adds no outer ring. */
+    /* Focus recolors the border and a 1px shadow thickens it, in place of the default outline. */
     input[type='number']:focus-visible,
     input[type='text']:focus-visible {
         outline: none;
@@ -193,8 +193,7 @@ export const resizeDialogCss = css`
         font-variant-numeric: tabular-nums;
     }
 
-    /* A label + control pair that toggles as one unit, while staying aligned to the
-       parent grid's columns. */
+    /* Rows shown, hidden or disabled together, still aligned to the parent grid's columns. */
     .subgrid {
         grid-column: 1 / -1;
         display: grid;
@@ -232,7 +231,7 @@ export const resizeDialogCss = css`
         opacity: 1;
     }
 
-    /* Labels in the grid's first column. Muted by opacity rather than a theme colour, so they
+    /* Labels in the grid's first column. Muted by opacity rather than a theme color, so they
        stay legible in any theme. */
     .field-label {
         opacity: 0.72;
@@ -241,7 +240,7 @@ export const resizeDialogCss = css`
 `;
 
 /**
- * Desktop-only rules: the theme's font size fallback (12px), and a fixed wrapper width.
+ * Desktop-only rules: desktop's theme font size (12px) as the fallback, and a fixed wrapper width.
  * Joplin desktop sizes a fit-to-content dialog from this wrapper, which otherwise shrinks
  * to the iframe's small starting width and cuts fields off. Mobile already picks a
  * sensible width on its own, so it gets no fixed width.
