@@ -45,15 +45,17 @@ export const resizeDialogCss = css`
         }
     }
     .container {
-        padding: 16px 14px 24px;
+        padding: 2px 2px 4px;
         display: flex;
         flex-direction: column;
         gap: 14px;
         width: 100%;
     }
     h4 {
-        margin: 0 0 10px;
-        font-size: 16px;
+        margin: 0;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        font-size: 15px;
     }
     .grid {
         display: grid;
@@ -182,9 +184,7 @@ export const resizeDialogCss = css`
         background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
         cursor: not-allowed;
     }
-    /* Extra space separates the output options from the sizing options. */
     .resize-section {
-        margin-top: 8px;
         transition: opacity 0.2s ease;
     }
     .resize-section.is-locked {
@@ -196,8 +196,9 @@ export const resizeDialogCss = css`
         opacity: 1;
     }
 
-    /* Utility classes for repeated patterns */
-    .label-nowrap {
+    /* Labels in the grid's first column. */
+    .field-label {
+        color: var(--joplin-color-faded, #7c8b9e);
         white-space: nowrap;
     }
 `;

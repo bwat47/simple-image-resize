@@ -1,7 +1,7 @@
 import type { DialogResult } from 'api/types';
 import {
     getInitialDialogState,
-    getOriginalDimensionsSummaryHtml,
+    getOriginalDimensionsText,
     renderDialogHtml,
     ResizeDialog,
     type JoplinDialogApi,
@@ -172,7 +172,7 @@ describe('getInitialDialogState', () => {
         });
     });
 
-    describe('original dimensions summary', () => {
+    describe('original dimensions text', () => {
         const context = {
             type: 'markdown' as const,
             syntax: '![Alt](https://example.com/image.png)',
@@ -185,13 +185,11 @@ describe('getInitialDialogState', () => {
         };
 
         it('displays detected dimensions', () => {
-            expect(getOriginalDimensionsSummaryHtml(context)).toBe('Original: <strong>400px × 300px</strong>');
+            expect(getOriginalDimensionsText(context)).toBe('400 × 300 px');
         });
 
         it('does not display fallback values when dimensions are unknown', () => {
-            expect(getOriginalDimensionsSummaryHtml({ ...context, originalDimensionsDetermined: false })).toBe(
-                'Original dimensions could not be determined.'
-            );
+            expect(getOriginalDimensionsText({ ...context, originalDimensionsDetermined: false })).toBe('Unknown');
         });
     });
 });
