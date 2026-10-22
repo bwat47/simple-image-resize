@@ -36,6 +36,8 @@ export interface InitialDialogState {
     markdownCheckedAttr: string;
     percentageModeCheckedAttr: string;
     absoluteModeCheckedAttr: string;
+    // HTML inert attribute
+    resizeSectionInertAttr: string;
     // HTML disabled attributes
     percentageDisabledAttr: string;
     percentageModeDisabledAttr: string;
@@ -70,6 +72,7 @@ export function getInitialDialogState(
         markdownCheckedAttr: checkedAttr(!htmlSyntaxSelected),
         percentageModeCheckedAttr: checkedAttr(percentageModeSelected),
         absoluteModeCheckedAttr: checkedAttr(!percentageModeSelected),
+        resizeSectionInertAttr: state.resizeLocked ? ' inert' : '',
         percentageDisabledAttr: disabledAttr(state.percentageDisabled),
         percentageModeDisabledAttr: disabledAttr(state.percentageModeDisabled),
         absoluteDisabledAttr: disabledAttr(state.absoluteDisabled),
@@ -113,6 +116,7 @@ export function renderDialogHtml(
         markdownCheckedAttr,
         percentageModeCheckedAttr,
         absoluteModeCheckedAttr,
+        resizeSectionInertAttr,
         percentageDisabledAttr,
         percentageModeDisabledAttr,
         absoluteDisabledAttr,
@@ -154,7 +158,7 @@ export function renderDialogHtml(
             <span>Markdown</span>
           </label>
         </div>
-        <div class="${resizeSectionClass}" data-resize-section>
+        <div class="${resizeSectionClass}"${resizeSectionInertAttr} data-resize-section>
           <span id="resizeModeLabel" class="field-label">Resize by</span>
           <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
             <label class="${percentageModeRowClass}" data-percentage-mode-row>

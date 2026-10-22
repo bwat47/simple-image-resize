@@ -161,6 +161,8 @@ describe('getInitialDialogState', () => {
 
             expect(markdownPercentage.resizeSectionClass).toContain('is-locked');
             expect(markdownAbsolute.resizeSectionClass).toContain('is-locked');
+            expect(markdownPercentage.resizeSectionInertAttr).toBe(' inert');
+            expect(markdownAbsolute.resizeSectionInertAttr).toBe(' inert');
         });
 
         it('should not lock resize section when HTML syntax is selected', () => {
@@ -169,6 +171,8 @@ describe('getInitialDialogState', () => {
 
             expect(htmlPercentage.resizeSectionClass).not.toContain('is-locked');
             expect(htmlAbsolute.resizeSectionClass).not.toContain('is-locked');
+            expect(htmlPercentage.resizeSectionInertAttr).toBe('');
+            expect(htmlAbsolute.resizeSectionInertAttr).toBe('');
         });
     });
 

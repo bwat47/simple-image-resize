@@ -107,4 +107,24 @@ describe('resize dialog webview', () => {
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteWidth"]')?.disabled).toBe(false);
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.disabled).toBe(false);
     });
+
+    it('makes the resize section inert while Markdown syntax is selected', () => {
+        document.body.innerHTML = dialogMarkup(800, 400, defaultsFor('absolute'));
+        initializeResizeDialog();
+        const resizeSection = document.querySelector('[data-resize-section]');
+        expect(resizeSection?.hasAttribute('inert')).toBe(false);
+
+        const selectSyntax = (syntax: string): void => {
+            const radio = document.querySelector<HTMLInputElement>(`input[name="targetSyntax"][value="${syntax}"]`);
+            if (!radio) throw new Error(`Missing ${syntax} syntax.`);
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        selectSyntax('markdown');
+        expect(resizeSection?.hasAttribute('inert')).toBe(true);
+
+        selectSyntax('html');
+        expect(resizeSection?.hasAttribute('inert')).toBe(false);
+    });
 });

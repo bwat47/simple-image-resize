@@ -226,9 +226,9 @@ export const resizeDialogCss = css`
     .resize-section {
         transition: opacity 0.2s ease;
     }
+    /* Dimming only: the inert attribute is what blocks pointer and keyboard input. */
     .resize-section.is-locked {
         opacity: 0.4;
-        pointer-events: none;
     }
     /* Opacity compounds, so rows already dimmed inside a locked section would almost vanish. */
     .resize-section.is-locked .is-disabled {
