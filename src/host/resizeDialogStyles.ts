@@ -110,11 +110,12 @@ export const resizeDialogCss = css`
         overflow: hidden;
         text-overflow: ellipsis;
     }
-    /* Pull the ring inward so it sits on top of the 1px border rather than around it. */
+    /* The border takes the focus colour and a 1px shadow thickens it, so focus adds no outer ring. */
     input[type='number']:focus-visible,
     input[type='text']:focus-visible {
-        outline: 2px solid var(--dialog-focus);
-        outline-offset: -1px;
+        outline: none;
+        border-color: var(--dialog-focus);
+        box-shadow: 0 0 0 1px var(--dialog-focus);
     }
     input::-webkit-outer-spin-button,
     input::-webkit-inner-spin-button {
@@ -158,8 +159,8 @@ export const resizeDialogCss = css`
         background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
     }
     .segment input:checked + span {
-        background-color: var(--dialog-raised);
-        color: var(--joplin-color4, #2d6bdc);
+        background-color: var(--joplin-selected-color, rgba(127, 127, 127, 0.3));
+        color: var(--joplin-url-color, #2d6bdc);
     }
     /* Inset, because the group's overflow: hidden clips anything drawn outside a segment. */
     .segment input:focus-visible + span {
@@ -174,7 +175,7 @@ export const resizeDialogCss = css`
         grid-column: 2;
         margin: -4px 0 0;
         font-size: 0.85em;
-        color: var(--joplin-color-faded, #7c8b9e);
+        opacity: 0.55;
     }
 
     /* A label + control pair that toggles as one unit, while staying aligned to the
@@ -216,9 +217,10 @@ export const resizeDialogCss = css`
         opacity: 1;
     }
 
-    /* Labels in the grid's first column. */
+    /* Labels in the grid's first column. Muted by opacity rather than a theme colour, so they
+       stay legible in any theme. */
     .field-label {
-        color: var(--joplin-color-faded, #7c8b9e);
+        opacity: 0.72;
         white-space: nowrap;
     }
 `;
