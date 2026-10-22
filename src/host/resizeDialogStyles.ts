@@ -22,9 +22,12 @@ export const resizeDialogCss = css`
         --dialog-focus: var(--joplin-focus-outline-color, rgb(228, 86, 0));
         --dialog-raised: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
     }
+    /* Joplin's UI font. The size fallback is mobile's theme value (16px), so the dialog has its
+       final size whether or not the theme variables are in when Joplin first measures it;
+       desktopDialogCss swaps in desktop's. */
     body {
-        font-family: system-ui, sans-serif;
-        font-size: 14px;
+        font-family: var(--joplin-font-family, Roboto, sans-serif);
+        font-size: var(--joplin-font-size, 16px);
         margin: 0;
         padding: 0;
         color: var(--joplin-color, #32373f);
@@ -211,11 +214,15 @@ export const resizeDialogCss = css`
 `;
 
 /**
- * Desktop-only wrapper width. Joplin desktop sizes a fit-to-content dialog from this
- * wrapper, which otherwise shrinks to the iframe's small starting width and cuts fields
- * off. Mobile already picks a sensible width on its own, so it gets no fixed width.
+ * Desktop-only rules: the theme's font size fallback (12px), and a fixed wrapper width.
+ * Joplin desktop sizes a fit-to-content dialog from this wrapper, which otherwise shrinks
+ * to the iframe's small starting width and cuts fields off. Mobile already picks a
+ * sensible width on its own, so it gets no fixed width.
  */
 export const desktopDialogCss = css`
+    body {
+        font-size: var(--joplin-font-size, 12px);
+    }
     #joplin-plugin-content {
         width: 360px;
     }
