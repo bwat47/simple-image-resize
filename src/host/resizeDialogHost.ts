@@ -177,8 +177,8 @@ export function renderDialogHtml(
                 <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
                 <span>%</span>
               </div>
-              <span class="field-label">New size</span>
-              <span class="dimensions" data-percentage-preview>—</span>
+              <span id="percentagePreviewLabel" class="field-label">New size</span>
+              <output for="percentage" class="dimensions" aria-labelledby="percentagePreviewLabel" data-percentage-preview>—</output>
             </div>
             <div class="${absoluteGroupClass}" data-absolute-group>
               <label for="absoluteWidth" class="field-label">Width</label>
