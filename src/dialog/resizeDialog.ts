@@ -120,7 +120,7 @@ function initializeResizeDialog(): void {
     const setPercentagePreview = (width: string, height: string): void => {
         absoluteWidthInput.value = width;
         absoluteHeightInput.value = height;
-        percentagePreview.textContent = width && height ? `= ${width} × ${height} px` : '';
+        percentagePreview.textContent = width && height ? `${width} × ${height} px` : '—';
     };
 
     const syncAbsoluteFromPercentage = (): void => {

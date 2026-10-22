@@ -177,12 +177,10 @@ export const resizeDialogCss = css`
     .segment.is-disabled {
         cursor: not-allowed;
     }
-    /* Sits in the control column under the control it annotates, tucked closer than a normal row. */
-    .hint {
-        grid-column: 2;
-        margin: -4px 0 0;
-        font-size: 0.85em;
-        opacity: 0.55;
+    /* Fixed-width digits, so the percentage preview doesn't jitter while typing and lines up
+       with the original size. */
+    .dimensions {
+        font-variant-numeric: tabular-nums;
     }
 
     /* A label + control pair that toggles as one unit, while staying aligned to the

@@ -137,7 +137,7 @@ export function renderDialogHtml(
       <h4>Resize Image</h4>
       <form name="resizeForm" autocomplete="off" class="grid">
         <span class="field-label">Original</span>
-        <span>${originalDimensionsText}</span>
+        <span class="dimensions">${originalDimensionsText}</span>
         <label for="altText" class="field-label">Alt text</label>
         <div class="row">
           <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
@@ -172,7 +172,8 @@ export function renderDialogHtml(
                 <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
                 <span>%</span>
               </div>
-              <p class="hint" data-percentage-preview></p>
+              <span class="field-label">New size</span>
+              <span class="dimensions" data-percentage-preview>—</span>
             </div>
             <div class="${absoluteGroupClass}" data-absolute-group>
               <label for="absoluteWidth" class="field-label">Width</label>
