@@ -99,16 +99,23 @@ export const resizeDialogCss = css`
         padding: 0 8px;
         border: 1px solid var(--dialog-line);
         border-radius: var(--dialog-radius);
+        transition: border-color 0.12s ease;
     }
     input[type='number'] {
         width: 80px;
-        transition: background-color 0.2s ease;
+        transition:
+            border-color 0.12s ease,
+            background-color 0.2s ease;
     }
     input[type='text'] {
         width: 100%;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
+    }
+    input[type='number']:hover:not(:disabled, :focus-visible),
+    input[type='text']:hover:not(:disabled, :focus-visible) {
+        border-color: rgba(127, 127, 127, 0.6);
     }
     /* The border takes the focus colour and a 1px shadow thickens it, so focus adds no outer ring. */
     input[type='number']:focus-visible,
