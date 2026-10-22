@@ -68,12 +68,17 @@ export const resizeDialogCss = css`
         flex-direction: column;
         gap: 14px;
         width: 100%;
+        /* Query container for the narrow layout. Safe because the width comes from the
+           wrapper, never from the content. */
+        container-type: inline-size;
     }
+    /* Wraps the original size under the title when both don't fit on one line. */
     .dialog-head {
         display: flex;
+        flex-wrap: wrap;
         align-items: baseline;
         justify-content: space-between;
-        gap: 12px;
+        gap: 4px 12px;
         padding-bottom: 8px;
         border-bottom: 1px solid var(--dialog-line);
     }
@@ -240,6 +245,27 @@ export const resizeDialogCss = css`
     .field-label {
         opacity: 0.72;
         white-space: nowrap;
+    }
+
+    /* Narrow layout: labels stack above their controls once the widest row
+       ("Resize by" beside the Percentage | Pixels toggle) no longer fits.
+       A container query rather than a media query, because container query ems follow
+       the dialog's font size, so larger text switches layouts sooner. */
+    @container (max-width: 18em) {
+        .grid {
+            grid-template-columns: minmax(0, 1fr);
+            row-gap: 4px;
+        }
+        .subgrid {
+            row-gap: 4px;
+        }
+        /* Extra space above each label after the first, so each label stays with its control. */
+        .grid .field-label {
+            margin-top: 6px;
+        }
+        .grid > .field-label:first-child {
+            margin-top: 0;
+        }
     }
 `;
 
