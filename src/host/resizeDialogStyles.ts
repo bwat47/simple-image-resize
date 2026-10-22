@@ -179,9 +179,10 @@ export const resizeDialogCss = css`
     .segment input:not(:checked):not(:disabled) + span:hover {
         background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
     }
+    /* Raised colors are a paired background and foreground, including in dark themes. */
     .segment input:checked + span {
-        background-color: var(--joplin-selected-color, rgba(127, 127, 127, 0.3));
-        color: var(--joplin-url-color, #2d6bdc);
+        background-color: var(--dialog-raised);
+        color: var(--joplin-raised-color, inherit);
     }
     /* Inset, because the group's overflow: hidden clips anything drawn outside a segment. */
     .segment input:focus-visible + span {
