@@ -17,6 +17,11 @@ export const resizeDialogCss = css`
     *::after {
         box-sizing: border-box;
     }
+    :root {
+        --dialog-line: var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        --dialog-focus: var(--joplin-focus-outline-color, rgb(228, 86, 0));
+        --dialog-raised: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
+    }
     body {
         font-family: system-ui, sans-serif;
         font-size: 14px;
@@ -54,7 +59,7 @@ export const resizeDialogCss = css`
     h4 {
         margin: 0;
         padding-bottom: 8px;
-        border-bottom: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        border-bottom: 1px solid var(--dialog-line);
         font-size: 15px;
     }
     .grid {
@@ -78,7 +83,7 @@ export const resizeDialogCss = css`
     input[type='text'] {
         background-color: var(--joplin-background-color, transparent);
         color: var(--joplin-color, #32373f);
-        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        border: 1px solid var(--dialog-line);
         border-radius: 3px;
     }
     input[type='number'] {
@@ -96,7 +101,7 @@ export const resizeDialogCss = css`
     /* Pull the ring inward so it sits on top of the 1px border rather than around it. */
     input[type='number']:focus-visible,
     input[type='text']:focus-visible {
-        outline: 2px solid var(--joplin-focus-outline-color, rgb(228, 86, 0));
+        outline: 2px solid var(--dialog-focus);
         outline-offset: -1px;
     }
     input::-webkit-outer-spin-button,
@@ -111,7 +116,7 @@ export const resizeDialogCss = css`
         display: inline-flex;
         justify-self: start;
         align-self: flex-start;
-        border: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        border: 1px solid var(--dialog-line);
         border-radius: 4px;
         overflow: hidden;
     }
@@ -120,7 +125,7 @@ export const resizeDialogCss = css`
         display: flex;
     }
     .segment + .segment {
-        border-left: 1px solid var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
+        border-left: 1px solid var(--dialog-line);
     }
     .segment input {
         position: absolute;
@@ -138,12 +143,12 @@ export const resizeDialogCss = css`
         background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
     }
     .segment input:checked + span {
-        background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
+        background-color: var(--dialog-raised);
         color: var(--joplin-color4, #2d6bdc);
     }
     /* Inset, because the group's overflow: hidden clips anything drawn outside a segment. */
     .segment input:focus-visible + span {
-        outline: 2px solid var(--joplin-focus-outline-color, rgb(228, 86, 0));
+        outline: 2px solid var(--dialog-focus);
         outline-offset: -2px;
     }
     .segment.is-disabled {
@@ -181,7 +186,7 @@ export const resizeDialogCss = css`
         opacity: 0.6;
     }
     .is-disabled input[type='number'] {
-        background-color: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
+        background-color: var(--dialog-raised);
         cursor: not-allowed;
     }
     .resize-section {
