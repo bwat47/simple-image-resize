@@ -28,6 +28,8 @@ export const resizeDialogCss = css`
     body {
         font-family: var(--joplin-font-family, Roboto, sans-serif);
         font-size: var(--joplin-font-size, 16px);
+        /* Explicit, because 'normal' varies by font and platform and would shift row heights. */
+        line-height: 1.35;
         margin: 0;
         padding: 0;
         color: var(--joplin-color, #32373f);
