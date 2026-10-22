@@ -8,6 +8,9 @@
  * Joplin's theme variables can arrive after the first paint, so neutral fills and borders
  * fall back to translucent greys that read on light and dark themes alike; an opaque light
  * fallback flashes on a dark theme.
+ *
+ * Visual design adapted from Jot (https://github.com/pmslava/joplin-plugin-jot),
+ * MIT License, Copyright (c) 2026 pmslava.
  */
 const css = String.raw;
 
