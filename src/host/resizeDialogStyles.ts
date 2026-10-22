@@ -1,6 +1,6 @@
 /**
  * Resize dialog stylesheet, embedded in the dialog markup so it arrives with the HTML.
- * Loading it via addScript instead lets the dialog render unstyled first, which shows up
+ * Loading it with addScript would let the dialog render unstyled first, which shows up
  * as a visible layout adjustment after the dialog opens on Joplin mobile.
  *
  * The `css` tag lets Prettier format the template as CSS; String.raw keeps CSS escapes intact.
@@ -24,9 +24,10 @@ export const resizeDialogCss = css`
         --dialog-line: var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
         --dialog-focus: var(--joplin-focus-outline-color, rgb(228, 86, 0));
         --dialog-raised: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
-        /* One height for every control so inputs and toggles line up: one line of text plus
-           padding and border, never under 28px. Custom properties are substituted where they're
-           used, so the em is the control's font size, not the root's. */
+        /* One height for every control so inputs and toggles line up: one line of text (1.35em
+           matches body's line-height) plus padding and border, never under 28px. Custom
+           properties are substituted where they're used, so the em is the control's font size,
+           not the root's. */
         --dialog-control: max(28px, calc(1.35em + 10px));
         --dialog-radius: 4px;
     }
@@ -68,11 +69,11 @@ export const resizeDialogCss = css`
         flex-direction: column;
         gap: 14px;
         width: 100%;
-        /* Query container for the narrow layout. Safe because the width comes from the
-           wrapper, never from the content. */
+        /* Query container for the narrow layout. Inline-size containment ignores the
+           content's width, which is fine because the wrapper sets the width. */
         container-type: inline-size;
     }
-    /* Wraps the original size under the title when both don't fit on one line. */
+    /* Wraps the original size under the title when they don't fit on one line together. */
     .dialog-head {
         display: flex;
         flex-wrap: wrap;
@@ -184,7 +185,8 @@ export const resizeDialogCss = css`
     .segment input:not(:checked):not(:disabled) + span:hover {
         background-color: var(--joplin-background-color-hover4, rgba(203, 218, 241, 0.3));
     }
-    /* Raised colors are a paired background and foreground, including in dark themes. */
+    /* Joplin pairs the raised background with --joplin-raised-color; set both so the checked
+       segment's text keeps its contrast in dark themes. */
     .segment input:checked + span {
         background-color: var(--dialog-raised);
         color: var(--joplin-raised-color, inherit);
@@ -197,12 +199,14 @@ export const resizeDialogCss = css`
     .segment.is-disabled {
         cursor: not-allowed;
     }
-    /* Fixed-width digits, so the percentage preview doesn't jitter while typing. */
+    /* Fixed-width digits for dimension readouts, so the percentage preview doesn't jitter
+       while typing. */
     .dimensions {
         font-variant-numeric: tabular-nums;
     }
 
-    /* Rows shown, hidden or disabled together, still aligned to the parent grid's columns. */
+    /* Groups rows that are shown, hidden or disabled as a unit, while keeping them on the
+       parent grid's columns. */
     .subgrid {
         grid-column: 1 / -1;
         display: grid;
@@ -249,8 +253,9 @@ export const resizeDialogCss = css`
 
     /* Narrow layout: labels stack above their controls once the widest row
        ("Resize by" beside the Percentage | Pixels toggle) no longer fits.
-       A container query rather than a media query, because container query ems follow
-       the dialog's font size, so larger text switches layouts sooner. */
+       A container query rather than a media query, because the dialog's width is unrelated
+       to the viewport's (on desktop it's a fixed 360px), and container query ems follow the
+       dialog's font size, so larger text switches layouts sooner. */
     @container (max-width: 18em) {
         .grid {
             grid-template-columns: minmax(0, 1fr);
@@ -259,7 +264,8 @@ export const resizeDialogCss = css`
         .subgrid {
             row-gap: 4px;
         }
-        /* Extra space above each label after the first, so each label stays with its control. */
+        /* Extra space above each label after the first, so each label sits closer to the control
+           below it than to the one above. */
         .grid .field-label {
             margin-top: 6px;
         }
@@ -272,8 +278,8 @@ export const resizeDialogCss = css`
 /**
  * Desktop-only rules: desktop's theme font size (12px) as the fallback, and a fixed wrapper width.
  * Joplin desktop sizes a fit-to-content dialog from this wrapper, which otherwise shrinks
- * to the iframe's small starting width and cuts fields off. Mobile already picks a
- * sensible width on its own, so it gets no fixed width.
+ * to the iframe's small starting width and cuts fields off. Mobile sizes the dialog to the
+ * wrapper's width, which the shared max-width already caps, so it needs no fixed width.
  */
 export const desktopDialogCss = css`
     body {
