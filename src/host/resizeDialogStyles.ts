@@ -21,6 +21,10 @@ export const resizeDialogCss = css`
         --dialog-line: var(--joplin-divider-color, rgba(127, 127, 127, 0.35));
         --dialog-focus: var(--joplin-focus-outline-color, rgb(228, 86, 0));
         --dialog-raised: var(--joplin-raised-background-color, rgba(127, 127, 127, 0.2));
+        /* One height for every control so inputs and toggles line up: one line of text plus
+           padding and border, never under 28px. In em, so it resolves against the control's font. */
+        --dialog-control: max(28px, calc(1.35em + 10px));
+        --dialog-radius: 4px;
     }
     /* Joplin's UI font. The size fallback is mobile's theme value (16px), so the dialog has its
        final size whether or not the theme variables are in when Joplin first measures it;
@@ -91,17 +95,17 @@ export const resizeDialogCss = css`
         font: inherit;
         background-color: var(--joplin-background-color, transparent);
         color: inherit;
+        height: var(--dialog-control);
+        padding: 0 8px;
         border: 1px solid var(--dialog-line);
-        border-radius: 3px;
+        border-radius: var(--dialog-radius);
     }
     input[type='number'] {
         width: 80px;
-        padding: 4px 6px;
         transition: background-color 0.2s ease;
     }
     input[type='text'] {
         width: 100%;
-        padding: 6px 8px;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -124,8 +128,9 @@ export const resizeDialogCss = css`
         display: inline-flex;
         justify-self: start;
         align-self: flex-start;
+        height: var(--dialog-control);
         border: 1px solid var(--dialog-line);
-        border-radius: 4px;
+        border-radius: var(--dialog-radius);
         overflow: hidden;
     }
     .segment {
@@ -143,7 +148,9 @@ export const resizeDialogCss = css`
         pointer-events: none;
     }
     .segment span {
-        padding: 4px 12px;
+        display: flex;
+        align-items: center;
+        padding: 0 12px;
         white-space: nowrap;
         transition: background-color 0.15s ease;
     }
