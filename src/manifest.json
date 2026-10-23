@@ -2,10 +2,10 @@
     "manifest_version": 1,
     "id": "com.bwat47.simple-image-resize",
     "app_min_version": "3.3",
-    "version": "1.9.0",
+    "version": "1.9.1",
     "platforms": ["desktop", "mobile"],
     "name": "Simple Image Resize",
-    "description": "A simple dialogue to switch image syntax between markdown/html and losslessly resize images",
+    "description": "Allows you to quickly resize images in the markdown editor (and viewer) using HTML image syntax via a dialog or customizable quick resize slots (context menu/keyboard shortcuts).",
     "author": "bwat47",
     "homepage_url": "https://github.com/bwat47/simple-image-resize",
     "repository_url": "https://github.com/bwat47/simple-image-resize",
@@ -16,8 +16,7 @@
         { "src": "images/simple-resize2.png", "label": "simple resize example 2" },
         { "src": "images/simple-resize3.png", "label": "simple resize example 3" },
         { "src": "images/simple-resize4.png", "label": "simple resize example 4" },
-        { "src": "images/simple-resize5.png", "label": "simple resize example 5" },
-        { "src": "images/simple-resize6.png", "label": "simple resize example 6" }
+        { "src": "images/simple-resize5.png", "label": "simple resize example 5" }
     ],
     "icons": {
         "128": "images/128.png",
