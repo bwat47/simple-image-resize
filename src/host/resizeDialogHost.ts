@@ -144,9 +144,7 @@ export function renderDialogHtml(
       </div>
       <form name="resizeForm" autocomplete="off" class="grid">
         <label for="altText" class="field-label">Alt text</label>
-        <div class="row">
-          <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
-        </div>
+        <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
         <span id="syntaxLabel" class="field-label">Syntax</span>
         <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
           <label class="segment">

@@ -97,7 +97,6 @@ export const resizeDialogCss = css`
         grid-template-columns: max-content 1fr;
         gap: 8px 12px;
         align-items: center;
-        width: 100%;
     }
     .row {
         display: flex;
