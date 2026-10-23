@@ -120,7 +120,7 @@ function initializeResizeDialog(): void {
     const setPercentagePreview = (width: string, height: string): void => {
         absoluteWidthInput.value = width;
         absoluteHeightInput.value = height;
-        percentagePreview.textContent = width && height ? `= ${width} × ${height} px` : '';
+        percentagePreview.textContent = width && height ? `${width} × ${height} px` : '—';
     };
 
     const syncAbsoluteFromPercentage = (): void => {
@@ -161,6 +161,8 @@ function initializeResizeDialog(): void {
         const isPercentage = state.resizeMode === 'percentage';
 
         resizeSection.classList.toggle('is-locked', state.resizeLocked);
+        // Inert takes the locked section out of the tab order and accessibility tree, not just pointer input.
+        resizeSection.toggleAttribute('inert', state.resizeLocked);
         setRowDisabled(percentageModeRow, state.percentageModeDisabled);
         setRowDisabled(percentageRow, state.percentageDisabled);
         setRowDisabled(absoluteGroup, state.absoluteDisabled);

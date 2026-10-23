@@ -1,7 +1,7 @@
 import type { DialogResult } from 'api/types';
 import {
     getInitialDialogState,
-    getOriginalDimensionsSummaryHtml,
+    getOriginalDimensionsText,
     renderDialogHtml,
     ResizeDialog,
     type JoplinDialogApi,
@@ -161,6 +161,8 @@ describe('getInitialDialogState', () => {
 
             expect(markdownPercentage.resizeSectionClass).toContain('is-locked');
             expect(markdownAbsolute.resizeSectionClass).toContain('is-locked');
+            expect(markdownPercentage.resizeSectionInertAttr).toBe(' inert');
+            expect(markdownAbsolute.resizeSectionInertAttr).toBe(' inert');
         });
 
         it('should not lock resize section when HTML syntax is selected', () => {
@@ -169,10 +171,12 @@ describe('getInitialDialogState', () => {
 
             expect(htmlPercentage.resizeSectionClass).not.toContain('is-locked');
             expect(htmlAbsolute.resizeSectionClass).not.toContain('is-locked');
+            expect(htmlPercentage.resizeSectionInertAttr).toBe('');
+            expect(htmlAbsolute.resizeSectionInertAttr).toBe('');
         });
     });
 
-    describe('original dimensions summary', () => {
+    describe('original dimensions text', () => {
         const context = {
             type: 'markdown' as const,
             syntax: '![Alt](https://example.com/image.png)',
@@ -185,13 +189,11 @@ describe('getInitialDialogState', () => {
         };
 
         it('displays detected dimensions', () => {
-            expect(getOriginalDimensionsSummaryHtml(context)).toBe('Original: <strong>400px × 300px</strong>');
+            expect(getOriginalDimensionsText(context)).toBe('400 × 300 px');
         });
 
         it('does not display fallback values when dimensions are unknown', () => {
-            expect(getOriginalDimensionsSummaryHtml({ ...context, originalDimensionsDetermined: false })).toBe(
-                'Original dimensions could not be determined.'
-            );
+            expect(getOriginalDimensionsText({ ...context, originalDimensionsDetermined: false })).toBe('Size unknown');
         });
     });
 });

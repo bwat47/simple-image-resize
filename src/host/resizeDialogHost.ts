@@ -36,6 +36,8 @@ export interface InitialDialogState {
     markdownCheckedAttr: string;
     percentageModeCheckedAttr: string;
     absoluteModeCheckedAttr: string;
+    // HTML inert attribute
+    resizeSectionInertAttr: string;
     // HTML disabled attributes
     percentageDisabledAttr: string;
     percentageModeDisabledAttr: string;
@@ -70,6 +72,7 @@ export function getInitialDialogState(
         markdownCheckedAttr: checkedAttr(!htmlSyntaxSelected),
         percentageModeCheckedAttr: checkedAttr(percentageModeSelected),
         absoluteModeCheckedAttr: checkedAttr(!percentageModeSelected),
+        resizeSectionInertAttr: state.resizeLocked ? ' inert' : '',
         percentageDisabledAttr: disabledAttr(state.percentageDisabled),
         percentageModeDisabledAttr: disabledAttr(state.percentageModeDisabled),
         absoluteDisabledAttr: disabledAttr(state.absoluteDisabled),
@@ -77,12 +80,12 @@ export function getInitialDialogState(
     };
 }
 
-export function getOriginalDimensionsSummaryHtml(context: ImageContext): string {
+export function getOriginalDimensionsText(context: ImageContext): string {
     if (!context.originalDimensionsDetermined) {
-        return 'Original dimensions could not be determined.';
+        return 'Size unknown';
     }
 
-    return `Original: <strong>${context.originalDimensions.width}px × ${context.originalDimensions.height}px</strong>`;
+    return `${context.originalDimensions.width} × ${context.originalDimensions.height} px`;
 }
 
 function getHeightPlaceholderAttribute(context: ImageContext): string {
@@ -113,12 +116,13 @@ export function renderDialogHtml(
         markdownCheckedAttr,
         percentageModeCheckedAttr,
         absoluteModeCheckedAttr,
+        resizeSectionInertAttr,
         percentageDisabledAttr,
         percentageModeDisabledAttr,
         absoluteDisabledAttr,
         heightDisabledAttr,
     } = getInitialDialogState(defaultSyntax, defaultResizeMode, context.originalDimensionsDetermined);
-    const originalDimensionsSummaryHtml = getOriginalDimensionsSummaryHtml(context);
+    const originalDimensionsText = getOriginalDimensionsText(context);
     const heightPlaceholderAttr = getHeightPlaceholderAttribute(context);
 
     // Read by the dialog script from the root's `data-config` attribute.
@@ -134,16 +138,14 @@ export function renderDialogHtml(
     return `
     <style>${resizeDialogCss}${platform === 'desktop' ? desktopDialogCss : ''}</style>
     <div id="dialog-root" class="container" data-config="${escapeHtmlAttribute(JSON.stringify(dialogConfig))}">
-      <div>
+      <div class="dialog-head">
         <h4>Resize Image</h4>
-        <p style="margin:0 0 4px;">${originalDimensionsSummaryHtml}</p>
+        <span class="original-size dimensions" title="Original image size">${originalDimensionsText}</span>
       </div>
       <form name="resizeForm" autocomplete="off" class="grid">
-        <label for="altText" class="label-nowrap">Alt text</label>
-        <div class="row">
-          <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
-        </div>
-        <span id="syntaxLabel" class="label-nowrap">Syntax</span>
+        <label for="altText" class="field-label">Alt text</label>
+        <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
+        <span id="syntaxLabel" class="field-label">Syntax</span>
         <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
           <label class="segment">
             <input type="radio" name="targetSyntax" value="html"${htmlCheckedAttr}>
@@ -154,9 +156,8 @@ export function renderDialogHtml(
             <span>Markdown</span>
           </label>
         </div>
-        <p class="hint">Only HTML supports resizing.</p>
-        <div class="${resizeSectionClass}" data-resize-section>
-          <span id="resizeModeLabel" class="label-nowrap">Resize by</span>
+        <div class="${resizeSectionClass}"${resizeSectionInertAttr} data-resize-section>
+          <span id="resizeModeLabel" class="field-label">Resize by</span>
           <div class="segmented" role="radiogroup" aria-labelledby="resizeModeLabel">
             <label class="${percentageModeRowClass}" data-percentage-mode-row>
               <input type="radio" name="resizeMode" value="percentage"${percentageModeCheckedAttr}${percentageModeDisabledAttr}>
@@ -169,21 +170,22 @@ export function renderDialogHtml(
           </div>
           <div class="subgrid mode-panels">
             <div class="${percentageRowClass}" data-percentage-row>
-              <label for="percentage">Scale</label>
+              <label for="percentage" class="field-label">Scale</label>
               <div class="row">
                 <input type="number" name="percentage" id="percentage" value="${defaultPercentage}" min="1" max="500"${percentageDisabledAttr}>
                 <span>%</span>
               </div>
-              <p class="hint" data-percentage-preview></p>
+              <span id="percentagePreviewLabel" class="field-label">New size</span>
+              <output for="percentage" class="dimensions" aria-labelledby="percentagePreviewLabel" data-percentage-preview>—</output>
             </div>
             <div class="${absoluteGroupClass}" data-absolute-group>
-              <label for="absoluteWidth">Width</label>
+              <label for="absoluteWidth" class="field-label">Width</label>
               <div class="row">
                 <input type="number" name="absoluteWidth" id="absoluteWidth" placeholder="${originalWidth}"${absoluteDisabledAttr}>
                 <span>px</span>
               </div>
               <div class="${heightRowClass}" data-height-row>
-                <label for="absoluteHeight">Height</label>
+                <label for="absoluteHeight" class="field-label">Height</label>
                 <div class="row">
                   <input type="number" name="absoluteHeight" id="absoluteHeight"${heightPlaceholderAttr}${heightDisabledAttr}>
                   <span>px</span>

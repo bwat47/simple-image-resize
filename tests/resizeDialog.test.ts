@@ -90,13 +90,15 @@ describe('resize dialog webview', () => {
 
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteWidth"]')?.value).toBe('200');
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.value).toBe('100');
-        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('= 200 × 100 px');
+        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('200 × 100 px');
+        expect(document.querySelector('[data-percentage-preview]')?.tagName).toBe('OUTPUT');
+        expect(document.getElementById('percentagePreviewLabel')?.textContent).toBe('New size');
         expect(document.querySelector('[data-absolute-group]')?.classList).toContain('is-disabled');
 
         setInputValue('percentage', '');
-        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('');
+        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('—');
         setInputValue('percentage', '50');
-        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('= 400 × 200 px');
+        expect(document.querySelector('[data-percentage-preview]')?.textContent).toBe('400 × 200 px');
         expect(document.querySelector('[data-height-row]')?.classList).not.toContain('is-disabled');
 
         const absoluteMode = document.querySelector<HTMLInputElement>('input[name="resizeMode"][value="absolute"]');
@@ -106,5 +108,25 @@ describe('resize dialog webview', () => {
 
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteWidth"]')?.disabled).toBe(false);
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.disabled).toBe(false);
+    });
+
+    it('makes the resize section inert while Markdown syntax is selected', () => {
+        document.body.innerHTML = dialogMarkup(800, 400, defaultsFor('absolute'));
+        initializeResizeDialog();
+        const resizeSection = document.querySelector('[data-resize-section]');
+        expect(resizeSection?.hasAttribute('inert')).toBe(false);
+
+        const selectSyntax = (syntax: string): void => {
+            const radio = document.querySelector<HTMLInputElement>(`input[name="targetSyntax"][value="${syntax}"]`);
+            if (!radio) throw new Error(`Missing ${syntax} syntax.`);
+            radio.checked = true;
+            radio.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        selectSyntax('markdown');
+        expect(resizeSection?.hasAttribute('inert')).toBe(true);
+
+        selectSyntax('html');
+        expect(resizeSection?.hasAttribute('inert')).toBe(false);
     });
 });
