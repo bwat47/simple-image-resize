@@ -23,7 +23,7 @@ function runtimeBoundary(folder) {
     return {
         files: [`src/${folder}/**/*.{ts,js}`],
         rules: {
-            '@typescript-eslint/no-restricted-imports': [
+            'no-restricted-imports': [
                 'error',
                 {
                     paths:

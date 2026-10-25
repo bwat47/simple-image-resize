@@ -21,7 +21,7 @@ Code under `src/` is grouped by the runtime it is bundled into, because that dec
 - `src/dialog/` runs in the resize dialog's webview. The host embeds `src/host/resizeDialogStyles.ts` with the markup to prevent an unstyled first paint and adds a fixed wrapper width on desktop for fit-to-content sizing. `revealWhenSized.ts` delays showing the dialog until sizing settles, with a CSS timeout fallback. Styles follow Joplin's theme and adapt to narrow widths and larger text.
 - `src/shared/` holds runtime-neutral code (types, logger, cross-runtime contracts, pure helpers) bundled into more than one of the above.
 
-`eslint.config.mjs` enforces this with `@typescript-eslint/no-restricted-imports`: a runtime folder cannot import values from another runtime folder, and only `src/host/` may import values from `api` or `api/types`. Type-only imports may cross boundaries since they are erased at build time. Code needed by two runtimes belongs in `src/shared/`.
+`eslint.config.mjs` enforces this with ESLint's `no-restricted-imports`: a runtime folder cannot import values from another runtime folder, and only `src/host/` may import values from `api` or `api/types`. Type-only imports may cross boundaries since they are erased at build time. Code needed by two runtimes belongs in `src/shared/`.
 
 The built output mirrors these folders, so registration paths such as `./editor/cursorContentScript.js`, `./viewer/viewerContentScript.js`, and `./dialog/resizeDialog.js` must match `plugin.config.json`.
 
