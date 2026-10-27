@@ -1,9 +1,28 @@
-import type { ImageDetails, ImageSyntax } from '../shared/types';
-import { decodeHtmlEntities } from '../shared/stringUtils';
+import type { ImageDetails } from '../shared/types';
+import { decodeHtmlEntities, decodeMarkdownText } from '../shared/stringUtils';
 
-// Matches a syntax-tree-validated Markdown image, for example:
-// ![Alt text](:/0123456789abcdef0123456789abcdef "Optional title")
-const MARKDOWN_IMAGE_PATTERN = /!\[(?<altText>[^\]]*)\]\(\s*(?<src>[^)\s]+)(?:\s+["'](?<title>[^"']+)["'])?\s*\)/;
+/**
+ * Raw source text of a Markdown image's parts, sliced from its syntax tree node.
+ *
+ * For `![a [b]](<:/0123456789abcdef0123456789abcdef> "t")`:
+ * `{ altText: 'a [b]', url: '<:/0123456789abcdef0123456789abcdef>', title: '"t"' }`
+ */
+export interface MarkdownImageParts {
+    /** Text between `![` and the closing `]`, still escaped. */
+    altText: string;
+    /** Destination, including any angle brackets. */
+    url: string;
+    /** Title including its delimiters, or `''` when absent. */
+    title: string;
+}
+
+// Matches an angle-bracketed destination, e.g. <:/0123456789abcdef0123456789abcdef>
+const ANGLE_BRACKET_URL_PATTERN = /^<([\s\S]*)>$/;
+
+// Matches what may not be safe in a bare destination, e.g. the space in <my image.png>
+// or the unbalanced parenthesis in <a(b.png>. Angle-bracketed destinations containing
+// these are rejected because Markdown output writes the source bare.
+const NEEDS_ANGLE_BRACKETS_PATTERN = /[\s()]/;
 
 // Matches a Joplin resource source, for example: :/0123456789abcdef0123456789abcdef
 const RESOURCE_ID_PATTERN = /:\/([a-f0-9]{32})/;
@@ -12,9 +31,10 @@ const RESOURCE_ID_PATTERN = /:\/([a-f0-9]{32})/;
 const EXTERNAL_URL_PATTERN = /(https?:\/\/[^\s"']+)/;
 
 // Attribute patterns preserve matching quote pairs, for example: src="image.png".
+// Alt and title values may span lines, e.g. alt="first\nsecond".
 const HTML_SRC_PATTERN = /src=(["'])([^"']+)\1/i;
-const HTML_ALT_PATTERN = /alt=(["'])(.*?)\1/i;
-const HTML_TITLE_PATTERN = /title=(["'])(.*?)\1/i;
+const HTML_ALT_PATTERN = /alt=(["'])([\s\S]*?)\1/i;
+const HTML_TITLE_PATTERN = /title=(["'])([\s\S]*?)\1/i;
 
 type ImageSourceInfo = Pick<ImageDetails, 'source' | 'sourceType'>;
 
@@ -28,22 +48,31 @@ function resolveImageSource(src: string): ImageSourceInfo {
     return { source: src, sourceType: 'external' };
 }
 
-function extractMarkdownDetails(imageText: string): ImageDetails | null {
-    const match = MARKDOWN_IMAGE_PATTERN.exec(imageText);
-    if (!match?.groups) return null;
-
-    const { altText, src, title } = match.groups;
+/**
+ * Extract image metadata from the parts of a syntax-tree-validated Markdown image.
+ *
+ * The syntax tree has already matched brackets, delimiters and code spans, so this
+ * only strips delimiters and decodes escapes and entities.
+ */
+export function extractMarkdownDetails(imageText: string, parts: MarkdownImageParts): ImageDetails | null {
+    const angleMatch = ANGLE_BRACKET_URL_PATTERN.exec(parts.url);
+    const src = angleMatch ? angleMatch[1] : parts.url;
+    if (!src || (angleMatch && NEEDS_ANGLE_BRACKETS_PATTERN.test(src))) return null;
 
     return {
         type: 'markdown',
         syntax: imageText,
         ...resolveImageSource(src),
-        altText: altText || '',
-        title: title || '',
+        altText: decodeMarkdownText(parts.altText),
+        // Titles are delimited by one character on each side: "t", 't' or (t).
+        title: decodeMarkdownText(parts.title.slice(1, -1)),
     };
 }
 
-function extractHtmlDetails(imageText: string): ImageDetails | null {
+/**
+ * Extract image metadata from an HTML `<img>` tag found by the syntax tree.
+ */
+export function extractHtmlDetails(imageText: string): ImageDetails | null {
     const srcMatch = HTML_SRC_PATTERN.exec(imageText);
     if (!srcMatch) return null;
 
@@ -58,11 +87,4 @@ function extractHtmlDetails(imageText: string): ImageDetails | null {
         altText: altMatch ? decodeHtmlEntities(altMatch[2]) : '',
         title: titleMatch ? decodeHtmlEntities(titleMatch[2]) : '',
     };
-}
-
-/**
- * Extract image metadata after CodeMirror's syntax tree has identified the syntax type.
- */
-export function extractImageDetails(imageText: string, syntaxType: ImageSyntax): ImageDetails | null {
-    return syntaxType === 'markdown' ? extractMarkdownDetails(imageText) : extractHtmlDetails(imageText);
 }

@@ -67,7 +67,7 @@ describe('isCursorInImageActivationRange', () => {
     });
 
     test('rejects cursor past the end of the image', () => {
-        const imageNode = { type: 'markdown' as const, from: 0, to: 10 };
+        const imageNode = { type: 'markdown' as const, from: 0, to: 10, parts: null };
 
         expect(isCursorInImageActivationRange('', 11, imageNode)).toBe(false);
     });
@@ -130,6 +130,15 @@ describe('findImagesOnLine', () => {
 
         expect(findImagesOnLine(state)).toEqual([]);
     });
+
+    test('counts an image nested in alt text as part of the outer image, like markdown-it', () => {
+        const state = stateWithCursor(`![a ![in](:/${RESOURCE_ID}) c‸](:/${RESOURCE_ID}) ![b](:/${RESOURCE_ID})`);
+
+        expect(sliceAll(state, findImagesOnLine(state))).toEqual([
+            `![a ![in](:/${RESOURCE_ID}) c](:/${RESOURCE_ID})`,
+            `![b](:/${RESOURCE_ID})`,
+        ]);
+    });
 });
 
 describe('getImageAtCursor', () => {
@@ -188,6 +197,13 @@ describe('getImageAtCursor', () => {
             type: 'markdown',
             range: { from: { line: 0, ch: 2 } },
         });
+    });
+
+    test('returns null for a reference-style image, which has no inline destination', () => {
+        const state = stateWithCursor(`![Al‸t][ref]\n\n[ref]: :/${RESOURCE_ID}`);
+
+        expect(findImagesOnLine(state)).toMatchObject([{ type: 'markdown', parts: null }]);
+        expect(getImageAtCursor(state)).toBeNull();
     });
 
     test('does not activate when non-whitespace text precedes the cursor and the image', () => {

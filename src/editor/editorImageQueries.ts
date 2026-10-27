@@ -9,20 +9,25 @@
 
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { EditorState, Text } from '@codemirror/state';
-import type { EditorImageAtCursorResult, EditorPosition, ImageSyntax } from '../shared/types';
+import type { SyntaxNode } from '@lezer/common';
+import type { EditorImageAtCursorResult, EditorPosition, ImageDetails } from '../shared/types';
 import { logger } from '../shared/logger';
-import { extractImageDetails } from './imageSyntaxParser';
+import { extractHtmlDetails, extractMarkdownDetails, type MarkdownImageParts } from './imageSyntaxParser';
 import type { ViewerImageTarget } from '../shared/viewerImageTarget';
 import type { ReplaceRangeArgs } from '../shared/editorCommands';
 
 // Keep viewer context menus responsive when parsing a very large note.
 const VIEWER_IMAGE_PARSE_TIMEOUT_MS = 200;
 
-export interface ImageNodeRange {
-    type: ImageSyntax;
-    from: number;
-    to: number;
-}
+export type ImageNodeRange =
+    | {
+          type: 'markdown';
+          from: number;
+          to: number;
+          /** Null for images without an inline destination, e.g. `![alt][ref]`. */
+          parts: MarkdownImageParts | null;
+      }
+    | { type: 'html'; from: number; to: number };
 
 /**
  * Validate arguments received across the plugin/editor boundary before using
@@ -70,6 +75,50 @@ function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
 }
 
 /**
+ * Slice the alt text, destination and title of a Markdown `Image` node from its
+ * direct children. For `![a [b]](:/id "t")` the children are:
+ * LinkMark `![`, Link `[b]`, LinkMark `]`, LinkMark `(`, URL `:/id`, LinkTitle `"t"`, LinkMark `)`.
+ *
+ * Only direct children are read, so a `]` inside a nested link, image or code span
+ * cannot end the alt text.
+ */
+function readMarkdownImageParts(doc: Text, image: SyntaxNode): MarkdownImageParts | null {
+    let altFrom = -1;
+    let altTo = -1;
+    let url: SyntaxNode | null = null;
+    let title: SyntaxNode | null = null;
+
+    for (let child = image.firstChild; child; child = child.nextSibling) {
+        if (child.name === 'LinkMark') {
+            const mark = doc.sliceString(child.from, child.to);
+            if (mark === '![') altFrom = child.to;
+            else if (mark === ']' && altTo === -1) altTo = child.from;
+        } else if (child.name === 'URL') {
+            url = child;
+        } else if (child.name === 'LinkTitle') {
+            title = child;
+        }
+    }
+
+    if (altFrom === -1 || altTo === -1 || !url) return null;
+
+    return {
+        altText: doc.sliceString(altFrom, altTo),
+        url: doc.sliceString(url.from, url.to),
+        title: title ? doc.sliceString(title.from, title.to) : '',
+    };
+}
+
+/**
+ * Extract image metadata from an image node found by `findImagesInRange`.
+ */
+function getImageDetails(doc: Text, image: ImageNodeRange): ImageDetails | null {
+    const imageText = doc.sliceString(image.from, image.to);
+    if (image.type === 'html') return extractHtmlDetails(imageText);
+    return image.parts ? extractMarkdownDetails(imageText, image.parts) : null;
+}
+
+/**
  * Find all image nodes that intersect a document range, in document order,
  * using the syntax tree. Returns both Markdown Image nodes and HTML img tags.
  *
@@ -94,8 +143,11 @@ function findImagesInRange(state: EditorState, from: number, to: number, tree = 
                     type: 'markdown',
                     from: node.from,
                     to: node.to,
+                    parts: readMarkdownImageParts(state.doc, node.node),
                 });
-                return;
+                // An image nested in alt text, e.g. ![a ![b](:/y)](:/x), is part of the
+                // outer image's alt text; markdown-it renders only the outer image.
+                return false;
             }
 
             // Case 2: Simple HTML tags in Markdown (HTMLTag node)
@@ -176,7 +228,7 @@ export function findImageForViewerTarget(state: EditorState, target: ViewerImage
         return null;
     }
 
-    const details = extractImageDetails(doc.sliceString(image.from, image.to), image.type);
+    const details = getImageDetails(doc, image);
     if (details?.sourceType !== 'resource' || details.source.toLowerCase() !== target.resourceId.toLowerCase()) {
         return null;
     }
@@ -223,8 +275,7 @@ export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult 
         const lineTextBeforeImage = state.doc.sliceString(imageLine.from, imageNode.from);
 
         if (isCursorInImageActivationRange(lineTextBeforeImage, cursor, imageNode)) {
-            const imageText = state.doc.sliceString(imageNode.from, imageNode.to);
-            const details = extractImageDetails(imageText, imageNode.type);
+            const details = getImageDetails(state.doc, imageNode);
 
             if (details) {
                 const fromLine = state.doc.lineAt(imageNode.from);

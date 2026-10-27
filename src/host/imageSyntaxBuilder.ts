@@ -1,5 +1,10 @@
 import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from '../shared/types';
-import { escapeHtmlAttribute, escapeMarkdownTitle, sanitizeMarkdownAlt } from '../shared/stringUtils';
+import { escapeHtmlAttribute, escapeMarkdownTitle, escapeMarkdownAlt } from '../shared/stringUtils';
+
+function normalizeLineBreaks(value: string): string {
+    // Treat CRLF as one line break; preserve other whitespace, e.g. tabs and spaces.
+    return value.replace(/\r\n|[\r\n]/g, ' ');
+}
 
 function buildSourcePath(context: ImageContext): string {
     return context.sourceType === 'resource' ? `:/${context.source}` : context.source;
@@ -7,7 +12,7 @@ function buildSourcePath(context: ImageContext): string {
 
 function buildMarkdownSyntax(context: ImageContext, result: ResizeDialogResult, srcPath: string): string {
     const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
-    return `![${sanitizeMarkdownAlt(result.altText)}](${srcPath}${titlePart})`;
+    return `![${escapeMarkdownAlt(result.altText)}](${srcPath}${titlePart})`;
 }
 
 function calculateWidth(context: ImageContext, result: ResizeDialogResult): number {
@@ -64,11 +69,13 @@ export function buildNewSyntax(
     result: ResizeDialogResult,
     htmlSyntaxStyle: HtmlSyntaxStyle
 ): string {
-    const srcPath = buildSourcePath(context);
+    const normalizedContext = { ...context, title: normalizeLineBreaks(context.title) };
+    const normalizedResult = { ...result, altText: normalizeLineBreaks(result.altText) };
+    const srcPath = buildSourcePath(normalizedContext);
 
     if (result.targetSyntax === 'markdown') {
-        return buildMarkdownSyntax(context, result, srcPath);
+        return buildMarkdownSyntax(normalizedContext, normalizedResult, srcPath);
     }
 
-    return buildHtmlSyntax(context, result, srcPath, htmlSyntaxStyle);
+    return buildHtmlSyntax(normalizedContext, normalizedResult, srcPath, htmlSyntaxStyle);
 }
