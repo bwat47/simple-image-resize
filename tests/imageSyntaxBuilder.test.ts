@@ -1,5 +1,7 @@
+import MarkdownIt from 'markdown-it';
+import { extractImageDetails } from './helpers/imageDetails';
 import { buildNewSyntax } from '../src/host/imageSyntaxBuilder';
-import type { ImageContext, ResizeDialogResult } from '../src/shared/types';
+import type { ImageContext, ImageSyntax, ResizeDialogResult } from '../src/shared/types';
 
 describe('buildNewSyntax', () => {
     const baseContext: ImageContext = {
@@ -143,7 +145,7 @@ describe('buildNewSyntax', () => {
         expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
     });
 
-    test('removes brackets and preserves backslashes in alt text for markdown output', () => {
+    test('escapes brackets and escaping backslashes in alt text for markdown output', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt [with] brackets and \\ backslash',
@@ -151,7 +153,101 @@ describe('buildNewSyntax', () => {
             percentage: 100,
         };
         const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
-        expect(syntax).toBe('![Alt with brackets and \\ backslash](:/0123456789abcdef0123456789abcdef)');
+        expect(syntax).toBe(String.raw`![Alt \[with\] brackets and \ backslash](:/0123456789abcdef0123456789abcdef)`);
+        expect(extractImageDetails(syntax, 'markdown')?.altText).toBe(res.altText);
+    });
+
+    test.each([
+        [
+            'leaves inline markup in alt text alone',
+            'my_screenshot_2024.png *x* a < b <3 <',
+            'my_screenshot_2024.png *x* a < b <3 <',
+            '',
+        ],
+        ['escapes tag-like angle brackets in alt text', '<b>x</b> <!-- <?', String.raw`\<b>x\</b> \<!-- \<?`, ''],
+        ['leaves literal backslashes alone', String.raw`C:\notes`, String.raw`C:\notes`, String.raw` "C:\notes"`],
+        ['escapes a trailing backslash', 'path\\', 'path\\\\', ' "path\\\\"'],
+        ['escapes backslashes before punctuation', String.raw`a\[b\]`, String.raw`a\\\[b\\\]`, String.raw` "a\\[b\\]"`],
+        ['escapes backticks in alt text', 'a `b] c` d', 'a \\`b\\] c\\` d', ' "a `b] c` d"'],
+    ])('markdown output %s', (_label, text, expectedAlt, expectedTitlePart) => {
+        const ctx: ImageContext = { ...baseContext, title: expectedTitlePart ? text : '' };
+        const res: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: text,
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const syntax = buildNewSyntax(ctx, res, 'widthAndHeight');
+        expect(syntax).toBe(`![${expectedAlt}](:/0123456789abcdef0123456789abcdef${expectedTitlePart})`);
+        expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText: text, title: ctx.title });
+    });
+
+    test.each([
+        [`<span title="x`, ' after">'],
+        [`<span title='`, '', `'>`],
+        ['<http://example.com/', ' y>'],
+    ])('keeps the image intact when alt text %j starts an unclosed tag', (altText, trailingText, title = '') => {
+        const res: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText,
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const syntax = buildNewSyntax({ ...baseContext, title }, res, 'widthAndHeight');
+        const tokens = new MarkdownIt({ html: true }).parseInline(syntax + trailingText, {});
+        const image = tokens[0].children?.find((token) => token.type === 'image');
+
+        expect(image?.attrGet('src')).toBe(':/0123456789abcdef0123456789abcdef');
+        expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText, title });
+    });
+
+    test('escapes entity-like sequences in alt text and title for markdown output', () => {
+        const ctx: ImageContext = { ...baseContext, title: 'a &lt; b &#60; c & d' };
+        const res: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: 'use &nbsp; here & &amp there',
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const syntax = buildNewSyntax(ctx, res, 'widthAndHeight');
+        expect(syntax).toBe(
+            '![use &amp;nbsp; here & &amp there](:/0123456789abcdef0123456789abcdef "a &amp;lt; b &amp;#60; c & d")'
+        );
+    });
+
+    test('leaves ampersands Markdown would not decode unescaped and round-trips them', () => {
+        const text = '&a; &#12345678; &#x1234567; &_x;';
+        const res: ResizeDialogResult = {
+            targetSyntax: 'markdown',
+            altText: text,
+            resizeMode: 'percentage',
+            percentage: 100,
+        };
+        const syntax = buildNewSyntax({ ...baseContext, title: text }, res, 'widthAndHeight');
+        expect(syntax).toBe(`![${text}](:/0123456789abcdef0123456789abcdef "${text}")`);
+        expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText: text, title: text });
+    });
+
+    test('round-trips entity-like text between markdown and html', () => {
+        const convert = (syntax: string, from: ImageSyntax, to: ImageSyntax): string => {
+            const details = extractImageDetails(syntax, from)!;
+            const ctx: ImageContext = {
+                ...details,
+                originalDimensions: { width: 800, height: 600 },
+                originalDimensionsDetermined: true,
+            };
+            return buildNewSyntax(
+                ctx,
+                { targetSyntax: to, altText: details.altText, resizeMode: 'percentage', percentage: 100 },
+                'widthOnly'
+            );
+        };
+        const markdown = '![use &amp;nbsp; here](:/0123456789abcdef0123456789abcdef "a &amp;lt; b")';
+        const html =
+            '<img src=":/0123456789abcdef0123456789abcdef" alt="use &amp;nbsp; here" width="800" title="a &amp;lt; b" />';
+
+        expect(convert(markdown, 'markdown', 'html')).toBe(html);
+        expect(convert(html, 'html', 'markdown')).toBe(markdown);
     });
 
     test('escapes quotes in title for markdown and html output', () => {
@@ -165,7 +261,7 @@ describe('buildNewSyntax', () => {
         };
         const html = buildNewSyntax(ctx, htmlRes, 'widthAndHeight');
         expect(html).toContain('title="He said &quot;hi&quot; &amp; &lt;ok&gt;"');
-        // Markdown: Only quotes are escaped (extraction regex works with raw text)
+        // Markdown: Quotes are escaped and recoverable on extraction.
         const mdRes: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt',
@@ -174,6 +270,7 @@ describe('buildNewSyntax', () => {
         };
         const md = buildNewSyntax(ctx, mdRes, 'widthAndHeight');
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said \\"hi\\" & <ok>")');
+        expect(extractImageDetails(md, 'markdown')?.title).toBe(ctx.title);
     });
 
     test('escapes quotes in alt text for html output', () => {
@@ -195,7 +292,7 @@ describe('buildNewSyntax', () => {
             percentage: 100,
         };
         const html = buildNewSyntax(baseContext, res, 'widthAndHeight');
-        expect(html).toContain('alt="It&#39;s fine"');
+        expect(html).toContain('alt="It&apos;s fine"');
     });
 
     test('preserves backslashes in title without accumulation', () => {
@@ -210,7 +307,7 @@ describe('buildNewSyntax', () => {
         const html = buildNewSyntax(ctx, htmlRes, 'widthAndHeight');
         expect(html).toContain('title="mern &amp; test\\ABC"');
 
-        // Convert back to Markdown - backslash should not be doubled
+        // Markdown leaves the literal backslash alone; it cannot act as an escape before `A`.
         const mdRes: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt',
@@ -218,7 +315,80 @@ describe('buildNewSyntax', () => {
             percentage: 100,
         };
         const md = buildNewSyntax(ctx, mdRes, 'widthAndHeight');
-        expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "mern & test\\ABC")');
+        expect(md).toBe(String.raw`![Alt](:/0123456789abcdef0123456789abcdef "mern & test\ABC")`);
+        expect(extractImageDetails(md, 'markdown')?.title).toBe(ctx.title);
+    });
+
+    test.each([
+        ['&#91;cat&#93;', '[cat]'],
+        ['say &quot;hi&quot; and &apos;bye&apos;', 'say "hi" and \'bye\''],
+        [String.raw`\&amp;`, '&amp;'],
+        [String.raw`\\&copy;`, '\\©'],
+        [String.raw`\\\&copy;`, '\\&copy;'],
+        ['&amp;quot; &amp;#91;', '&quot; &#91;'],
+        ['&#92;&#34;', '\\"'],
+        ['ends with &#92;', 'ends with \\'],
+        ['&#42;cat&#42; &#96;code&#96; &lt;b&gt;', '*cat* `code` <b>'],
+    ])('preserves %s across repeated conversions', (raw, expected) => {
+        let syntax = `![${raw}](:/0123456789abcdef0123456789abcdef "${raw}")`;
+        let from: ImageSyntax = 'markdown';
+        const markdownTitles: (string | null | undefined)[] = [];
+        const targets: ImageSyntax[] = ['markdown', 'markdown', 'html', 'html', 'markdown', 'html', 'markdown'];
+        for (const targetSyntax of targets) {
+            const details = extractImageDetails(syntax, from);
+            expect(details).not.toBeNull();
+            expect(details?.altText).toBe(expected);
+            expect(details?.title).toBe(expected);
+            syntax = buildNewSyntax(
+                { ...baseContext, ...details! },
+                { targetSyntax, altText: details!.altText, resizeMode: 'percentage', percentage: 100 },
+                'widthOnly'
+            );
+            if (targetSyntax === 'markdown') {
+                const tokens = new MarkdownIt().parseInline(syntax, {});
+                const image = tokens[0].children?.find((token) => token.type === 'image');
+                markdownTitles.push(image?.attrGet('title'));
+            }
+            from = targetSyntax;
+        }
+        expect(extractImageDetails(syntax, from)).toMatchObject({ altText: expected, title: expected });
+        expect(markdownTitles).toEqual([expected, expected, expected, expected]);
+    });
+
+    test.each(['&#10;', '&#13;', '&#13;&#10;'])('normalizes decoded %s before repeated conversions', (lineBreak) => {
+        const raw = `first${lineBreak}second${lineBreak}${lineBreak}third  fourth\tfifth`;
+        const expected = 'first second  third  fourth\tfifth';
+        const original = `![${raw}](:/0123456789abcdef0123456789abcdef "${raw}")`;
+
+        for (const firstTarget of ['markdown', 'html'] as const) {
+            let syntax = original;
+            let from: ImageSyntax = 'markdown';
+            const targets: ImageSyntax[] = [firstTarget, 'html', 'markdown', 'html'];
+            for (const targetSyntax of targets) {
+                const details = extractImageDetails(syntax, from)!;
+                syntax = buildNewSyntax(
+                    { ...baseContext, ...details },
+                    { targetSyntax, altText: details.altText, resizeMode: 'percentage', percentage: 100 },
+                    'widthOnly'
+                );
+                expect(syntax).not.toMatch(/[\r\n]/);
+                expect(extractImageDetails(syntax, targetSyntax)).toMatchObject({ altText: expected, title: expected });
+                from = targetSyntax;
+            }
+        }
+    });
+
+    test('rewrites a parenthesized title as a double-quoted title', () => {
+        const details = extractImageDetails(
+            String.raw`![Alt](:/0123456789abcdef0123456789abcdef (a \(b\) "c"))`,
+            'markdown'
+        )!;
+        const syntax = buildNewSyntax(
+            { ...baseContext, ...details },
+            { targetSyntax: 'markdown', altText: details.altText, resizeMode: 'percentage', percentage: 100 },
+            'widthOnly'
+        );
+        expect(syntax).toBe(String.raw`![Alt](:/0123456789abcdef0123456789abcdef "a (b) \"c\"")`);
     });
 
     test('builds syntax for external URL source', () => {

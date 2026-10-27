@@ -41,7 +41,7 @@ The built output mirrors these folders, so registration paths such as `./editor/
 - It is the source of truth for cursor-based image detection, editor text replacement, dimension lookup in editor context, and editor-origin context menu checks.
 - Detection is syntax-tree based, not regex-first. It recognizes Markdown image nodes plus HTML `img` tags, including nested HTML blocks.
 - `src/shared/editorCommands.ts` is the shared contract between the host and the content script: the content script ID, every editor command name, and the replace-range argument shape. It has no runtime dependencies, so host modules never import from the content script itself.
-- `src/editor/imageSyntaxParser.ts` owns the lightweight regex extraction that pulls source, alt text, and title from syntax-tree-validated image nodes.
+- `src/editor/imageSyntaxParser.ts` turns image nodes into image details. For Markdown it receives the raw alt text, destination and title that `editorImageQueries.ts` sliced from the `Image` node's direct children, and only strips delimiters and decodes them. For HTML it runs lightweight attribute regexes on the `img` tag.
 - Leading indentation on an image line can be treated as part of the activation area, while replacement still targets only the image syntax itself.
 - `src/host/editorBridge.ts` is the thin plugin-side wrapper around these content script commands. Every `editor.execCommand` call the host makes goes through it, including text replacement and editor-context dimension measurement.
 - `src/viewer/viewerContentScript.ts` is a markdown-it content script for the markdown viewer; see Viewer Context Menu below.
@@ -62,7 +62,7 @@ The dialog script focuses the Alt text input after initializing the form on each
 
 - `src/shared/imageDimensionUtils.ts` contains shared DOM image measurement and dimension-validation logic plus the image load timeouts, kept runtime dependency-free so both execution contexts can import them.
 - `src/host/resourceUtils.ts` handles resource-specific helpers.
-- `src/shared/stringUtils.ts` handles HTML entity decoding and output escaping.
+- `src/shared/stringUtils.ts` handles HTML entity decoding and output escaping (via the `entities` library).
 - `src/host/toastUtils.ts` centralizes toast messaging.
 - `src/shared/logger.ts` and `src/shared/types.ts` provide logging and core types.
 
@@ -71,7 +71,9 @@ The dialog script focuses the Alt text input after initializing the form on each
 The architecture separates image detection from image extraction:
 
 - Detection uses CodeMirror's syntax tree so the plugin can reason about real Markdown and HTML structure instead of raw text alone.
-- Extraction uses focused regex patterns only after a syntax node has already been identified as an image.
+- Markdown extraction reads part boundaries from the same tree: alt text runs from the `![` mark to the first `]` mark that is a direct child of the `Image` node, so brackets in nested links, images or code spans cannot end it. The `URL` and `LinkTitle` children give the destination and title. Images without an inline destination (reference-style `![alt][ref]`) are still counted but cannot be resized.
+- HTML extraction uses focused regex patterns only after a syntax node has already been identified as an `img` tag.
+- Angle-bracketed Markdown destinations are unwrapped. Ones that contain whitespace or parentheses are rejected, because Markdown output writes the source without angle brackets.
 
 That split keeps detection reliable while keeping the extraction code small and easy to maintain.
 
@@ -82,7 +84,7 @@ Right-clicking a resource image in the desktop markdown viewer offers the same r
 - `viewerContentScript.ts` runs only when Joplin renders with `mapsToLine` (the note viewer). It stamps each rendered image with the source line range of the block it came from (markdown-it's token map; table cells use their row) and its index among the images in that range. Markdown images carry the position in `token.meta` and get the attributes in a wrapped `image` render rule, because Joplin rebuilds resource images from scratch; HTML `<img>` tags get the attributes written into the token content. An instance marker keeps repeated installation from adding the core rule or render wrapper twice.
 - `viewerContextMenu.js` is a plain-script viewer asset. On every viewer right-click it posts the clicked image's `ViewerImageTarget` (line range, index, `data-resource-id`), or `null`, with the click time to the plugin. The asset is `// @ts-check`ed and casts `window` and Joplin's injected `webviewApi` locally via JSDoc to types exported from `viewerContextMenuTypes.d.ts`. That module declares no globals, so plugin-side and dialog code cannot reference `webviewApi` without a type error. The message shape, `ViewerContextMenuMessage`, lives in `src/shared/viewerImageTarget.ts` with the rest of the contract; the viewer types import it for `postMessage`, and `viewerMessages.ts` uses it for the message it receives.
 - `src/host/viewerMessages.ts` receives those messages and registers the viewer content script. For a context menu that did not originate in the editor, the filter takes a recent click message from at or before that menu request's start (waiting briefly if Joplin's menu request arrived first) and runs a read-only editor match command. A timed-out or editor-origin menu discards its click time, so a delayed message cannot target a later menu. A newer click remains available to its own menu when an older request is still waiting. Items are added only when the editor confirms the viewer image still matches the note source. The resize command revalidates and selects the image when chosen.
-- `findImageForViewerTarget` in `editorImageQueries.ts` ensures the syntax tree is parsed through the target's line range, then counts images starting in that range with the same rules as the markdown-it side and checks the resource ID matches. It fails safe when parsing times out or the viewer render is out of date.
+- `findImageForViewerTarget` in `editorImageQueries.ts` ensures the syntax tree is parsed through the target's line range, then counts images starting in that range with the same rules as the markdown-it side (an image nested in another image's alt text is not counted separately, since markdown-it renders only the outer one) and checks the resource ID matches. It fails safe when parsing times out or the viewer render is out of date.
 - `src/shared/viewerImageTarget.ts` holds the shared contract (content script ID, attribute names, target shape and validation, right-click message shape). The viewer asset repeats the ID and attribute names because it cannot import modules; `tests/viewerContextMenuAsset.test.ts` runs the actual asset against renderer output and checks its message ID and target, so drift fails the test suite.
 - External images are not supported: Joplin's viewer only opens a context menu for images with a `data-resource-id`.
 
@@ -99,9 +101,13 @@ This keeps the user-facing behavior consistent without forcing the rest of the p
 ## Output Rules
 
 - Markdown output preserves standard Markdown image syntax and does not encode explicit size.
+- Before generating either syntax, line breaks in alt text and titles are normalized to spaces (one space per CRLF, CR, or LF). Other whitespace is preserved.
 - HTML output is used for resized images and can emit width only or width plus height, depending on settings. When original dimensions cannot be determined, HTML output always emits width only so the browser can preserve the image's natural aspect ratio.
 - When original dimensions could not be determined, the resize dialog shows that status instead of the fallback dimensions, disables percentage resizing, selects absolute sizing, and disables the height field.
-- Alt text and title are preserved across conversions, with escaping rules handled centrally in the string utilities.
+- Alt text and title are preserved across conversions, with escaping rules handled centrally in the string utilities:
+    - Extraction decodes both syntaxes to plain text: HTML with attribute rules, Markdown with backslash escapes and CommonMark's semicolon-required entities processed together in a single pass.
+    - Markdown output escapes only what would change the parse: brackets, backticks and tag-like `<` in alt text, quotes in titles, entity-like `&` sequences, and backslashes before punctuation or at the end. Other characters are written unchanged, so text like `my_image.png` or `C:\notes` stays readable. As a result, code spans, nested links or images, and inline HTML in alt text become literal text after a resize. Other markup, such as emphasis, is kept.
+    - Titles are always written double-quoted, so resizing an image with a parenthesized title (which Joplin's viewer does not render) also repairs it.
 - The editor only replaces the image if its range still contains the syntax that was detected. If the note changed in the meantime, the replacement is skipped and the user sees a "try again" toast instead of the success toast.
 
 ## Quick Resize Slots
