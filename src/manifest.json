@@ -2,7 +2,7 @@
     "manifest_version": 1,
     "id": "com.bwat47.simple-image-resize",
     "app_min_version": "3.3",
-    "version": "1.9.1",
+    "version": "1.9.2",
     "platforms": ["desktop", "mobile"],
     "name": "Simple Image Resize",
     "description": "Allows you to quickly resize images in the markdown editor (and viewer) using HTML image syntax via a dialog or customizable quick resize slots (context menu/keyboard shortcuts).",
