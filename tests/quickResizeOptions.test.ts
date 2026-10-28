@@ -71,9 +71,10 @@ describe('buildQuickResizeResult', () => {
     it('builds a percentage resize request', () => {
         const [option] = parseQuickResizeOptions('75%');
 
-        expect(buildQuickResizeResult(option, 'Alt')).toEqual({
+        expect(buildQuickResizeResult(option, { altText: 'Alt', title: 'Title' })).toEqual({
             targetSyntax: 'html',
             altText: 'Alt',
+            title: 'Title',
             resizeMode: 'percentage',
             percentage: 75,
         });
@@ -82,9 +83,10 @@ describe('buildQuickResizeResult', () => {
     it('builds a Markdown conversion request for 100%', () => {
         const [option] = parseQuickResizeOptions('100%');
 
-        expect(buildQuickResizeResult(option, 'Alt')).toEqual({
+        expect(buildQuickResizeResult(option, { altText: 'Alt', title: 'Title' })).toEqual({
             targetSyntax: 'markdown',
             altText: 'Alt',
+            title: 'Title',
             resizeMode: 'percentage',
             percentage: 100,
         });
@@ -93,9 +95,10 @@ describe('buildQuickResizeResult', () => {
     it('builds an absolute-width resize request for pixels', () => {
         const [option] = parseQuickResizeOptions('300px');
 
-        expect(buildQuickResizeResult(option, 'Alt')).toEqual({
+        expect(buildQuickResizeResult(option, { altText: 'Alt', title: 'Title' })).toEqual({
             targetSyntax: 'html',
             altText: 'Alt',
+            title: 'Title',
             resizeMode: 'absolute',
             absoluteWidth: 300,
         });

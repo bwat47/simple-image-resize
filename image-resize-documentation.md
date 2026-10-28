@@ -56,6 +56,8 @@ The built output mirrors these folders, so registration paths such as `./editor/
 - `src/host/imageSyntaxBuilder.ts` converts dialog choices into final Markdown or HTML output. It is pure: callers pass the HTML syntax style setting in rather than the builder reading the settings cache.
 - Quick resize commands use five stable command slots with default values `100%, 75%, 50%, 33%, 25%`.
 
+The dialog shows a Title input after Alt text only when the image already has a title, so the common untitled case stays compact; titles cannot be added from the dialog. Clearing the field removes the title. The field is named `imageTitle` because `title` would shadow the form element's own `title` property. Alt text and title values come back in `ResizeDialogResult`, which is the builder's only source for both; quick resize copies them unchanged from the detected image.
+
 The dialog script focuses the Alt text input after initializing the form on each open. Joplin focuses the dialog iframe for keyboard shortcuts; the plugin selects the initial input explicitly.
 
 ### Shared Utilities
@@ -101,7 +103,7 @@ This keeps the user-facing behavior consistent without forcing the rest of the p
 ## Output Rules
 
 - Markdown output preserves standard Markdown image syntax and does not encode explicit size.
-- Before generating either syntax, line breaks in alt text and titles are normalized to spaces (one space per CRLF, CR, or LF). Other whitespace is preserved.
+- Before generating either syntax, line breaks in alt text and titles are normalized to spaces (one space per CRLF, CR, or LF). Other whitespace is preserved. The dialog applies the same normalization to the values it pre-fills, because single-line inputs would otherwise silently drop line breaks and join the words on either side.
 - HTML output is used for resized images and can emit width only or width plus height, depending on settings. When original dimensions cannot be determined, HTML output always emits width only so the browser can preserve the image's natural aspect ratio.
 - When original dimensions could not be determined, the resize dialog shows that status instead of the fallback dimensions, disables percentage resizing, selects absolute sizing, and disables the height field.
 - Alt text and title are preserved across conversions, with escaping rules handled centrally in the string utilities:

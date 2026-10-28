@@ -1,4 +1,4 @@
-import type { ResizeDialogResult } from '../shared/types';
+import type { ImageDetails, ResizeDialogResult } from '../shared/types';
 
 export const QUICK_RESIZE_OPTIONS_DEFAULT = '100%, 75%, 50%, 33%, 25%';
 const QUICK_RESIZE_SLOT_LIMIT = 5;
@@ -78,11 +78,15 @@ export function getQuickResizeLabel(option: QuickResizeOption): string {
     return `Resize ${option.label}`;
 }
 
-export function buildQuickResizeResult(option: QuickResizeOption, altText: string): ResizeDialogResult {
+export function buildQuickResizeResult(
+    option: QuickResizeOption,
+    { altText, title }: Pick<ImageDetails, 'altText' | 'title'>
+): ResizeDialogResult {
     if (option.kind === 'percentage') {
         return {
             targetSyntax: option.value === 100 ? 'markdown' : 'html',
             altText,
+            title,
             resizeMode: 'percentage',
             percentage: option.value,
         };
@@ -91,6 +95,7 @@ export function buildQuickResizeResult(option: QuickResizeOption, altText: strin
     return {
         targetSyntax: 'html',
         altText,
+        title,
         resizeMode: 'absolute',
         absoluteWidth: option.value,
     };

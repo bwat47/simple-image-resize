@@ -1,7 +1,7 @@
 import type { ButtonSpec, DialogResult, VersionInfo, ViewHandle } from 'api/types';
 import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from '../shared/types';
 import { getDialogFieldState } from '../shared/dialogFieldState';
-import { escapeHtmlAttribute } from '../shared/stringUtils';
+import { escapeHtmlAttribute, normalizeLineBreaks } from '../shared/stringUtils';
 import { desktopDialogCss, resizeDialogCss } from './resizeDialogStyles';
 
 const DIALOG_ID = 'image-resize-dialog';
@@ -93,6 +93,22 @@ function getHeightPlaceholderAttribute(context: ImageContext): string {
 }
 
 /**
+ * Renders the title field only for images that already have a title, so the dialog
+ * stays compact for the common untitled case. Clearing the field removes the title.
+ *
+ * Line breaks are normalized before rendering: a text input would otherwise drop them
+ * (joining the lines without a space), while generated syntax replaces them with spaces.
+ * The field is named `imageTitle` because `title` would shadow the form element's own
+ * `title` property.
+ */
+function getTitleFieldHtml(context: ImageContext): string {
+    if (!context.title) return '';
+    return `
+        <label for="imageTitle" class="field-label">Title</label>
+        <input type="text" id="imageTitle" name="imageTitle" value="${escapeHtmlAttribute(normalizeLineBreaks(context.title))}">`;
+}
+
+/**
  * Renders the dialog markup for one image. Exported so webview tests can drive the
  * real markup instead of a hand-maintained copy of it.
  */
@@ -124,6 +140,7 @@ export function renderDialogHtml(
     } = getInitialDialogState(defaultSyntax, defaultResizeMode, context.originalDimensionsDetermined);
     const originalDimensionsText = getOriginalDimensionsText(context);
     const heightPlaceholderAttr = getHeightPlaceholderAttribute(context);
+    const titleFieldHtml = getTitleFieldHtml(context);
 
     // Read by the dialog script from the root's `data-config` attribute.
     const dialogConfig: ResizeDialogConfig = {
@@ -144,7 +161,7 @@ export function renderDialogHtml(
       </div>
       <form name="resizeForm" autocomplete="off" class="grid">
         <label for="altText" class="field-label">Alt text</label>
-        <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(context.altText)}" placeholder="Describe the image">
+        <input type="text" id="altText" name="altText" value="${escapeHtmlAttribute(normalizeLineBreaks(context.altText))}" placeholder="Describe the image">${titleFieldHtml}
         <span id="syntaxLabel" class="field-label">Syntax</span>
         <div class="segmented" role="radiogroup" aria-labelledby="syntaxLabel">
           <label class="segment">
@@ -269,6 +286,8 @@ export class ResizeDialog {
 
             const targetSyntax = fields.targetSyntax === 'markdown' ? 'markdown' : 'html';
             const altText = typeof fields.altText === 'string' ? fields.altText : '';
+            // Untitled images render no title field, so a missing value means no title.
+            const title = typeof fields.imageTitle === 'string' ? fields.imageTitle : '';
             const defaultResizeMode = getDialogFieldState(
                 targetSyntax,
                 defaults.defaultResizeMode,
@@ -285,6 +304,7 @@ export class ResizeDialog {
             return {
                 targetSyntax,
                 altText,
+                title,
                 resizeMode,
                 percentage: readDimension(fields.percentage),
                 absoluteWidth: readDimension(fields.absoluteWidth),

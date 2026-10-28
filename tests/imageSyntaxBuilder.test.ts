@@ -19,6 +19,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'New Alt',
+            title: '',
             resizeMode: 'percentage',
             percentage: 50,
         };
@@ -31,6 +32,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
+            title: '',
             resizeMode: 'percentage',
             percentage: 25,
         };
@@ -44,6 +46,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
+            title: '',
             resizeMode: 'percentage',
             percentage: 25,
         };
@@ -57,6 +60,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
+            title: '',
             resizeMode: 'absolute',
             absoluteWidth: 320,
             absoluteHeight: 240,
@@ -70,6 +74,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
+            title: '',
             resizeMode: 'absolute',
             absoluteWidth: 320,
             absoluteHeight: 240,
@@ -84,6 +89,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
+            title: '',
             resizeMode: 'absolute',
             absoluteWidth: 320,
             absoluteHeight: 240,
@@ -99,6 +105,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
+            title: '',
             resizeMode: 'absolute',
             absoluteWidth: 400,
         };
@@ -112,6 +119,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'X',
+            title: '',
             resizeMode: 'absolute',
             absoluteHeight: 300,
         };
@@ -122,33 +130,45 @@ describe('buildNewSyntax', () => {
     });
 
     test('preserves title when generating HTML', () => {
-        const ctx: ImageContext = { ...baseContext, title: 'My Title' };
+        const title = 'My Title';
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
+            title,
             resizeMode: 'percentage',
             percentage: 50,
         };
-        const syntax = buildNewSyntax(ctx, result, 'widthAndHeight');
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         expect(syntax).toContain('title="My Title"');
     });
 
     test('preserves title when generating markdown', () => {
-        const ctx: ImageContext = { ...baseContext, title: 'My Title' };
+        const title = 'My Title';
         const result: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt2',
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax(ctx, result, 'widthAndHeight');
+        const syntax = buildNewSyntax(baseContext, result, 'widthAndHeight');
         expect(syntax).toBe('![Alt2](:/0123456789abcdef0123456789abcdef "My Title")');
+    });
+
+    test.each(['markdown', 'html'] as const)('uses the dialog title over the original for %s output', (to) => {
+        const ctx: ImageContext = { ...baseContext, title: 'Old' };
+        const base = { targetSyntax: to, altText: 'Alt', resizeMode: 'percentage', percentage: 100 } as const;
+
+        expect(buildNewSyntax(ctx, { ...base, title: 'New' }, 'widthOnly')).toContain('New');
+        expect(buildNewSyntax(ctx, { ...base, title: 'New' }, 'widthOnly')).not.toContain('Old');
+        expect(buildNewSyntax(ctx, { ...base, title: '' }, 'widthOnly')).not.toMatch(/title=|"Old"/);
     });
 
     test('escapes brackets and escaping backslashes in alt text for markdown output', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt [with] brackets and \\ backslash',
+            title: '',
             resizeMode: 'percentage',
             percentage: 100,
         };
@@ -170,16 +190,17 @@ describe('buildNewSyntax', () => {
         ['escapes backslashes before punctuation', String.raw`a\[b\]`, String.raw`a\\\[b\\\]`, String.raw` "a\\[b\\]"`],
         ['escapes backticks in alt text', 'a `b] c` d', 'a \\`b\\] c\\` d', ' "a `b] c` d"'],
     ])('markdown output %s', (_label, text, expectedAlt, expectedTitlePart) => {
-        const ctx: ImageContext = { ...baseContext, title: expectedTitlePart ? text : '' };
+        const title = expectedTitlePart ? text : '';
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: text,
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax(ctx, res, 'widthAndHeight');
+        const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
         expect(syntax).toBe(`![${expectedAlt}](:/0123456789abcdef0123456789abcdef${expectedTitlePart})`);
-        expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText: text, title: ctx.title });
+        expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText: text, title });
     });
 
     test.each([
@@ -190,10 +211,11 @@ describe('buildNewSyntax', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText,
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax({ ...baseContext, title }, res, 'widthAndHeight');
+        const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
         const tokens = new MarkdownIt({ html: true }).parseInline(syntax + trailingText, {});
         const image = tokens[0].children?.find((token) => token.type === 'image');
 
@@ -202,14 +224,15 @@ describe('buildNewSyntax', () => {
     });
 
     test('escapes entity-like sequences in alt text and title for markdown output', () => {
-        const ctx: ImageContext = { ...baseContext, title: 'a &lt; b &#60; c & d' };
+        const title = 'a &lt; b &#60; c & d';
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'use &nbsp; here & &amp there',
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax(ctx, res, 'widthAndHeight');
+        const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
         expect(syntax).toBe(
             '![use &amp;nbsp; here & &amp there](:/0123456789abcdef0123456789abcdef "a &amp;lt; b &amp;#60; c & d")'
         );
@@ -220,10 +243,11 @@ describe('buildNewSyntax', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: text,
+            title: text,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const syntax = buildNewSyntax({ ...baseContext, title: text }, res, 'widthAndHeight');
+        const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
         expect(syntax).toBe(`![${text}](:/0123456789abcdef0123456789abcdef "${text}")`);
         expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText: text, title: text });
     });
@@ -238,7 +262,13 @@ describe('buildNewSyntax', () => {
             };
             return buildNewSyntax(
                 ctx,
-                { targetSyntax: to, altText: details.altText, resizeMode: 'percentage', percentage: 100 },
+                {
+                    targetSyntax: to,
+                    altText: details.altText,
+                    title: details.title,
+                    resizeMode: 'percentage',
+                    percentage: 100,
+                },
                 'widthOnly'
             );
         };
@@ -251,32 +281,35 @@ describe('buildNewSyntax', () => {
     });
 
     test('escapes quotes in title for markdown and html output', () => {
-        const ctx: ImageContext = { ...baseContext, title: 'He said "hi" & <ok>' };
+        const title = 'He said "hi" & <ok>';
         // HTML: HTML entities are escaped
         const htmlRes: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = buildNewSyntax(ctx, htmlRes, 'widthAndHeight');
+        const html = buildNewSyntax(baseContext, htmlRes, 'widthAndHeight');
         expect(html).toContain('title="He said &quot;hi&quot; &amp; &lt;ok&gt;"');
         // Markdown: Quotes are escaped and recoverable on extraction.
         const mdRes: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt',
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const md = buildNewSyntax(ctx, mdRes, 'widthAndHeight');
+        const md = buildNewSyntax(baseContext, mdRes, 'widthAndHeight');
         expect(md).toBe('![Alt](:/0123456789abcdef0123456789abcdef "He said \\"hi\\" & <ok>")');
-        expect(extractImageDetails(md, 'markdown')?.title).toBe(ctx.title);
+        expect(extractImageDetails(md, 'markdown')?.title).toBe(title);
     });
 
     test('escapes quotes in alt text for html output', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Quote: "double" & <tag>',
+            title: '',
             resizeMode: 'percentage',
             percentage: 100,
         };
@@ -288,6 +321,7 @@ describe('buildNewSyntax', () => {
         const res: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: "It's fine",
+            title: '',
             resizeMode: 'percentage',
             percentage: 100,
         };
@@ -296,27 +330,29 @@ describe('buildNewSyntax', () => {
     });
 
     test('preserves backslashes in title without accumulation', () => {
-        const ctx: ImageContext = { ...baseContext, title: 'mern & test\\ABC' };
+        const title = 'mern & test\\ABC';
         // Convert to HTML
         const htmlRes: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Alt',
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const html = buildNewSyntax(ctx, htmlRes, 'widthAndHeight');
+        const html = buildNewSyntax(baseContext, htmlRes, 'widthAndHeight');
         expect(html).toContain('title="mern &amp; test\\ABC"');
 
         // Markdown leaves the literal backslash alone; it cannot act as an escape before `A`.
         const mdRes: ResizeDialogResult = {
             targetSyntax: 'markdown',
             altText: 'Alt',
+            title,
             resizeMode: 'percentage',
             percentage: 100,
         };
-        const md = buildNewSyntax(ctx, mdRes, 'widthAndHeight');
+        const md = buildNewSyntax(baseContext, mdRes, 'widthAndHeight');
         expect(md).toBe(String.raw`![Alt](:/0123456789abcdef0123456789abcdef "mern & test\ABC")`);
-        expect(extractImageDetails(md, 'markdown')?.title).toBe(ctx.title);
+        expect(extractImageDetails(md, 'markdown')?.title).toBe(title);
     });
 
     test.each([
@@ -341,7 +377,13 @@ describe('buildNewSyntax', () => {
             expect(details?.title).toBe(expected);
             syntax = buildNewSyntax(
                 { ...baseContext, ...details! },
-                { targetSyntax, altText: details!.altText, resizeMode: 'percentage', percentage: 100 },
+                {
+                    targetSyntax,
+                    altText: details!.altText,
+                    title: details!.title,
+                    resizeMode: 'percentage',
+                    percentage: 100,
+                },
                 'widthOnly'
             );
             if (targetSyntax === 'markdown') {
@@ -368,7 +410,13 @@ describe('buildNewSyntax', () => {
                 const details = extractImageDetails(syntax, from)!;
                 syntax = buildNewSyntax(
                     { ...baseContext, ...details },
-                    { targetSyntax, altText: details.altText, resizeMode: 'percentage', percentage: 100 },
+                    {
+                        targetSyntax,
+                        altText: details.altText,
+                        title: details.title,
+                        resizeMode: 'percentage',
+                        percentage: 100,
+                    },
                     'widthOnly'
                 );
                 expect(syntax).not.toMatch(/[\r\n]/);
@@ -385,7 +433,13 @@ describe('buildNewSyntax', () => {
         )!;
         const syntax = buildNewSyntax(
             { ...baseContext, ...details },
-            { targetSyntax: 'markdown', altText: details.altText, resizeMode: 'percentage', percentage: 100 },
+            {
+                targetSyntax: 'markdown',
+                altText: details.altText,
+                title: details.title,
+                resizeMode: 'percentage',
+                percentage: 100,
+            },
             'widthOnly'
         );
         expect(syntax).toBe(String.raw`![Alt](:/0123456789abcdef0123456789abcdef "a (b) \"c\"")`);
@@ -405,6 +459,7 @@ describe('buildNewSyntax', () => {
         const result: ResizeDialogResult = {
             targetSyntax: 'html',
             altText: 'Logo',
+            title: '',
             resizeMode: 'percentage',
             percentage: 50,
         };

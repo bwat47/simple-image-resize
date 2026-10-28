@@ -101,7 +101,7 @@ async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown)
             return;
         }
 
-        const resizeResult = buildQuickResizeResult(option, fullContext.altText);
+        const resizeResult = buildQuickResizeResult(option, fullContext);
         const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
 
         if (!(await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax))) {

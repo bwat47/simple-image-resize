@@ -318,6 +318,7 @@ describe('ResizeDialog', () => {
                 resizeForm: {
                     targetSyntax: 'html',
                     altText: 'Updated alt',
+                    imageTitle: 'Updated title',
                     resizeMode: 'absolute',
                     percentage: '75',
                     absoluteWidth: '300',
@@ -329,6 +330,7 @@ describe('ResizeDialog', () => {
         await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
             targetSyntax: 'html',
             altText: 'Updated alt',
+            title: 'Updated title',
             resizeMode: 'absolute',
             percentage: 75,
             absoluteWidth: 300,
@@ -354,6 +356,7 @@ describe('ResizeDialog', () => {
                 resizeForm: {
                     targetSyntax: 'invalid',
                     altText: 123,
+                    imageTitle: 456,
                     resizeMode: 'invalid',
                     percentage: {},
                     absoluteWidth: 300,
@@ -365,6 +368,7 @@ describe('ResizeDialog', () => {
         await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
             targetSyntax: 'html',
             altText: '',
+            title: '',
             resizeMode: dialogDefaults.defaultResizeMode,
             percentage: undefined,
             absoluteWidth: undefined,
@@ -374,6 +378,24 @@ describe('ResizeDialog', () => {
 });
 
 describe('renderDialogHtml', () => {
+    it('shows the title field only when the image has a title', () => {
+        expect(renderDialogHtml(dialogContext, dialogDefaults, 'desktop')).not.toContain('imageTitle');
+
+        const html = renderDialogHtml({ ...dialogContext, title: 'Say "hi"' }, dialogDefaults, 'desktop');
+        expect(html).toContain('<input type="text" id="imageTitle" name="imageTitle" value="Say &quot;hi&quot;">');
+        expect(html.indexOf('id="imageTitle"')).toBeGreaterThan(html.indexOf('id="altText"'));
+    });
+
+    it('renders line breaks in alt text and title as spaces', () => {
+        const html = renderDialogHtml(
+            { ...dialogContext, altText: 'a\r\nb', title: 'c\nd\re' },
+            dialogDefaults,
+            'desktop'
+        );
+        expect(html).toContain('id="altText" name="altText" value="a b"');
+        expect(html).toContain('id="imageTitle" name="imageTitle" value="c d e"');
+    });
+
     it('fixes the dialog width on desktop only', () => {
         expect(renderDialogHtml(dialogContext, dialogDefaults, 'desktop')).toContain(desktopDialogCss);
         expect(renderDialogHtml(dialogContext, dialogDefaults, 'mobile')).not.toContain(desktopDialogCss);

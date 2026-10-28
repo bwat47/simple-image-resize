@@ -1,17 +1,17 @@
 import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from '../shared/types';
-import { escapeHtmlAttribute, escapeMarkdownTitle, escapeMarkdownAlt } from '../shared/stringUtils';
-
-function normalizeLineBreaks(value: string): string {
-    // Treat CRLF as one line break; preserve other whitespace, e.g. tabs and spaces.
-    return value.replace(/\r\n|[\r\n]/g, ' ');
-}
+import {
+    escapeHtmlAttribute,
+    escapeMarkdownTitle,
+    escapeMarkdownAlt,
+    normalizeLineBreaks,
+} from '../shared/stringUtils';
 
 function buildSourcePath(context: ImageContext): string {
     return context.sourceType === 'resource' ? `:/${context.source}` : context.source;
 }
 
-function buildMarkdownSyntax(context: ImageContext, result: ResizeDialogResult, srcPath: string): string {
-    const titlePart = context.title ? ` "${escapeMarkdownTitle(context.title)}"` : '';
+function buildMarkdownSyntax(result: ResizeDialogResult, srcPath: string): string {
+    const titlePart = result.title ? ` "${escapeMarkdownTitle(result.title)}"` : '';
     return `![${escapeMarkdownAlt(result.altText)}](${srcPath}${titlePart})`;
 }
 
@@ -47,7 +47,7 @@ function buildHtmlSyntax(
     const newHeight = originalWidth > 0 ? Math.round(newWidth * (originalHeight / originalWidth)) : originalHeight;
     const includeHeight = htmlSyntaxStyle === 'widthAndHeight' && context.originalDimensionsDetermined;
     const heightAttr = includeHeight ? ` height="${newHeight}"` : '';
-    const titleAttr = context.title ? ` title="${escapeHtmlAttribute(context.title)}"` : '';
+    const titleAttr = result.title ? ` title="${escapeHtmlAttribute(result.title)}"` : '';
     const safeAlt = escapeHtmlAttribute(result.altText);
 
     return `<img src="${srcPath}" alt="${safeAlt}" width="${newWidth}"${heightAttr}${titleAttr} />`;
@@ -69,13 +69,16 @@ export function buildNewSyntax(
     result: ResizeDialogResult,
     htmlSyntaxStyle: HtmlSyntaxStyle
 ): string {
-    const normalizedContext = { ...context, title: normalizeLineBreaks(context.title) };
-    const normalizedResult = { ...result, altText: normalizeLineBreaks(result.altText) };
-    const srcPath = buildSourcePath(normalizedContext);
+    const normalizedResult = {
+        ...result,
+        altText: normalizeLineBreaks(result.altText),
+        title: normalizeLineBreaks(result.title),
+    };
+    const srcPath = buildSourcePath(context);
 
     if (result.targetSyntax === 'markdown') {
-        return buildMarkdownSyntax(normalizedContext, normalizedResult, srcPath);
+        return buildMarkdownSyntax(normalizedResult, srcPath);
     }
 
-    return buildHtmlSyntax(normalizedContext, normalizedResult, srcPath, htmlSyntaxStyle);
+    return buildHtmlSyntax(context, normalizedResult, srcPath, htmlSyntaxStyle);
 }

@@ -35,6 +35,7 @@ export interface ImageContext extends ImageDetails {
 export interface ResizeDialogResult {
     targetSyntax: ImageSyntax;
     altText: string;
+    title: string;
     // Resize options
     resizeMode: ResizeMode;
     percentage?: number;

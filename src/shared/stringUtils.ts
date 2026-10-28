@@ -1,6 +1,15 @@
 import { decodeHTMLAttribute, decodeHTMLStrict, escapeUTF8 } from 'entities';
 
 /**
+ * Replaces each line break (CRLF, CR or LF) with one space; other whitespace is preserved.
+ *
+ * Generated syntax and the dialog's single-line inputs both keep alt text and titles on one line.
+ */
+export function normalizeLineBreaks(value: string): string {
+    return value.replace(/\r\n|[\r\n]/g, ' ');
+}
+
+/**
  * Escapes a string for safe inclusion inside a double-quoted HTML attribute value.
  *
  * Escapes `&`, `<`, `>`, `"` and `'`; all other characters are left as-is.
