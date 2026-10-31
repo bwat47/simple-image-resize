@@ -1,9 +1,9 @@
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
-import { registerSettings, initializeSettingsCache, settingsCache } from './host/settings';
 import { registerCommands } from './host/commands';
-import { registerMenus, registerContextMenu, registerToolbarButton } from './host/menus';
+import { registerContextMenu, registerMenus, registerToolbarButton } from './host/menus';
 import { ResizeDialog } from './host/resizeDialogHost';
+import { initializeSettingsCache, registerSettings, settingsCache } from './host/settings';
 import { registerViewerContentScript } from './host/viewerMessages';
 import { EDITOR_CONTENT_SCRIPT_ID } from './shared/editorCommands';
 

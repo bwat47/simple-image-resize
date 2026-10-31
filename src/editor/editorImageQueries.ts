@@ -10,11 +10,12 @@
 import { ensureSyntaxTree, syntaxTree } from '@codemirror/language';
 import type { EditorState, Text } from '@codemirror/state';
 import type { SyntaxNode } from '@lezer/common';
-import type { EditorImageAtCursorResult, EditorPosition, ImageDetails } from '../shared/types';
-import { logger } from '../shared/logger';
-import { extractHtmlDetails, extractMarkdownDetails, type MarkdownImageParts } from './imageSyntaxParser';
-import type { ViewerImageTarget } from '../shared/viewerImageTarget';
+
 import type { ReplaceRangeArgs } from '../shared/editorCommands';
+import { logger } from '../shared/logger';
+import type { EditorImageAtCursorResult, EditorPosition, ImageDetails } from '../shared/types';
+import type { ViewerImageTarget } from '../shared/viewerImageTarget';
+import { extractHtmlDetails, extractMarkdownDetails, type MarkdownImageParts } from './imageSyntaxParser';
 
 // Keep viewer context menus responsive when parsing a very large note.
 const VIEWER_IMAGE_PARSE_TIMEOUT_MS = 200;

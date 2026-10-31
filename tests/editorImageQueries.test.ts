@@ -1,5 +1,6 @@
-import { EditorState, Text } from '@codemirror/state';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { EditorState, Text } from '@codemirror/state';
+
 import {
     findImagesOnLine,
     getImageAtCursor,

@@ -1,7 +1,7 @@
 import type { ButtonSpec, DialogResult, VersionInfo, ViewHandle } from 'api/types';
-import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from '../shared/types';
 import { getDialogFieldState } from '../shared/dialogFieldState';
 import { escapeHtmlAttribute, normalizeLineBreaks } from '../shared/stringUtils';
+import type { ImageContext, ImageSyntax, ResizeDialogConfig, ResizeDialogResult, ResizeMode } from '../shared/types';
 import { desktopDialogCss, resizeDialogCss } from './resizeDialogStyles';
 
 const DIALOG_ID = 'image-resize-dialog';

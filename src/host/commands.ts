@@ -11,15 +11,12 @@
  */
 
 import joplin from 'api';
-import { buildNewSyntax } from './imageSyntaxBuilder';
-import type { ResizeDialog } from './resizeDialogHost';
-import { getOriginalImageDimensions } from './originalImageDimensions';
-import { detectImageAtCursor, replaceRangeInEditor, selectViewerImageInEditor } from './editorBridge';
-import { isViewerImageTarget } from '../shared/viewerImageTarget';
-import type { ImageContext } from '../shared/types';
 import { logger } from '../shared/logger';
-import { settingsCache } from './settings';
-import { showToast, ToastType } from './toastUtils';
+import type { ImageContext } from '../shared/types';
+import { isViewerImageTarget } from '../shared/viewerImageTarget';
+import { detectImageAtCursor, replaceRangeInEditor, selectViewerImageInEditor } from './editorBridge';
+import { buildNewSyntax } from './imageSyntaxBuilder';
+import { getOriginalImageDimensions } from './originalImageDimensions';
 import {
     buildQuickResizeResult,
     getQuickResizeSkippedMessage,
@@ -28,6 +25,9 @@ import {
     QUICK_RESIZE_SLOTS,
     requiresOriginalDimensions,
 } from './quickResizeOptions';
+import type { ResizeDialog } from './resizeDialogHost';
+import { settingsCache } from './settings';
+import { showToast, ToastType } from './toastUtils';
 
 const IMAGE_CHANGED_MESSAGE = 'The image changed before it could be resized. Try again.';
 

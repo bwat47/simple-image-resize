@@ -1,7 +1,8 @@
 import MarkdownIt from 'markdown-it';
-import { extractImageDetails } from './helpers/imageDetails';
+
 import { buildNewSyntax } from '../src/host/imageSyntaxBuilder';
 import type { ImageContext, ImageSyntax, ResizeDialogResult } from '../src/shared/types';
+import { extractImageDetails } from './helpers/imageDetails';
 
 describe('buildNewSyntax', () => {
     const baseContext: ImageContext = {

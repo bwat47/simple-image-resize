@@ -1,13 +1,14 @@
-import MarkdownIt from 'markdown-it';
-import { EditorState } from '@codemirror/state';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
-import { installImagePositions } from '../src/viewer/viewerContentScript';
+import { EditorState } from '@codemirror/state';
+import MarkdownIt from 'markdown-it';
+
 import {
     findImageForViewerTarget,
     getImageAtCursor,
     viewerImageCursorPosition,
 } from '../src/editor/editorImageQueries';
 import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, type ViewerImageTarget } from '../src/shared/viewerImageTarget';
+import { installImagePositions } from '../src/viewer/viewerContentScript';
 
 vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },

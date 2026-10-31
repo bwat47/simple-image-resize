@@ -1,5 +1,6 @@
-import { EditorState } from '@codemirror/state';
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
+import { EditorState } from '@codemirror/state';
+
 import { getImageAtCursor } from '../../src/editor/editorImageQueries';
 import type { ImageDetails, ImageSyntax } from '../../src/shared/types';
 

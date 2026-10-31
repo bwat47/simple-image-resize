@@ -1,7 +1,8 @@
-import joplin from 'api';
 import type { Mock, MockInstance } from 'vitest';
-import { initializeSettingsCache, settingsCache } from '../src/host/settings';
+
+import joplin from 'api';
 import { QUICK_RESIZE_OPTIONS_DEFAULT } from '../src/host/quickResizeOptions';
+import { initializeSettingsCache, settingsCache } from '../src/host/settings';
 
 const SETTING_VALUES = {
     defaultResizeMode: 'percentage',

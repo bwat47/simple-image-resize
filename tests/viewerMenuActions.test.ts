@@ -1,6 +1,7 @@
 import joplin from 'api';
 import { registerCommands } from '../src/host/commands';
 import { registerContextMenu } from '../src/host/menus';
+import { settingsCache } from '../src/host/settings';
 import { receiveViewerMessage } from '../src/host/viewerMessages';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
@@ -8,7 +9,6 @@ import {
     MATCH_VIEWER_IMAGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
 } from '../src/shared/editorCommands';
-import { settingsCache } from '../src/host/settings';
 
 vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },

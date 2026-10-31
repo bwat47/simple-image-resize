@@ -6,8 +6,6 @@
  */
 
 import joplin from 'api';
-import type { EditorImageAtCursorResult, EditorRange, ImageDetails, ImageDimensions } from '../shared/types';
-import { logger } from '../shared/logger';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
     GET_IMAGE_DIMENSIONS_COMMAND,
@@ -17,6 +15,8 @@ import {
     SELECT_VIEWER_IMAGE_COMMAND,
 } from '../shared/editorCommands';
 import { isValidImageDimensions } from '../shared/imageDimensionUtils';
+import { logger } from '../shared/logger';
+import type { EditorImageAtCursorResult, EditorRange, ImageDetails, ImageDimensions } from '../shared/types';
 import type { ViewerImageTarget } from '../shared/viewerImageTarget';
 
 interface CursorDetectionResult {

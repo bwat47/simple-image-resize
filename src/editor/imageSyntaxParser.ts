@@ -1,5 +1,5 @@
-import type { ImageDetails } from '../shared/types';
 import { decodeHtmlEntities, decodeMarkdownText } from '../shared/stringUtils';
+import type { ImageDetails } from '../shared/types';
 
 /**
  * Raw source text of a Markdown image's parts, sliced from its syntax tree node.

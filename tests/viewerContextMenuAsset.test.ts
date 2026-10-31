@@ -3,8 +3,9 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import MarkdownIt from 'markdown-it';
+
+import { VIEWER_CONTENT_SCRIPT_ID, type ViewerContextMenuMessage } from '../src/shared/viewerImageTarget';
 import { installImagePositions } from '../src/viewer/viewerContentScript';
-import { type ViewerContextMenuMessage, VIEWER_CONTENT_SCRIPT_ID } from '../src/shared/viewerImageTarget';
 import type { ViewerWebviewApi } from '../src/viewer/viewerContextMenuTypes';
 
 const script = readFileSync(resolve(process.cwd(), 'src/viewer/viewerContextMenu.js'), 'utf8');

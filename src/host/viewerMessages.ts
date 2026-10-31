@@ -14,14 +14,14 @@
 
 import joplin from 'api';
 import { ContentScriptType } from 'api/types';
+import { logger } from '../shared/logger';
 import {
     isViewerImageTarget,
     VIEWER_CONTENT_SCRIPT_ID,
-    type ViewerContextMenuMessage as ViewerMessage,
     type ViewerImageTarget,
+    type ViewerContextMenuMessage as ViewerMessage,
 } from '../shared/viewerImageTarget';
 import { matchesViewerImageInEditor } from './editorBridge';
-import { logger } from '../shared/logger';
 
 /** Maximum time between a viewer click and the start of its menu request. */
 const VIEWER_MESSAGE_GRACE_MS = 400;

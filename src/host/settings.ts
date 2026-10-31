@@ -6,10 +6,10 @@
  */
 
 import joplin from 'api';
-import { type SettingItem, SettingItemType } from 'api/types';
+import { SettingItemType, type SettingItem } from 'api/types';
 import { logger } from '../shared/logger';
-import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
 import type { HtmlSyntaxStyle, ResizeMode } from '../shared/types';
+import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
 
 const SECTION_ID = 'imageResize';
 

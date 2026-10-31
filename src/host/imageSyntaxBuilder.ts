@@ -1,10 +1,10 @@
-import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from '../shared/types';
 import {
     escapeHtmlAttribute,
-    escapeMarkdownTitle,
     escapeMarkdownAlt,
+    escapeMarkdownTitle,
     normalizeLineBreaks,
 } from '../shared/stringUtils';
+import type { HtmlSyntaxStyle, ImageContext, ResizeDialogResult } from '../shared/types';
 
 function buildSourcePath(context: ImageContext): string {
     return context.sourceType === 'resource' ? `:/${context.source}` : context.source;

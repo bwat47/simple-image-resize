@@ -8,13 +8,13 @@
  */
 
 import joplin from 'api';
-import { type MenuItem, MenuItemLocation, ToolbarButtonLocation } from 'api/types';
-import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './editorBridge';
+import { MenuItemLocation, ToolbarButtonLocation, type MenuItem } from 'api/types';
 import { logger } from '../shared/logger';
-import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerMessages';
 import type { ViewerImageTarget } from '../shared/viewerImageTarget';
-import { settingsCache } from './settings';
+import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './editorBridge';
 import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
+import { settingsCache } from './settings';
+import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerMessages';
 
 function buildQuickResizeMenuItems(includeAccelerators: boolean, viewerTarget?: ViewerImageTarget): MenuItem[] {
     const quickResizeOptions = tryParseQuickResizeOptions(settingsCache.quickResizeOptions);
