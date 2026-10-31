@@ -52,7 +52,7 @@ function bytesFromObject(object: Record<string | number, unknown>): Uint8Array<A
  * - Desktop: Electron IPC structured-clones it into a Uint8Array.
  * - Web app: RemoteMessenger has no case for typed arrays (its SerializableData
  *   covers only ArrayBuffer, Blob, and FileSystemHandle), so it deep-copies the
- *   Buffer with for...in, yielding {0: 137, 1: 80, ...}.
+ *   Buffer with for...in, yielding `{0: 137, 1: 80, ...}`.
  *
  * The ArrayBuffer branch is defensive, for the same reason as the Blob guard in
  * getResourceBlob. Nothing produces an ArrayBuffer today.

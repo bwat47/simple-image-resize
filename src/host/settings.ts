@@ -1,6 +1,5 @@
 /**
- * Joplin settings registration for Simple Image Resize plugin, shown under
- * Settings > Simple Image Resize.
+ * Joplin settings registration for Simple Image Resize plugin.
  *
  * Also maintains an in-memory settings cache to avoid async reads on every operation.
  */
