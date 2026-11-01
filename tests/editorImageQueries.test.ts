@@ -8,7 +8,6 @@ import {
     posToOffset,
     resolveReplaceChange,
 } from '../src/editor/editorImageQueries';
-import { requireValue } from './helpers/requireValue';
 
 vi.mock('../src/shared/logger', () => ({
     logger: {
@@ -80,8 +79,7 @@ describe('findImagesOnLine', () => {
         const state = stateWithCursor(`![alt‸](:/${RESOURCE_ID} "title")`);
         const images = findImagesOnLine(state);
 
-        expect(images).toHaveLength(1);
-        expect(requireValue(images[0], 'the Markdown image').type).toBe('markdown');
+        expect(images).toMatchObject([{ type: 'markdown' }]);
         expect(sliceAll(state, images)).toEqual([`![alt](:/${RESOURCE_ID} "title")`]);
     });
 
@@ -89,8 +87,7 @@ describe('findImagesOnLine', () => {
         const state = stateWithCursor('Before <img src="a.png" width="100"> af‸ter');
         const images = findImagesOnLine(state);
 
-        expect(images).toHaveLength(1);
-        expect(requireValue(images[0], 'the HTML image').type).toBe('html');
+        expect(images).toMatchObject([{ type: 'html' }]);
         expect(sliceAll(state, images)).toEqual(['<img src="a.png" width="100">']);
     });
 
@@ -104,8 +101,7 @@ describe('findImagesOnLine', () => {
         const state = stateWithCursor('<div><img src="a.png" wid‸th="100"></div>');
         const images = findImagesOnLine(state);
 
-        expect(images).toHaveLength(1);
-        expect(requireValue(images[0], 'the nested HTML image').type).toBe('html');
+        expect(images).toMatchObject([{ type: 'html' }]);
         expect(sliceAll(state, images)).toEqual(['<img src="a.png" width="100">']);
     });
 
