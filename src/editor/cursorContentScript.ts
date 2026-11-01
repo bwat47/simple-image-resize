@@ -45,7 +45,7 @@ const EDITOR_CONTEXT_MENU_EVENT_GRACE_MS = 400;
 export default function (): MarkdownEditorContentScriptModule {
     return {
         plugin: function (editorControl: CodeMirrorControl) {
-            if (!editorControl?.cm6) {
+            if (!editorControl.cm6) {
                 logger.warn('CodeMirror 6 not available; skipping content script commands.');
                 return;
             }
