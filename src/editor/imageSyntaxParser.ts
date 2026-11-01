@@ -40,10 +40,10 @@ type ImageSourceInfo = Pick<ImageDetails, 'source' | 'sourceType'>;
 
 function resolveImageSource(src: string): ImageSourceInfo {
     const resourceMatch = RESOURCE_ID_PATTERN.exec(src);
-    if (resourceMatch) return { source: resourceMatch[1], sourceType: 'resource' };
+    if (resourceMatch?.[1]) return { source: resourceMatch[1], sourceType: 'resource' };
 
     const urlMatch = EXTERNAL_URL_PATTERN.exec(src);
-    if (urlMatch) return { source: urlMatch[1], sourceType: 'external' };
+    if (urlMatch?.[1]) return { source: urlMatch[1], sourceType: 'external' };
 
     return { source: src, sourceType: 'external' };
 }
@@ -74,9 +74,8 @@ export function extractMarkdownDetails(imageText: string, parts: MarkdownImagePa
  */
 export function extractHtmlDetails(imageText: string): ImageDetails | null {
     const srcMatch = HTML_SRC_PATTERN.exec(imageText);
-    if (!srcMatch) return null;
-
-    const src = srcMatch[2];
+    const src = srcMatch?.[2];
+    if (!src) return null;
     const altMatch = HTML_ALT_PATTERN.exec(imageText);
     const titleMatch = HTML_TITLE_PATTERN.exec(imageText);
 
@@ -84,7 +83,7 @@ export function extractHtmlDetails(imageText: string): ImageDetails | null {
         type: 'html',
         syntax: imageText,
         ...resolveImageSource(src),
-        altText: altMatch ? decodeHtmlEntities(altMatch[2]) : '',
-        title: titleMatch ? decodeHtmlEntities(titleMatch[2]) : '',
+        altText: decodeHtmlEntities(altMatch?.[2] ?? ''),
+        title: decodeHtmlEntities(titleMatch?.[2] ?? ''),
     };
 }

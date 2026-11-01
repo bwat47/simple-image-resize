@@ -21,6 +21,9 @@ function buildQuickResizeMenuItems(includeAccelerators: boolean, viewerTarget?: 
 
     return quickResizeOptions.map((option, index) => {
         const slot = QUICK_RESIZE_SLOTS[index];
+        if (!slot) {
+            throw new Error(`No command is registered for quick resize slot ${index + 1}.`);
+        }
         const menuItem: MenuItem = {
             label: getQuickResizeLabel(option),
             commandName: slot.commandName,

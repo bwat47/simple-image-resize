@@ -1,7 +1,6 @@
 import type { ImageDetails, ResizeDialogResult } from '../shared/types';
 
 export const QUICK_RESIZE_OPTIONS_DEFAULT = '100%, 75%, 50%, 33%, 25%';
-const QUICK_RESIZE_SLOT_LIMIT = 5;
 
 export const QUICK_RESIZE_SLOTS = [
     { commandName: 'resize100', accelerator: 'CmdOrCtrl+Shift+1' },
@@ -10,6 +9,7 @@ export const QUICK_RESIZE_SLOTS = [
     { commandName: 'resize33', accelerator: 'CmdOrCtrl+Shift+4' },
     { commandName: 'resize25', accelerator: 'CmdOrCtrl+Shift+5' },
 ] as const;
+const QUICK_RESIZE_SLOT_LIMIT = QUICK_RESIZE_SLOTS.length;
 
 export type QuickResizeOption =
     | {
@@ -124,12 +124,13 @@ export function getQuickResizeSuccessMessage(option: QuickResizeOption): string 
 
 function parseQuickResizeToken(token: string): QuickResizeOption {
     const match = /^(\d+)(%|px)$/i.exec(token);
-    if (!match) {
+    const valueText = match?.[1];
+    const unit = match?.[2]?.toLowerCase();
+    if (!valueText || !unit) {
         throw new Error(`Invalid quick resize option "${token}". Use positive whole-number values like 75% or 300px.`);
     }
 
-    const value = Number.parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
+    const value = Number.parseInt(valueText, 10);
 
     if (value <= 0) {
         throw new Error(`Invalid quick resize option "${token}". Values must be greater than zero.`);

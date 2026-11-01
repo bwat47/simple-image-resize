@@ -141,7 +141,7 @@ export function installImagePositions(markdownIt: MarkdownIt, options?: { mapsTo
         const html = defaultImageRender
             ? defaultImageRender(tokens, idx, options, env, self)
             : self.renderToken(tokens, idx, options);
-        const meta = tokens[idx].meta as ImagePositionMeta | null;
+        const meta = tokens[idx]?.meta as ImagePositionMeta | null | undefined;
         const position = meta?.[POSITION_META_KEY];
         return position ? addAttributesToImgTag(html, position) : html;
     };

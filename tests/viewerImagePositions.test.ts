@@ -9,6 +9,7 @@ import {
 } from '../src/editor/editorImageQueries';
 import { isViewerImageTarget, VIEWER_IMAGE_ATTRIBUTES, type ViewerImageTarget } from '../src/shared/viewerImageTarget';
 import { installImagePositions } from '../src/viewer/viewerContentScript';
+import { requireValue } from './helpers/requireValue';
 
 vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -41,7 +42,7 @@ function viewerTargets(html: string): ViewerImageTarget[] {
             line: Number(line),
             lineEnd: Number(attr(VIEWER_IMAGE_ATTRIBUTES.lineEnd)),
             index: Number(attr(VIEWER_IMAGE_ATTRIBUTES.index)),
-            resourceId: /src=":\/([a-f0-9]{32})"/.exec(tag)![1],
+            resourceId: requireValue(/src=":\/([a-f0-9]{32})"/.exec(tag)?.[1], 'the image resource ID'),
         });
     }
     return targets;
@@ -100,10 +101,14 @@ describe('viewer image positions resolve to the same image in the editor', () =>
     it('picks the right copy when one resource appears twice in a block', () => {
         const doc = `![a](:/${id(1)}) and ![a](:/${id(1)})`;
         const state = editorState(doc);
-        const [first, second] = viewerTargets(render(doc));
+        const targets = viewerTargets(render(doc));
+        const first = requireValue(targets[0], 'the first viewer target');
+        const second = requireValue(targets[1], 'the second viewer target');
 
-        expect(findImageForViewerTarget(state, first)!.from).toBe(0);
-        expect(findImageForViewerTarget(state, second)!.from).toBe(doc.lastIndexOf('!['));
+        expect(requireValue(findImageForViewerTarget(state, first), 'the first editor image').from).toBe(0);
+        expect(requireValue(findImageForViewerTarget(state, second), 'the second editor image').from).toBe(
+            doc.lastIndexOf('![')
+        );
     });
 
     it('resolves an image beyond the editor syntax tree in a long note', () => {
