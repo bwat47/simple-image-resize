@@ -1,7 +1,6 @@
 import type { ImageDetails, ResizeDialogResult } from '../shared/types';
 
 export const QUICK_RESIZE_OPTIONS_DEFAULT = '100%, 75%, 50%, 33%, 25%';
-const QUICK_RESIZE_SLOT_LIMIT = 5;
 
 export const QUICK_RESIZE_SLOTS = [
     { commandName: 'resize100', accelerator: 'CmdOrCtrl+Shift+1' },
@@ -10,6 +9,7 @@ export const QUICK_RESIZE_SLOTS = [
     { commandName: 'resize33', accelerator: 'CmdOrCtrl+Shift+4' },
     { commandName: 'resize25', accelerator: 'CmdOrCtrl+Shift+5' },
 ] as const;
+const QUICK_RESIZE_SLOT_LIMIT = QUICK_RESIZE_SLOTS.length;
 
 export type QuickResizeOption =
     | {
