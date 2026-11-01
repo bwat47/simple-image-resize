@@ -7,6 +7,7 @@ import MarkdownIt from 'markdown-it';
 import { VIEWER_CONTENT_SCRIPT_ID, type ViewerContextMenuMessage } from '../src/shared/viewerImageTarget';
 import { installImagePositions } from '../src/viewer/viewerContentScript';
 import type { ViewerWebviewApi } from '../src/viewer/viewerContextMenuTypes';
+import { requireValue } from './helpers/requireValue';
 
 const script = readFileSync(resolve(process.cwd(), 'src/viewer/viewerContextMenu.js'), 'utf8');
 const resourceId = '0123456789abcdef0123456789abcdef';
@@ -28,7 +29,9 @@ it('reports positions stamped by the viewer renderer to the registered content s
     Object.assign(window, { webviewApi });
 
     window.eval(script);
-    images[1].dispatchEvent(new MouseEvent('contextmenu', { bubbles: true }));
+    requireValue(images[1], 'the second rendered image').dispatchEvent(
+        new MouseEvent('contextmenu', { bubbles: true })
+    );
 
     expect(messages).toEqual([
         {

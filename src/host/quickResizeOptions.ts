@@ -124,12 +124,13 @@ export function getQuickResizeSuccessMessage(option: QuickResizeOption): string 
 
 function parseQuickResizeToken(token: string): QuickResizeOption {
     const match = /^(\d+)(%|px)$/i.exec(token);
-    if (!match) {
+    const valueText = match?.[1];
+    const unit = match?.[2]?.toLowerCase();
+    if (!valueText || !unit) {
         throw new Error(`Invalid quick resize option "${token}". Use positive whole-number values like 75% or 300px.`);
     }
 
-    const value = Number.parseInt(match[1], 10);
-    const unit = match[2].toLowerCase();
+    const value = Number.parseInt(valueText, 10);
 
     if (value <= 0) {
         throw new Error(`Invalid quick resize option "${token}". Values must be greater than zero.`);

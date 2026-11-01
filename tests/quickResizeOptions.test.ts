@@ -6,6 +6,7 @@ import {
     QUICK_RESIZE_OPTIONS_DEFAULT,
     requiresOriginalDimensions,
 } from '../src/host/quickResizeOptions';
+import { requireValue } from './helpers/requireValue';
 
 describe('parseQuickResizeOptions', () => {
     it('parses the default quick resize options', () => {
@@ -69,7 +70,7 @@ describe('normalizeQuickResizeOptionsSetting', () => {
 
 describe('buildQuickResizeResult', () => {
     it('builds a percentage resize request', () => {
-        const [option] = parseQuickResizeOptions('75%');
+        const option = requireValue(parseQuickResizeOptions('75%')[0], 'the 75% option');
 
         expect(buildQuickResizeResult(option, { altText: 'Alt', title: 'Title' })).toEqual({
             targetSyntax: 'html',
@@ -81,7 +82,7 @@ describe('buildQuickResizeResult', () => {
     });
 
     it('builds a Markdown conversion request for 100%', () => {
-        const [option] = parseQuickResizeOptions('100%');
+        const option = requireValue(parseQuickResizeOptions('100%')[0], 'the 100% option');
 
         expect(buildQuickResizeResult(option, { altText: 'Alt', title: 'Title' })).toEqual({
             targetSyntax: 'markdown',
@@ -93,7 +94,7 @@ describe('buildQuickResizeResult', () => {
     });
 
     it('builds an absolute-width resize request for pixels', () => {
-        const [option] = parseQuickResizeOptions('300px');
+        const option = requireValue(parseQuickResizeOptions('300px')[0], 'the 300px option');
 
         expect(buildQuickResizeResult(option, { altText: 'Alt', title: 'Title' })).toEqual({
             targetSyntax: 'html',
@@ -107,25 +108,25 @@ describe('buildQuickResizeResult', () => {
 
 describe('requiresOriginalDimensions', () => {
     it('requires original dimensions for scaling percentages', () => {
-        const [seventyFive] = parseQuickResizeOptions('75%');
+        const seventyFive = requireValue(parseQuickResizeOptions('75%')[0], 'the 75% option');
 
         expect(requiresOriginalDimensions(seventyFive)).toBe(true);
     });
 
     it('does not require original dimensions for 100%, which converts to Markdown', () => {
-        const [hundred] = parseQuickResizeOptions('100%');
+        const hundred = requireValue(parseQuickResizeOptions('100%')[0], 'the 100% option');
 
         expect(requiresOriginalDimensions(hundred)).toBe(false);
     });
 
     it('does not require original dimensions for pixel values', () => {
-        const [pixels] = parseQuickResizeOptions('300px');
+        const pixels = requireValue(parseQuickResizeOptions('300px')[0], 'the 300px option');
 
         expect(requiresOriginalDimensions(pixels)).toBe(false);
     });
 
     it('names the skipped option and suggests an alternative', () => {
-        const [seventyFive] = parseQuickResizeOptions('75%');
+        const seventyFive = requireValue(parseQuickResizeOptions('75%')[0], 'the 75% option');
 
         expect(getQuickResizeSkippedMessage(seventyFive)).toBe(
             "Cannot resize to 75%: the image's original dimensions are unknown. Use a pixel value such as 300px, or the resize dialog."

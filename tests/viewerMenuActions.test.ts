@@ -9,6 +9,7 @@ import {
     MATCH_VIEWER_IMAGE_COMMAND,
     SELECT_VIEWER_IMAGE_COMMAND,
 } from '../src/shared/editorCommands';
+import { requireValue } from './helpers/requireValue';
 
 vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -31,7 +32,7 @@ function mockEditorCommands(results: Record<string, unknown>): void {
 /** Returns the filter registered by the most recent `registerContextMenu()` call. */
 function getContextMenuFilter(): Parameters<typeof joplin.workspace.filterEditorContextMenu>[0] {
     const filterMock = vi.mocked(joplin.workspace.filterEditorContextMenu);
-    return filterMock.mock.calls[0][0];
+    return requireValue(filterMock.mock.calls[0], 'the context menu filter registration')[0];
 }
 
 describe('viewer context menu actions', () => {

@@ -9,6 +9,7 @@ import {
 } from '../src/host/resizeDialogHost';
 import { desktopDialogCss } from '../src/host/resizeDialogStyles';
 import type { ImageContext } from '../src/shared/types';
+import { requireValue } from './helpers/requireValue';
 
 describe('getInitialDialogState', () => {
     describe('HTML syntax with percentage mode', () => {
@@ -238,7 +239,9 @@ describe('ResizeDialog', () => {
         expect(dialogs.addScript).toHaveBeenCalledExactlyOnceWith('handle', './dialog/resizeDialog.js');
         expect(dialogs.setButtons).toHaveBeenCalledOnce();
         expect(dialogs.setHtml).toHaveBeenCalledTimes(2);
-        expect(dialogs.setHtml.mock.calls[1][1]).toContain('value="Second image"');
+        expect(requireValue(dialogs.setHtml.mock.calls[1], 'the second setHtml call')[1]).toContain(
+            'value="Second image"'
+        );
         expect(dialogs.open).toHaveBeenCalledTimes(2);
     });
 

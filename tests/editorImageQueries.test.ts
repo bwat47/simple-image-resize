@@ -8,6 +8,7 @@ import {
     posToOffset,
     resolveReplaceChange,
 } from '../src/editor/editorImageQueries';
+import { requireValue } from './helpers/requireValue';
 
 vi.mock('../src/shared/logger', () => ({
     logger: {
@@ -80,7 +81,7 @@ describe('findImagesOnLine', () => {
         const images = findImagesOnLine(state);
 
         expect(images).toHaveLength(1);
-        expect(images[0].type).toBe('markdown');
+        expect(requireValue(images[0], 'the Markdown image').type).toBe('markdown');
         expect(sliceAll(state, images)).toEqual([`![alt](:/${RESOURCE_ID} "title")`]);
     });
 
@@ -89,7 +90,7 @@ describe('findImagesOnLine', () => {
         const images = findImagesOnLine(state);
 
         expect(images).toHaveLength(1);
-        expect(images[0].type).toBe('html');
+        expect(requireValue(images[0], 'the HTML image').type).toBe('html');
         expect(sliceAll(state, images)).toEqual(['<img src="a.png" width="100">']);
     });
 
@@ -104,7 +105,7 @@ describe('findImagesOnLine', () => {
         const images = findImagesOnLine(state);
 
         expect(images).toHaveLength(1);
-        expect(images[0].type).toBe('html');
+        expect(requireValue(images[0], 'the nested HTML image').type).toBe('html');
         expect(sliceAll(state, images)).toEqual(['<img src="a.png" width="100">']);
     });
 

@@ -3,6 +3,7 @@ import MarkdownIt from 'markdown-it';
 import { buildNewSyntax } from '../src/host/imageSyntaxBuilder';
 import type { ImageContext, ImageSyntax, ResizeDialogResult } from '../src/shared/types';
 import { extractImageDetails } from './helpers/imageDetails';
+import { requireValue } from './helpers/requireValue';
 
 describe('buildNewSyntax', () => {
     const baseContext: ImageContext = {
@@ -218,7 +219,7 @@ describe('buildNewSyntax', () => {
         };
         const syntax = buildNewSyntax(baseContext, res, 'widthAndHeight');
         const tokens = new MarkdownIt({ html: true }).parseInline(syntax + trailingText, {});
-        const image = tokens[0].children?.find((token) => token.type === 'image');
+        const image = requireValue(tokens[0], 'the inline token').children?.find((token) => token.type === 'image');
 
         expect(image?.attrGet('src')).toBe(':/0123456789abcdef0123456789abcdef');
         expect(extractImageDetails(syntax, 'markdown')).toMatchObject({ altText, title });
@@ -389,7 +390,9 @@ describe('buildNewSyntax', () => {
             );
             if (targetSyntax === 'markdown') {
                 const tokens = new MarkdownIt().parseInline(syntax, {});
-                const image = tokens[0].children?.find((token) => token.type === 'image');
+                const image = requireValue(tokens[0], 'the inline token').children?.find(
+                    (token) => token.type === 'image'
+                );
                 markdownTitles.push(image?.attrGet('title'));
             }
             from = targetSyntax;
