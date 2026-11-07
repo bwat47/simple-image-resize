@@ -1,15 +1,15 @@
 // Flat config (ESM). Adds ignores, Node + Vitest globals, and TS-friendly rule tweaks.
 
-import { defineConfig } from 'eslint/config';
 import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import importPlugin from 'eslint-plugin-import-x';
+import vitest from '@vitest/eslint-plugin';
+import prettier from 'eslint-config-prettier';
 import { createTypeScriptImportResolver } from 'eslint-import-resolver-typescript';
+import importPlugin from 'eslint-plugin-import-x';
 import sonarjs from 'eslint-plugin-sonarjs';
 import tsdoc from 'eslint-plugin-tsdoc';
-import prettier from 'eslint-config-prettier';
+import { defineConfig } from 'eslint/config';
 import globals from 'globals';
-import vitest from '@vitest/eslint-plugin';
+import tseslint from 'typescript-eslint';
 
 // Each folder is bundled for one runtime; src/shared is bundled into several.
 const RUNTIME_FOLDERS = ['host', 'editor', 'viewer', 'dialog'];
