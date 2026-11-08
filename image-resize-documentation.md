@@ -23,7 +23,7 @@ Code under `src/` is grouped by the runtime it is bundled into, because that dec
 
 `eslint.config.mjs` enforces this with ESLint's `no-restricted-imports`: a runtime folder cannot import values from another runtime folder, and only `src/host/` may import values from `api` or `api/types`. Type-only imports may cross boundaries since they are erased at build time. Code needed by two runtimes belongs in `src/shared/`.
 
-The built output mirrors these folders, so registration paths such as `./editor/cursorContentScript.js`, `./viewer/viewerContentScript.js`, and `./dialog/resizeDialog.js` must match `plugin.config.json`.
+The built output mirrors these folders, so registration paths such as `./editor/cursorContentScript.js`, `./viewer/viewerContentScript.js`, and `./dialog/resizeDialog.js` must match `plugin.config.json`. The editor and viewer content scripts are listed under `extraScripts` (CommonJS modules Joplin loads). The dialog script is listed under `webviewScripts`: the dialog loads it with a plain `<script>` tag, so it is bundled as a self-contained IIFE that starts itself, and its default export exists only for tests. `viewerContextMenu.js` is plain JavaScript and is copied as-is. See [docs/BUILDING.md](docs/BUILDING.md).
 
 ## Main Pieces
 

@@ -49,11 +49,17 @@ function runtimeBoundary(folder) {
 
 export default defineConfig([
     {
-        ignores: ['api/**', 'dist/**', 'webpack.config.js', '.prettierrc.js'],
+        ignores: ['api/**', '.api-staging-*/**', 'dist/**', '.prettierrc.js'],
     },
 
     js.configs.recommended,
     sonarjs.configs.recommended,
+
+    // Bundle tests run under node:test.
+    {
+        files: ['tests/*.mjs'],
+        languageOptions: { globals: globals.node },
+    },
 
     // Project TS/JS sources
     {

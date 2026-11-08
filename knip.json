@@ -1,20 +1,17 @@
 {
     "$schema": "https://unpkg.com/knip@6/schema.json",
     "entry": [
-        "webpack.config.js",
         "src/index.ts",
         "src/editor/cursorContentScript.ts",
         "src/viewer/viewerContentScript.ts",
         "src/viewer/viewerContextMenu.js",
         "src/dialog/resizeDialog.ts",
-        "tests/**/*.test.ts"
+        "tests/**/*.test.ts",
+        "tests/*.test.mjs"
     ],
-    "project": ["src/**/*.ts"],
-    "ignoreBinaries": ["yo"],
-    "ignoreDependencies": ["ts-loader"],
+    "project": ["src/**/*.ts", "tests/*.mjs"],
     "ignoreIssues": {
         "api/**": ["unlisted", "unresolved"]
     },
-    "tags": ["-lintignore"],
-    "webpack": false
+    "tags": ["-lintignore"]
 }

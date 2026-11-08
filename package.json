@@ -2,19 +2,23 @@
     "name": "joplin-plugin-simple-image-resize",
     "version": "1.9.2",
     "scripts": {
-        "dist": "webpack --env joplin-plugin-config=buildMain && webpack --env joplin-plugin-config=buildExtraScripts && webpack --env joplin-plugin-config=createArchive",
+        "dist": "npm run typecheck && joplin-plugin-scripts build",
         "prepare": "npm run dist",
-        "updateVersion": "webpack --env joplin-plugin-config=updateVersion",
-        "update": "npm install -g generator-joplin && yo joplin --node-package-manager npm --update --force",
+        "updateVersion": "joplin-plugin-scripts update-version",
+        "updateApi": "joplin-plugin-scripts update-api",
         "lint": "eslint src/ tests/",
         "lint:fix": "eslint src/ tests/ --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "test": "vitest run --passWithNoTests",
+        "test": "vitest run --passWithNoTests && node --test tests/*.test.mjs",
         "test:watch": "vitest",
-        "knip": "knip"
+        "knip": "knip",
+        "typecheck": "tsc --noEmit"
     },
     "license": "MIT",
+    "engines": {
+        "node": ">=22"
+    },
     "keywords": [
         "joplin-plugin"
     ],
@@ -22,6 +26,7 @@
         "publish"
     ],
     "devDependencies": {
+        "@bwat47/joplin-plugin-scripts": "^1.1.0",
         "@codemirror/lang-markdown": "^6.5.2",
         "@codemirror/language": "^6.12.3",
         "@codemirror/state": "^6.6.0",
@@ -33,28 +38,21 @@
         "@types/node": "^25.9.4",
         "@vitest/coverage-v8": "^5.1.0",
         "@vitest/eslint-plugin": "^1.6.28",
-        "chalk": "^4.1.0",
-        "copy-webpack-plugin": "^14.0.0",
+        "esbuild": "^0.28.2",
         "eslint": "^10.14.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-import-resolver-typescript": "^4.4.5",
         "eslint-plugin-import-x": "^4.18.0",
         "eslint-plugin-sonarjs": "^4.2.2",
         "eslint-plugin-tsdoc": "^0.5.4",
-        "fs-extra": "^10.1.0",
-        "glob": "^14.0.4",
         "globals": "^14.0.0",
         "jsdom": "^31.0.0",
         "knip": "^6.44.2",
         "markdown-it": "13.0.2",
         "prettier": "^3.9.10",
-        "tar": "^7.5.15",
-        "ts-loader": "^9.6.2",
         "typescript": "^6.0.3",
         "typescript-eslint": "8.71.2",
-        "vitest": "^5.1.0",
-        "webpack": "^5.106.2",
-        "webpack-cli": "^6.0.1"
+        "vitest": "^5.1.0"
     },
     "dependencies": {
         "entities": "^9.0.0"
