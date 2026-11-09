@@ -6,10 +6,9 @@
         "src/viewer/viewerContentScript.ts",
         "src/viewer/viewerContextMenu.js",
         "src/dialog/resizeDialog.ts",
-        "tests/**/*.test.ts",
-        "tests/*.test.mjs"
+        "tests/**/*.test.ts"
     ],
-    "project": ["src/**/*.ts", "tests/*.mjs"],
+    "project": ["src/**/*.ts"],
     "ignoreIssues": {
         "api/**": ["unlisted", "unresolved"]
     },
