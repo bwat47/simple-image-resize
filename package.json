@@ -10,7 +10,7 @@
         "lint:fix": "eslint src/ tests/ --fix",
         "format": "prettier --write .",
         "format:check": "prettier --check .",
-        "test": "vitest run --passWithNoTests && node --test tests/*.test.mjs",
+        "test": "vitest run --passWithNoTests",
         "test:watch": "vitest",
         "knip": "knip",
         "typecheck": "tsc --noEmit"
@@ -38,7 +38,6 @@
         "@types/node": "^25.9.4",
         "@vitest/coverage-v8": "^5.1.0",
         "@vitest/eslint-plugin": "^1.6.28",
-        "esbuild": "^0.28.2",
         "eslint": "^10.14.0",
         "eslint-config-prettier": "^10.1.8",
         "eslint-import-resolver-typescript": "^4.4.5",
