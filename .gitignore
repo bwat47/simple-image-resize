@@ -10,6 +10,9 @@ coverage/
 *:Zone.Identifier
 *.patch
 *.diff
+.claude/
+.codex/
+.agents/
 gemini/
 prompts/
 .claude/settings.local.json
