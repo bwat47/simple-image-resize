@@ -7,11 +7,11 @@ image-resize-documentation.md
 
 ## Build, Test, and Development Commands
 
-- `npm test` Run the Vitest suite, then the bundle tests (`tests/*.test.mjs`).
+- `npm test` Run the Vitest suite (`tests/**/*.{test,spec}.ts`).
 - `npm run test:watch` Run tests in watch mode during development.
 - `npm run dist` Typecheck, bundle with esbuild, and create archive at `publish/*.jpl`.
 - `npm run typecheck` Check TypeScript without producing output.
-- `npm run lint` Lint TypeScript and bundle tests with ESLint.
+- `npm run lint` Lint TypeScript with ESLint.
 - `npm run lint:fix` Auto-fix lint issues.
 - `npm run format` Format code with Prettier.
 - `npm run knip` Find unused dependencies, exports and files.

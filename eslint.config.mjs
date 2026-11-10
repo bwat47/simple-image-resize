@@ -55,12 +55,6 @@ export default defineConfig([
     js.configs.recommended,
     sonarjs.configs.recommended,
 
-    // Bundle tests run under node:test.
-    {
-        files: ['tests/*.mjs'],
-        languageOptions: { globals: globals.node },
-    },
-
     // Project TS/JS sources
     {
         files: ['**/*.{ts,tsx,js}'],
