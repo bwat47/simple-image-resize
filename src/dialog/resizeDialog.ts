@@ -15,6 +15,17 @@ import { revealWhenSized } from './revealWhenSized';
 const dialogGlobal = globalThis as typeof globalThis & { exports?: Record<string, unknown> };
 dialogGlobal.exports ??= {};
 
+function setRowDisabled(element: HTMLElement, disabled: boolean, visuallyDisabled = disabled): void {
+    element.classList.toggle('is-disabled', visuallyDisabled);
+    element
+        .querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
+            'input, select, textarea, button'
+        )
+        .forEach((field) => {
+            field.disabled = disabled;
+        });
+}
+
 function initializeResizeDialog(): void {
     const root = document.getElementById('dialog-root') as HTMLDivElement | null;
     if (!root || root.dataset.initialized === 'true') return;
@@ -141,17 +152,6 @@ function initializeResizeDialog(): void {
         const width = Math.max(1, Math.round(originalWidthValue * ratio));
         const height = Math.max(1, Math.round(originalHeightValue * ratio));
         setPercentagePreview(String(width), String(height));
-    };
-
-    const setRowDisabled = (element: HTMLElement, disabled: boolean, visuallyDisabled = disabled): void => {
-        element.classList.toggle('is-disabled', visuallyDisabled);
-        element
-            .querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLButtonElement>(
-                'input, select, textarea, button'
-            )
-            .forEach((field) => {
-                field.disabled = disabled;
-            });
     };
 
     const applyResizeMode = (mode: ResizeMode): void => {

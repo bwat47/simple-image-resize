@@ -45,6 +45,14 @@ export interface InitialDialogState {
     heightDisabledAttr: string;
 }
 
+const disabledClass = (disabled: boolean): string => (disabled ? ' is-disabled' : '');
+const disabledAttr = (disabled: boolean): string => (disabled ? ' disabled' : '');
+const checkedAttr = (checked: boolean): string => (checked ? ' checked' : '');
+
+/** Parses a submitted dimension field; empty or missing values mean "not set". */
+const readDimension = (value: unknown): number | undefined =>
+    typeof value === 'string' && value ? parseInt(value, 10) : undefined;
+
 /**
  * Renders the initial control state as markup classes and attributes, so the dialog
  * opens in the right state before its script runs. The rules themselves live in
@@ -58,9 +66,6 @@ export function getInitialDialogState(
     const state = getDialogFieldState(defaultSyntax, defaultResizeMode, originalDimensionsDetermined);
     const htmlSyntaxSelected = defaultSyntax === 'html';
     const percentageModeSelected = state.resizeMode === 'percentage';
-    const disabledClass = (disabled: boolean): string => (disabled ? ' is-disabled' : '');
-    const disabledAttr = (disabled: boolean): string => (disabled ? ' disabled' : '');
-    const checkedAttr = (checked: boolean): string => (checked ? ' checked' : '');
 
     return {
         resizeSectionClass: `subgrid resize-section${state.resizeLocked ? ' is-locked' : ''}`,
@@ -297,9 +302,6 @@ export class ResizeDialog {
                 fields.resizeMode === 'percentage' || fields.resizeMode === 'absolute'
                     ? fields.resizeMode
                     : defaultResizeMode;
-
-            const readDimension = (value: unknown): number | undefined =>
-                typeof value === 'string' && value ? parseInt(value, 10) : undefined;
 
             return {
                 targetSyntax,

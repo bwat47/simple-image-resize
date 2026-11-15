@@ -7,18 +7,25 @@ image-resize-documentation.md
 
 ## Build, Test, and Development Commands
 
+Build, packaging, version, and API-update behavior lives in the shared `@bwat47/joplin-plugin-scripts`
+dev dependency. Change it there and update the dependency, rather than adding local build scripts. Extra
+content scripts and webview scripts are declared in `plugin.config.json`.
+
 - `npm test` Run the Vitest suite (`tests/**/*.{test,spec}.ts`).
 - `npm run test:watch` Run tests in watch mode during development.
 - `npm run dist` Typecheck, bundle with esbuild, and create archive at `publish/*.jpl`.
 - `npm run typecheck` Check TypeScript without producing output.
-- `npm run lint` Lint TypeScript with ESLint.
+- `npm run lint` Lint sources, tests, and config files with Oxlint (type-aware), then run the fallow dead-code and complexity checks.
+- `npm run lint:dead-code` Find unused files, exports, and dependencies with fallow (`.fallowrc.json`).
+- `npm run lint:complexity` Check cognitive/cyclomatic complexity limits with fallow (`health` in `.fallowrc.json`).
 - `npm run lint:fix` Auto-fix lint issues.
-- `npm run format` Format code with Prettier.
-- `npm run knip` Find unused dependencies, exports and files.
-- `npm run updateVersion` Increment the patch version in package.json, src/manifest.json, and package-lock.json together.
-- `npm run updateApi` Update api/ from generator-joplin without regenerating the project.
+- `npm run format` Format code with Oxfmt.
+- `npm run format:check` Check formatting without writing files.
+- `npm run updateVersion` Increment the patch version in package.json, src/manifest.json, and package-lock.json (their versions must already match).
+- `npm run updateApi` Replace `api/` with the latest `generator-joplin` API types; review `git diff api/` and run `npm run typecheck` afterwards.
 
-See docs/BUILDING.md for build and maintenance details.
+Before releasing, install the `.jpl` in Joplin on desktop and mobile. Check the resize dialog, quick resize, and
+resizing from both the editor and the note viewer context menu.
 
 ## Design Principles
 
@@ -32,14 +39,14 @@ See docs/BUILDING.md for build and maintenance details.
 - **Language**: TypeScript with strict settings; 4-space indentation; semicolons required.
 - **Filenames**: `camelCase.ts` for modules; tests mirror names: `module.test.ts`.
 - **Module Boundaries**: Add explicit return types to exported functions and public methods of exported classes. Prefer named exported types for non-trivial object shapes. Let TypeScript infer local implementation details, and avoid redundant primitive annotations.
-- **Style enforcement**: Run `npm run format` before commits or if you encounter formatting errors from prettier.
+- **Style enforcement**: Run `npm run format` before commits or if you encounter formatting errors from oxfmt.
 - **Documentation**: Use JSDoc for complex functions; document regex patterns with examples.
 
 ## Line endings
 
 - All text files use LF. If you must fall back to a Python script for file editing, write LF explicitly
   (Python: `open(path, 'w', newline='\n')` or `write_text(..., newline='\n')`).
-- Don't manually repair incidental CRLF changes. Git normalizes text to LF when staging; Prettier also normalizes files when formatting.
+- Don't manually repair incidental CRLF changes. Git normalizes text to LF when staging; Oxfmt also normalizes files when formatting.
 
 ## Log messages
 

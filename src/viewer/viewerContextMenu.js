@@ -56,6 +56,8 @@
             getViewerApi()
                 .postMessage(CONTENT_SCRIPT_ID, { target: findTarget(event.target), clickedAt: Date.now() })
                 .catch((error) => {
+                    // Copied to dist/ as-is, so it cannot import src/shared/logger.ts.
+                    // oxlint-disable-next-line no-console
                     console.warn('[Image Resize] Could not report viewer context menu target:', error);
                 });
         },

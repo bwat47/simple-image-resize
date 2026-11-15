@@ -44,7 +44,7 @@ describe('parseQuickResizeOptions', () => {
         ['decimal pixels', '300.5px'],
         ['percentage above maximum', '501%'],
     ])('rejects %s', (_name, rawOptions) => {
-        expect(() => parseQuickResizeOptions(rawOptions)).toThrow();
+        expect(() => parseQuickResizeOptions(rawOptions)).toThrow(/quick resize option/i);
     });
 });
 

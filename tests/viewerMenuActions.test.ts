@@ -71,8 +71,8 @@ describe('viewer context menu actions', () => {
         const menu = await filter({ items: [] });
 
         expect(menu.items.filter((item) => item.commandName?.startsWith('resize'))).toHaveLength(6);
-        for (const item of menu.items.filter((item) => item.commandName?.startsWith('resize'))) {
-            expect(item.commandArgs).toEqual([target]);
+        for (const resizeItem of menu.items.filter((item) => item.commandName?.startsWith('resize'))) {
+            expect(resizeItem.commandArgs).toEqual([target]);
         }
         expect(joplin.commands.execute).not.toHaveBeenCalledWith('editor.execCommand', {
             name: SELECT_VIEWER_IMAGE_COMMAND,

@@ -49,14 +49,9 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
 
     return new Promise((resolve, reject) => {
         const img = new Image();
-        const timeoutId = setTimeout(() => {
-            img.onload = img.onerror = null; // Remove handlers to prevent race conditions
-            img.src = ''; // Attempt to abort loading
-            reject(new Error('Timeout: Could not load image to determine dimensions.'));
-        }, timeoutMs);
 
-        img.onload = () => {
-            clearTimeout(timeoutId);
+        const handleLoad = (): void => {
+            cleanup();
             const dimensions = { width: img.naturalWidth, height: img.naturalHeight };
             if (isValidImageDimensions(dimensions)) {
                 resolve(dimensions);
@@ -65,10 +60,25 @@ export async function measureImageDimensions(src: string, options: MeasureImageO
             }
         };
 
-        img.onerror = () => {
-            clearTimeout(timeoutId);
+        const handleError = (): void => {
+            cleanup();
             reject(new Error('Failed to load image for dimension measurement.'));
         };
+
+        const timeoutId = setTimeout(() => {
+            cleanup(); // Remove handlers to prevent race conditions
+            img.src = ''; // Attempt to abort loading
+            reject(new Error('Timeout: Could not load image to determine dimensions.'));
+        }, timeoutMs);
+
+        function cleanup(): void {
+            clearTimeout(timeoutId);
+            img.removeEventListener('load', handleLoad);
+            img.removeEventListener('error', handleError);
+        }
+
+        img.addEventListener('load', handleLoad);
+        img.addEventListener('error', handleError);
 
         // Avoid disclosing the note's origin when measuring external images.
         if (useNoReferrer) {

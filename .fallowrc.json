@@ -1,0 +1,20 @@
+{
+    "$schema": "./node_modules/fallow/schema.json",
+    "entry": [
+        "src/index.ts",
+        "src/editor/cursorContentScript.ts",
+        "src/viewer/viewerContentScript.ts",
+        "src/viewer/viewerContextMenu.js",
+        "src/dialog/resizeDialog.ts"
+    ],
+    "supportEntry": ["tests/**/*.test.ts"],
+    "ignorePatterns": ["**/*.d.ts", "api/**"],
+    "rules": {
+        "complexity-crap": "off",
+        "dev-dependencies-in-production": "off"
+    },
+    "health": {
+        "maxCognitive": 15,
+        "maxCyclomatic": 20
+    }
+}

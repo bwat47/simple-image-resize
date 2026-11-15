@@ -76,6 +76,20 @@ function toUint8Array(data: unknown): Uint8Array<ArrayBuffer> {
     failUnknownFormat(typeof data);
 }
 
+/** Returns the resource's MIME type, or throws when the resource is not an image. */
+function getImageMime(resource: unknown): string {
+    if (
+        typeof resource !== 'object' ||
+        resource === null ||
+        !('mime' in resource) ||
+        typeof resource.mime !== 'string' ||
+        !resource.mime.toLowerCase().startsWith('image/')
+    ) {
+        throw new Error('Resource is not an image.');
+    }
+    return resource.mime;
+}
+
 /**
  * Loads a Joplin image resource into a Blob.
  * Works on desktop and the web app. Native mobile cannot transport the Buffer
@@ -90,15 +104,7 @@ export async function getResourceBlob(resourceId: string): Promise<Blob> {
             throw new Error('Resource not found or is empty.');
         }
 
-        if (
-            typeof resource !== 'object' ||
-            !('mime' in resource) ||
-            typeof resource.mime !== 'string' ||
-            !resource.mime.toLowerCase().startsWith('image/')
-        ) {
-            throw new Error('Resource is not an image.');
-        }
-
+        const mime = getImageMime(resource);
         const body = typeof file === 'object' && 'body' in file ? (file.body ?? file) : file;
 
         // Blob and ArrayBuffer are two of the three types Joplin's plugin IPC passes
@@ -108,7 +114,7 @@ export async function getResourceBlob(resourceId: string): Promise<Blob> {
             if (body.size === 0) {
                 throw new Error('Resource file data is empty.');
             }
-            return body.type ? body : new Blob([body], { type: resource.mime });
+            return body.type ? body : new Blob([body], { type: mime });
         }
 
         const bytes = toUint8Array(body);
@@ -116,7 +122,7 @@ export async function getResourceBlob(resourceId: string): Promise<Blob> {
             throw new Error('Resource file data is empty.');
         }
 
-        return new Blob([bytes], { type: resource.mime });
+        return new Blob([bytes], { type: mime });
     } catch (err) {
         logger.debug(`Error loading resource ${resourceId} as a Blob:`, err);
         const message = err instanceof Error ? err.message : String(err);
