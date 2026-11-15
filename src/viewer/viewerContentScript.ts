@@ -137,10 +137,10 @@ export function installImagePositions(markdownIt: MarkdownIt, options?: { mapsTo
     });
 
     const defaultImageRender = markdownIt.renderer.rules.image;
-    markdownIt.renderer.rules.image = (tokens, idx, options, env, self) => {
+    markdownIt.renderer.rules.image = (tokens, idx, renderOptions, env, self) => {
         const html = defaultImageRender
-            ? defaultImageRender(tokens, idx, options, env, self)
-            : self.renderToken(tokens, idx, options);
+            ? defaultImageRender(tokens, idx, renderOptions, env, self)
+            : self.renderToken(tokens, idx, renderOptions);
         const meta = tokens[idx]?.meta as ImagePositionMeta | null | undefined;
         const position = meta?.[POSITION_META_KEY];
         return position ? addAttributesToImgTag(html, position) : html;

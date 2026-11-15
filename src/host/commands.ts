@@ -37,11 +37,12 @@ const IMAGE_CHANGED_MESSAGE = 'The image changed before it could be resized. Try
  * no image to resize.
  */
 async function detectAndPrepareImage(viewerTarget?: unknown) {
-    if (viewerTarget !== undefined) {
-        if (!isViewerImageTarget(viewerTarget) || !(await selectViewerImageInEditor(viewerTarget))) {
-            await showToast('The viewer image is no longer available. Right-click it again.', ToastType.Info);
-            return null;
-        }
+    if (
+        viewerTarget !== undefined &&
+        (!isViewerImageTarget(viewerTarget) || !(await selectViewerImageInEditor(viewerTarget)))
+    ) {
+        await showToast('The viewer image is no longer available. Right-click it again.', ToastType.Info);
+        return null;
     }
 
     const cursorDetection = await detectImageAtCursor();

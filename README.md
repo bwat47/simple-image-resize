@@ -68,3 +68,14 @@ You can configure up to 5 quick resize slots (using percentage or pixel sizes), 
 - Quick Resize 3 (default 50%) (CmdOrCtrl+Shift+3)
 - Quick Resize 4 (default 33%) (CmdOrCtrl+Shift+4)
 - Quick Resize 5 (default 25%) (CmdOrCtrl+Shift+5)
+
+## Building
+
+Requires Node 22 or later.
+
+```sh
+npm ci
+npm run dist
+```
+
+The installable plugin is written to `publish/com.bwat47.simple-image-resize.jpl`.

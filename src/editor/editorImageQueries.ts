@@ -30,6 +30,20 @@ export type ImageNodeRange =
       }
     | { type: 'html'; from: number; to: number };
 
+function isValidPosition(position: unknown): position is EditorPosition {
+    if (typeof position !== 'object' || position === null) {
+        return false;
+    }
+
+    const candidate = position as Partial<EditorPosition>;
+    return (
+        typeof candidate.line === 'number' &&
+        Number.isFinite(candidate.line) &&
+        typeof candidate.ch === 'number' &&
+        Number.isFinite(candidate.ch)
+    );
+}
+
 /**
  * Validate arguments received across the plugin/editor boundary before using
  * them in document operations.
@@ -38,20 +52,6 @@ export type ImageNodeRange =
  * hands them over as plain data, so nothing has checked their shape yet.
  */
 function isValidReplaceRangeArgs(args: unknown): args is ReplaceRangeArgs {
-    const isValidPosition = (position: unknown): position is EditorPosition => {
-        if (typeof position !== 'object' || position === null) {
-            return false;
-        }
-
-        const candidate = position as Partial<EditorPosition>;
-        return (
-            typeof candidate.line === 'number' &&
-            Number.isFinite(candidate.line) &&
-            typeof candidate.ch === 'number' &&
-            Number.isFinite(candidate.ch)
-        );
-    };
-
     // A non-object (null, undefined, a bare string) fails the field checks below.
     const candidate = (typeof args === 'object' && args !== null ? args : {}) as Partial<ReplaceRangeArgs>;
 

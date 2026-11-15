@@ -4,10 +4,8 @@ import {
     measureImageDimensions,
 } from '../src/shared/imageDimensionUtils';
 
-class FakeImage {
+class FakeImage extends EventTarget {
     private static latestInstance: FakeImage;
-    public onload: (() => void) | null = null;
-    public onerror: (() => void) | null = null;
     public naturalWidth = 640;
     public naturalHeight = 480;
     public crossOrigin = 'unchanged';
@@ -15,7 +13,12 @@ class FakeImage {
     private source = '';
 
     public constructor() {
+        super();
         FakeImage.latestInstance = this;
+    }
+
+    public fire(type: 'load' | 'error'): void {
+        this.dispatchEvent(new Event(type));
     }
 
     public static get latest(): FakeImage {
@@ -69,7 +72,7 @@ describe('measureBlobImageDimensions', () => {
 
         expect(URL.createObjectURL).toHaveBeenCalledWith(blob);
         expect(FakeImage.latest.src).toBe('blob:resource-image');
-        FakeImage.latest.onload?.();
+        FakeImage.latest.fire('load');
 
         await expect(resultPromise).resolves.toEqual({ width: 640, height: 480 });
         expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
@@ -81,7 +84,7 @@ describe('measureBlobImageDimensions', () => {
             timeoutMs: 1000,
         });
 
-        FakeImage.latest.onerror?.();
+        FakeImage.latest.fire('error');
 
         await expect(resultPromise).rejects.toThrow('Failed to load image for dimension measurement');
         expect(URL.revokeObjectURL).toHaveBeenCalledTimes(1);
@@ -120,7 +123,7 @@ describe('measureImageDimensions', () => {
 
         expect(FakeImage.latest.referrerPolicy).toBe('no-referrer');
         expect(FakeImage.latest.crossOrigin).toBe('unchanged');
-        FakeImage.latest.onload?.();
+        FakeImage.latest.fire('load');
 
         await expect(resultPromise).resolves.toEqual({ width: 640, height: 480 });
     });
