@@ -93,8 +93,6 @@ export default defineConfig({
         // toSorted()/toReversed() are ES2023; the build targets ES2020.
         'unicorn/no-array-sort': 'off',
         'unicorn/no-array-reverse': 'off',
-        // Typed `new Array<T>(n)` preallocation is intentional.
-        'unicorn/no-new-array': 'off',
         // Flags exhaustive switches; tsc already checks every path returns the declared type.
         'typescript/consistent-return': 'off',
         // Assertions on DOM, CodeMirror, and Joplin API values are routine and checked by tests.
