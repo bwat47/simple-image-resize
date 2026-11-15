@@ -15,7 +15,7 @@ content scripts and webview scripts are declared in `plugin.config.json`.
 - `npm run test:watch` Run tests in watch mode during development.
 - `npm run dist` Typecheck, bundle with esbuild, and create archive at `publish/*.jpl`.
 - `npm run typecheck` Check TypeScript without producing output.
-- `npm run lint` Lint sources and tests with Oxlint (type-aware), then run the fallow dead-code and complexity checks.
+- `npm run lint` Lint sources, tests, and config files with Oxlint (type-aware), then run the fallow dead-code and complexity checks.
 - `npm run lint:dead-code` Find unused files, exports, and dependencies with fallow (`.fallowrc.json`).
 - `npm run lint:complexity` Check cognitive/cyclomatic complexity limits with fallow (`health` in `.fallowrc.json`).
 - `npm run lint:fix` Auto-fix lint issues.
