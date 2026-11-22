@@ -1,5 +1,6 @@
 {
     "extraScripts": ["editor/cursorContentScript.ts", "viewer/viewerContentScript.ts"],
     "webviewScripts": ["dialog/resizeDialog.ts"],
-    "buildOptions": { "target": "es2020" }
+    "buildOptions": { "target": "es2020" },
+    "mainBuildOptions": { "platform": "browser" }
 }
