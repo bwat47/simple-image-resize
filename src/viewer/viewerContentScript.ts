@@ -18,7 +18,7 @@
 import type MarkdownIt from 'markdown-it';
 import type Token from 'markdown-it/lib/token';
 
-import { VIEWER_IMAGE_ATTRIBUTES } from '../shared/viewerImageTarget';
+import { HTML_IMG_TAG_PATTERN, VIEWER_IMAGE_ATTRIBUTES } from '../shared/viewerImageTarget';
 
 type LineMap = [number, number];
 
@@ -33,12 +33,6 @@ const POSITION_META_KEY = 'simpleImageResizePosition';
 type ImagePositionMeta = Record<string, unknown> & { [POSITION_META_KEY]?: ImageSourcePosition };
 const IMAGE_POSITIONS_INSTALLED = Symbol('simpleImageResizeImagePositionsInstalled');
 type PositionedMarkdownIt = MarkdownIt & { [IMAGE_POSITIONS_INSTALLED]?: true };
-
-/**
- * Matches an HTML `<img>` tag, e.g. `<img src=":/abc" width="200">`.
- * Same pattern as the editor's HTMLBlock scan, so both count the same tags.
- */
-const IMG_TAG_REGEX = /<img\s[^>]*>/gi;
 
 function positionAttributes(position: ImageSourcePosition): string {
     return (
@@ -77,7 +71,7 @@ export function annotateImagePositions(tokens: Token[]): void {
     };
 
     const annotateHtml = (html: string, map: LineMap): string =>
-        html.replace(IMG_TAG_REGEX, (tag) => addAttributesToImgTag(tag, claimPosition(map)));
+        html.replace(HTML_IMG_TAG_PATTERN, (tag) => addAttributesToImgTag(tag, claimPosition(map)));
 
     for (const token of tokens) {
         if (token.nesting === -1) {

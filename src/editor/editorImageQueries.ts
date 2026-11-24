@@ -14,7 +14,7 @@ import type { SyntaxNode } from '@lezer/common';
 import type { ReplaceRangeArgs } from '../shared/editorCommands';
 import { logger } from '../shared/logger';
 import type { EditorImageAtCursorResult, EditorPosition, ImageDetails } from '../shared/types';
-import type { ViewerImageTarget } from '../shared/viewerImageTarget';
+import { HTML_IMG_TAG_PATTERN, type ViewerImageTarget } from '../shared/viewerImageTarget';
 import { extractHtmlDetails, extractMarkdownDetails, type MarkdownImageParts } from './imageSyntaxParser';
 
 // Keep viewer context menus responsive when parsing a very large note.
@@ -168,9 +168,7 @@ function findImagesInRange(state: EditorState, from: number, to: number, tree = 
             // Example: <div><img src="..."></div>
             if (node.name === 'HTMLBlock') {
                 const blockText = state.doc.sliceString(node.from, node.to);
-                const imgRegex = /<img\s[^>]*>/gi;
-                let match: RegExpExecArray | null;
-                while ((match = imgRegex.exec(blockText)) !== null) {
+                for (const match of blockText.matchAll(HTML_IMG_TAG_PATTERN)) {
                     const imgStart = node.from + match.index;
                     const imgEnd = imgStart + match[0].length;
                     // The block can extend past the range, so skip tags outside it.

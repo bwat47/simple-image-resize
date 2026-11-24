@@ -25,6 +25,14 @@ export const VIEWER_IMAGE_ATTRIBUTES = {
 } as const;
 
 /**
+ * Matches an HTML `<img>` tag, e.g. `<img src=":/abc" width="200">`.
+ *
+ * Shared by the viewer's markdown-it plugin and the editor's `HTMLBlock` scan so
+ * both sides count the same HTML images when resolving a `ViewerImageTarget`.
+ */
+export const HTML_IMG_TAG_PATTERN = /<img\s[^>]*>/gi;
+
+/**
  * A right-clicked viewer image, located in the note's Markdown source.
  *
  * - `line`, `lineEnd`: 0-based source line range (end exclusive) of the block
