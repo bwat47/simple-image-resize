@@ -12,14 +12,12 @@ import { MenuItemLocation, ToolbarButtonLocation, type MenuItem } from 'api/type
 import { logger } from '../shared/logger';
 import type { ViewerImageTarget } from '../shared/viewerImageTarget';
 import { isEditorContextMenuOrigin, isOnImageInMarkdownEditor } from './editorBridge';
-import { getQuickResizeLabel, QUICK_RESIZE_SLOTS, tryParseQuickResizeOptions } from './quickResizeOptions';
+import { getQuickResizeLabel, QUICK_RESIZE_SLOTS } from './quickResizeOptions';
 import { settingsCache } from './settings';
 import { discardViewerMessagesThrough, getViewerContextMenuImage } from './viewerMessages';
 
 function buildQuickResizeMenuItems(includeAccelerators: boolean, viewerTarget?: ViewerImageTarget): MenuItem[] {
-    const quickResizeOptions = tryParseQuickResizeOptions(settingsCache.quickResizeOptions);
-
-    return quickResizeOptions.map((option, index) => {
+    return settingsCache.quickResizeOptions.map((option, index) => {
         const slot = QUICK_RESIZE_SLOTS[index];
         if (!slot) {
             throw new Error(`No command is registered for quick resize slot ${index + 1}.`);

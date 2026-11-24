@@ -21,7 +21,6 @@ import {
     buildQuickResizeResult,
     getQuickResizeSkippedMessage,
     getQuickResizeSuccessMessage,
-    parseQuickResizeOptions,
     QUICK_RESIZE_SLOTS,
     requiresOriginalDimensions,
 } from './quickResizeOptions';
@@ -103,11 +102,7 @@ async function applyResize(
  */
 async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown): Promise<void> {
     await withErrorToast(async () => {
-        // The cached setting is always normalized, so parsing is not expected to fail;
-        // withErrorToast handles the theoretical failure.
-        const quickResizeOptions = parseQuickResizeOptions(settingsCache.quickResizeOptions);
-
-        const option = quickResizeOptions[slotIndex];
+        const option = settingsCache.quickResizeOptions[slotIndex];
         if (!option) {
             await showToast(`No quick resize option is configured for slot ${slotIndex + 1}.`, ToastType.Info);
             return;

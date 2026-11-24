@@ -1,7 +1,7 @@
 import type { Mock, MockInstance } from 'vitest';
 
 import joplin from 'api';
-import { QUICK_RESIZE_OPTIONS_DEFAULT } from '../src/host/quickResizeOptions';
+import { normalizeQuickResizeOptions, QUICK_RESIZE_OPTIONS_DEFAULT } from '../src/host/quickResizeOptions';
 import { initializeSettingsCache, settingsCache } from '../src/host/settings';
 
 const SETTING_VALUES = {
@@ -47,7 +47,11 @@ describe('initializeSettingsCache', () => {
 
         await initializeSettingsCache();
 
-        expect(settingsCache.quickResizeOptions).toBe('100%, 300px, 75%');
+        expect(settingsCache.quickResizeOptions).toEqual([
+            { kind: 'percentage', value: 100, label: '100%' },
+            { kind: 'pixels', value: 300, label: '300px' },
+            { kind: 'percentage', value: 75, label: '75%' },
+        ]);
         expect(joplin.settings.setValue).toHaveBeenCalledWith(getSettingKey('quickResizeOptions'), '100%, 300px, 75%');
     });
 
@@ -58,7 +62,7 @@ describe('initializeSettingsCache', () => {
         onChangeHandler?.({ keys: [getSettingKey('quickResizeOptions')] });
 
         await vi.waitFor(() => {
-            expect(settingsCache.quickResizeOptions).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
+            expect(settingsCache.quickResizeOptions).toEqual(normalizeQuickResizeOptions(QUICK_RESIZE_OPTIONS_DEFAULT));
             expect(joplin.settings.setValue).toHaveBeenCalledWith(
                 getSettingKey('quickResizeOptions'),
                 QUICK_RESIZE_OPTIONS_DEFAULT
@@ -90,7 +94,7 @@ describe('initializeSettingsCache', () => {
     it('does not write back unchanged quick resize options', async () => {
         await initializeSettingsCache();
 
-        expect(settingsCache.quickResizeOptions).toBe(QUICK_RESIZE_OPTIONS_DEFAULT);
+        expect(settingsCache.quickResizeOptions).toEqual(normalizeQuickResizeOptions(QUICK_RESIZE_OPTIONS_DEFAULT));
         expect(joplin.settings.setValue).not.toHaveBeenCalled();
     });
 

@@ -8,7 +8,12 @@ import joplin from 'api';
 import { SettingItemType, type SettingItem } from 'api/types';
 import { logger } from '../shared/logger';
 import type { HtmlSyntaxStyle, ResizeMode } from '../shared/types';
-import { normalizeQuickResizeOptionsSetting, QUICK_RESIZE_OPTIONS_DEFAULT } from './quickResizeOptions';
+import {
+    formatQuickResizeOptions,
+    normalizeQuickResizeOptions,
+    QUICK_RESIZE_OPTIONS_DEFAULT,
+    type QuickResizeOption,
+} from './quickResizeOptions';
 
 const SECTION_ID = 'imageResize';
 
@@ -83,7 +88,7 @@ export type SettingsCache = {
     defaultPercentage: number;
     htmlSyntaxStyle: HtmlSyntaxStyle;
     showQuickResizeInContextMenu: boolean;
-    quickResizeOptions: string;
+    quickResizeOptions: readonly QuickResizeOption[];
     showToastMessages: boolean;
     showFormattingToolbarIcon: boolean;
 };
@@ -96,7 +101,7 @@ export const settingsCache: SettingsCache = {
     defaultPercentage: SETTINGS_CONFIG.defaultPercentage.defaultValue,
     htmlSyntaxStyle: SETTINGS_CONFIG.htmlSyntaxStyle.defaultValue,
     showQuickResizeInContextMenu: SETTINGS_CONFIG.showQuickResizeInContextMenu.defaultValue,
-    quickResizeOptions: SETTINGS_CONFIG.quickResizeOptions.defaultValue,
+    quickResizeOptions: normalizeQuickResizeOptions(SETTINGS_CONFIG.quickResizeOptions.defaultValue),
     showToastMessages: SETTINGS_CONFIG.showToastMessages.defaultValue,
     showFormattingToolbarIcon: SETTINGS_CONFIG.showFormattingToolbarIcon.defaultValue,
 };
@@ -131,9 +136,10 @@ async function updateSettingsCache(): Promise<void> {
     const raw = await joplin.settings.values(Object.values(config).map((setting) => setting.key));
 
     const rawQuickResizeOptions = raw[config.quickResizeOptions.key];
-    const normalizedQuickResizeOptions = normalizeQuickResizeOptionsSetting(
+    const quickResizeOptions = normalizeQuickResizeOptions(
         typeof rawQuickResizeOptions === 'string' ? rawQuickResizeOptions : ''
     );
+    const normalizedQuickResizeOptions = formatQuickResizeOptions(quickResizeOptions);
 
     // Typing the literal as SettingsCache makes a forgotten setting a compile error,
     // which a per-field assignment would not catch (the cache is pre-seeded with defaults).
@@ -158,7 +164,7 @@ async function updateSettingsCache(): Promise<void> {
             raw[config.showQuickResizeInContextMenu.key],
             config.showQuickResizeInContextMenu.defaultValue
         ),
-        quickResizeOptions: normalizedQuickResizeOptions,
+        quickResizeOptions,
         showToastMessages: readBool(raw[config.showToastMessages.key], config.showToastMessages.defaultValue),
         showFormattingToolbarIcon: readBool(
             raw[config.showFormattingToolbarIcon.key],

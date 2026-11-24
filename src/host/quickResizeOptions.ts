@@ -1,7 +1,5 @@
 import type { ImageDetails, ResizeDialogResult } from '../shared/types';
 
-export const QUICK_RESIZE_OPTIONS_DEFAULT = '100%, 75%, 50%, 33%, 25%';
-
 export const QUICK_RESIZE_SLOTS = [
     { commandName: 'resize100', accelerator: 'CmdOrCtrl+Shift+1' },
     { commandName: 'resize75', accelerator: 'CmdOrCtrl+Shift+2' },
@@ -23,55 +21,43 @@ export type QuickResizeOption =
           label: string;
       };
 
-export function parseQuickResizeOptions(rawOptions: string): QuickResizeOption[] {
-    const tokens = rawOptions
-        .split(',')
-        .map((token) => token.trim())
-        .filter((token) => token.length > 0);
+const DEFAULT_QUICK_RESIZE_OPTIONS: readonly QuickResizeOption[] = [
+    { kind: 'percentage', value: 100, label: '100%' },
+    { kind: 'percentage', value: 75, label: '75%' },
+    { kind: 'percentage', value: 50, label: '50%' },
+    { kind: 'percentage', value: 33, label: '33%' },
+    { kind: 'percentage', value: 25, label: '25%' },
+];
 
-    if (tokens.length === 0) {
-        throw new Error('Quick resize options must include at least one value.');
-    }
-
-    if (tokens.length > QUICK_RESIZE_SLOT_LIMIT) {
-        throw new Error(`Quick resize options support at most ${QUICK_RESIZE_SLOT_LIMIT} values.`);
-    }
-
-    return tokens.map(parseQuickResizeToken);
+export function formatQuickResizeOptions(options: readonly QuickResizeOption[]): string {
+    return options.map((option) => option.label).join(', ');
 }
 
-export function normalizeQuickResizeOptionsSetting(rawOptions: string): string {
-    const normalizedTokens = rawOptions
+export const QUICK_RESIZE_OPTIONS_DEFAULT = formatQuickResizeOptions(DEFAULT_QUICK_RESIZE_OPTIONS);
+
+export function normalizeQuickResizeOptions(rawOptions: string): QuickResizeOption[] {
+    const normalizedOptions = rawOptions
         .split(',')
         .map((token) => token.trim())
         .filter((token) => token.length > 0)
-        .reduce<string[]>((tokens, token) => {
-            if (tokens.length >= QUICK_RESIZE_SLOT_LIMIT) {
-                return tokens;
+        .reduce<QuickResizeOption[]>((options, token) => {
+            if (options.length >= QUICK_RESIZE_SLOT_LIMIT) {
+                return options;
             }
 
-            try {
-                tokens.push(parseQuickResizeToken(token).label);
-            } catch {
-                // Invalid entries are discarded so valid quick resize slots still work.
+            const parsed = parseQuickResizeToken(token);
+            if (parsed) {
+                options.push(parsed);
             }
 
-            return tokens;
+            return options;
         }, []);
 
-    if (normalizedTokens.length === 0) {
-        return QUICK_RESIZE_OPTIONS_DEFAULT;
+    if (normalizedOptions.length === 0) {
+        return [...DEFAULT_QUICK_RESIZE_OPTIONS];
     }
 
-    return normalizedTokens.join(', ');
-}
-
-export function tryParseQuickResizeOptions(rawOptions: string): QuickResizeOption[] {
-    try {
-        return parseQuickResizeOptions(rawOptions);
-    } catch {
-        return [];
-    }
+    return normalizedOptions;
 }
 
 export function getQuickResizeLabel(option: QuickResizeOption): string {
@@ -122,22 +108,22 @@ export function getQuickResizeSuccessMessage(option: QuickResizeOption): string 
     return `Image resized to ${option.label}.`;
 }
 
-function parseQuickResizeToken(token: string): QuickResizeOption {
+function parseQuickResizeToken(token: string): QuickResizeOption | null {
     const match = /^(\d+)(%|px)$/i.exec(token);
     const valueText = match?.[1];
     const unit = match?.[2]?.toLowerCase();
     if (!valueText || !unit) {
-        throw new Error(`Invalid quick resize option "${token}". Use positive whole-number values like 75% or 300px.`);
+        return null;
     }
 
     const value = Number.parseInt(valueText, 10);
 
-    if (value <= 0) {
-        throw new Error(`Invalid quick resize option "${token}". Values must be greater than zero.`);
+    if (!Number.isSafeInteger(value) || value <= 0) {
+        return null;
     }
 
     if (unit === '%' && value > 500) {
-        throw new Error(`Invalid quick resize option "${token}". Percentages must be between 1% and 500%.`);
+        return null;
     }
 
     if (unit === '%') {
