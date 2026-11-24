@@ -12,7 +12,7 @@
 
 import joplin from 'api';
 import { logger } from '../shared/logger';
-import type { ImageContext } from '../shared/types';
+import type { EditorRange, ImageContext, ResizeDialogResult } from '../shared/types';
 import { isViewerImageTarget } from '../shared/viewerImageTarget';
 import { detectImageAtCursor, replaceRangeInEditor, selectViewerImageInEditor } from './editorBridge';
 import { buildNewSyntax } from './imageSyntaxBuilder';
@@ -29,14 +29,17 @@ import type { ResizeDialog } from './resizeDialogHost';
 import { settingsCache } from './settings';
 import { showToast, ToastType } from './toastUtils';
 
-const IMAGE_CHANGED_MESSAGE = 'The image changed before it could be resized. Try again.';
+interface PreparedImage {
+    fullContext: ImageContext;
+    replacementRange: EditorRange;
+}
 
 /**
  * Find the target image and load its original dimensions. A viewer target is
  * first selected in the editor. Shows a toast and returns null when there is
  * no image to resize.
  */
-async function detectAndPrepareImage(viewerTarget?: unknown) {
+async function detectAndPrepareImage(viewerTarget?: unknown): Promise<PreparedImage | null> {
     if (
         viewerTarget !== undefined &&
         (!isViewerImageTarget(viewerTarget) || !(await selectViewerImageInEditor(viewerTarget)))
@@ -78,6 +81,24 @@ async function withErrorToast(action: () => Promise<void>): Promise<void> {
 }
 
 /**
+ * Build resized syntax, apply a guarded editor replacement, and show feedback.
+ */
+async function applyResize(
+    { fullContext, replacementRange }: PreparedImage,
+    resizeResult: ResizeDialogResult,
+    successMessage: string
+): Promise<void> {
+    const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
+
+    if (!(await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax))) {
+        await showToast('The image changed before it could be resized. Try again.', ToastType.Info);
+        return;
+    }
+
+    await showToast(successMessage, ToastType.Success);
+}
+
+/**
  * Execute quick resize for a configured slot.
  */
 async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown): Promise<void> {
@@ -95,22 +116,13 @@ async function executeQuickResizeSlot(slotIndex: number, viewerTarget?: unknown)
         const prepared = await detectAndPrepareImage(viewerTarget);
         if (!prepared) return;
 
-        const { fullContext, replacementRange } = prepared;
-
-        if (requiresOriginalDimensions(option) && !fullContext.originalDimensionsDetermined) {
+        if (requiresOriginalDimensions(option) && !prepared.fullContext.originalDimensionsDetermined) {
             await showToast(getQuickResizeSkippedMessage(option), ToastType.Info);
             return;
         }
 
-        const resizeResult = buildQuickResizeResult(option, fullContext);
-        const newSyntax = buildNewSyntax(fullContext, resizeResult, settingsCache.htmlSyntaxStyle);
-
-        if (!(await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax))) {
-            await showToast(IMAGE_CHANGED_MESSAGE, ToastType.Info);
-            return;
-        }
-
-        await showToast(getQuickResizeSuccessMessage(option), ToastType.Success);
+        const resizeResult = buildQuickResizeResult(option, prepared.fullContext);
+        await applyResize(prepared, resizeResult, getQuickResizeSuccessMessage(option));
     });
 }
 
@@ -137,21 +149,13 @@ export async function registerCommands(resizeDialog: ResizeDialog): Promise<void
                 const prepared = await detectAndPrepareImage(viewerTarget);
                 if (!prepared) return;
 
-                const { fullContext, replacementRange } = prepared;
-
-                const result = await resizeDialog.open(fullContext, {
+                const result = await resizeDialog.open(prepared.fullContext, {
                     defaultResizeMode: settingsCache.defaultResizeMode,
                     defaultPercentage: settingsCache.defaultPercentage,
                 });
 
                 if (result) {
-                    const newSyntax = buildNewSyntax(fullContext, result, settingsCache.htmlSyntaxStyle);
-                    if (!(await replaceRangeInEditor(newSyntax, replacementRange, fullContext.syntax))) {
-                        await showToast(IMAGE_CHANGED_MESSAGE, ToastType.Info);
-                        return;
-                    }
-
-                    await showToast('Image resized successfully!', ToastType.Success);
+                    await applyResize(prepared, result, 'Image resized successfully!');
                 }
             });
         },
