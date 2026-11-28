@@ -3,8 +3,8 @@ import type { MockInstance } from 'vitest';
 import joplin from 'api';
 import { getOriginalImageDimensions } from '../src/host/originalImageDimensions';
 import { getResourceBlob } from '../src/host/resourceUtils';
-import type * as ImageDimensionUtils from '../src/shared/imageDimensionUtils';
 import { measureBlobImageDimensions, measureImageDimensions } from '../src/shared/imageDimensionUtils';
+import type * as ImageDimensionUtils from '../src/shared/imageDimensionUtils';
 
 vi.mock('../src/host/resourceUtils', () => ({
     getResourceBlob: vi.fn(),

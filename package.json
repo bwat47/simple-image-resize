@@ -35,16 +35,17 @@
         "@lezer/common": "^1.5.2",
         "@types/markdown-it": "^13.0.9",
         "@types/node": "^24.19.2",
-        "@vitest/coverage-v8": "^5.1.0",
+        "@vitest/coverage-v8": "^5.1.2",
         "eslint-plugin-regexp": "^3.3.3",
-        "fallow": "^3.45.0",
-        "jsdom": "^31.0.0",
+        "fallow": "^3.50.0",
+        "fallow-type-aware": "^3.50.0",
+        "jsdom": "^31.0.1",
         "markdown-it": "13.0.2",
-        "oxfmt": "^0.79.0",
-        "oxlint": "^1.94.0",
-        "oxlint-tsgolint": "^7.0.2008",
+        "oxfmt": "^0.80.0",
+        "oxlint": "^1.95.0",
+        "oxlint-tsgolint": "^7.0.2009",
         "typescript": "^7.0.2",
-        "vitest": "^5.1.1"
+        "vitest": "^5.1.2"
     },
     "dependencies": {
         "entities": "^9.0.0"

@@ -9,6 +9,9 @@
     ],
     "supportEntry": ["tests/**/*.test.ts"],
     "ignorePatterns": ["**/*.d.ts", "api/**"],
+    "typeAware": {
+        "enabled": true
+    },
     "rules": {
         "complexity-crap": "off",
         "dev-dependencies-in-production": "off"

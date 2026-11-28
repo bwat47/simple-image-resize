@@ -1,6 +1,7 @@
 import joplin from 'api';
 import { registerCommands } from '../src/host/commands';
 import { registerContextMenu } from '../src/host/menus';
+import { ResizeDialog } from '../src/host/resizeDialogHost';
 import { settingsCache } from '../src/host/settings';
 import { receiveViewerMessage } from '../src/host/viewerMessages';
 import {
@@ -81,7 +82,7 @@ describe('viewer context menu actions', () => {
     });
 
     it.each(['resizeImage', 'resize100'])('selects and revalidates only when %s is chosen', async (commandName) => {
-        await registerCommands({} as Parameters<typeof registerCommands>[0]);
+        await registerCommands(new ResizeDialog(joplin.views.dialogs, 'desktop'));
         const command = vi
             .mocked(joplin.commands.register)
             .mock.calls.find(([registration]) => registration.name === commandName)![0];
