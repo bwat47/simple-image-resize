@@ -38,7 +38,7 @@ resizing from both the editor and the note viewer context menu.
 
 - **Language**: TypeScript with strict settings; 4-space indentation; semicolons required.
 - **Filenames**: `camelCase.ts` for modules; tests mirror names: `module.test.ts`.
-- **Module Boundaries**: Add explicit return types to exported functions and public methods of exported classes. Prefer named exported types for non-trivial object shapes. Let TypeScript infer local implementation details, and avoid redundant primitive annotations.
+- **Module Boundaries**: Add explicit return types to exported functions and public methods of exported classes. Prefer named types for non-trivial object shapes. Let TypeScript infer local implementation details, and avoid redundant primitive annotations.
 - **Style enforcement**: Run `npm run format` before commits or if you encounter formatting errors from oxfmt.
 - **Documentation**: Use JSDoc for complex functions; document regex patterns with examples.
 
