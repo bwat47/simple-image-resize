@@ -190,7 +190,7 @@ function findImagesInRange(state: EditorState, from: number, to: number, tree = 
 /**
  * Find all image nodes on the cursor's line.
  */
-export function findImagesOnLine(state: EditorState): ImageNodeRange[] {
+function findImagesOnLine(state: EditorState): ImageNodeRange[] {
     const currentLine = state.doc.lineAt(state.selection.main.head);
     return findImagesInRange(state, currentLine.from, currentLine.to);
 }
@@ -250,7 +250,7 @@ export function viewerImageCursorPosition(image: ImageNodeRange): number {
  * Treat indentation before an image as part of its activation area while keeping
  * the replacement range scoped to the image syntax itself.
  */
-export function isCursorInImageActivationRange(
+function isCursorInImageActivationRange(
     lineTextBeforeImage: string,
     cursor: number,
     imageNode: ImageNodeRange
@@ -304,7 +304,7 @@ export function getImageAtCursor(state: EditorState): EditorImageAtCursorResult 
  * Convert a 0-indexed line/ch position to a document offset. CM6 lines are
  * 1-indexed. Out-of-range lines and columns are clamped to the document.
  */
-export function posToOffset(doc: Text, pos: EditorPosition): number {
+function posToOffset(doc: Text, pos: EditorPosition): number {
     const lineNum = Math.max(1, Math.min(pos.line + 1, doc.lines));
     const lineInfo = doc.line(lineNum);
     const ch = Math.max(0, Math.min(pos.ch, lineInfo.to - lineInfo.from));

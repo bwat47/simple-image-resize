@@ -3,7 +3,7 @@ import { registerCommands } from '../src/host/commands';
 import { registerContextMenu } from '../src/host/menus';
 import { ResizeDialog } from '../src/host/resizeDialogHost';
 import { settingsCache } from '../src/host/settings';
-import { receiveViewerMessage } from '../src/host/viewerMessages';
+import { registerViewerContentScript } from '../src/host/viewerMessages';
 import {
     GET_IMAGE_AT_CURSOR_COMMAND,
     IS_EDITOR_CONTEXT_MENU_ORIGIN_COMMAND,
@@ -18,6 +18,7 @@ vi.mock('../src/shared/logger', () => ({
 
 const target = { line: 2, lineEnd: 3, index: 0, resourceId: '0123456789abcdef0123456789abcdef' };
 let clock = Date.now();
+let receiveViewerMessage: (message: unknown) => void;
 
 type EditorCommandArgs = { name: string };
 
@@ -37,16 +38,22 @@ function getContextMenuFilter(): Parameters<typeof joplin.workspace.filterEditor
 }
 
 describe('viewer context menu actions', () => {
-    beforeEach(() => {
+    beforeEach(async () => {
         vi.useFakeTimers();
         // Keep new clicks later than the timestamps discarded by previous tests.
         clock += 10_000;
         vi.setSystemTime(new Date(clock));
         vi.mocked(joplin.commands.execute).mockReset();
         vi.mocked(joplin.commands.register).mockClear();
+        vi.mocked(joplin.contentScripts.onMessage).mockClear();
         vi.mocked(joplin.workspace.filterEditorContextMenu).mockClear();
         vi.mocked(joplin.settings.globalValues).mockResolvedValue([true]);
         settingsCache.showQuickResizeInContextMenu = true;
+        await registerViewerContentScript();
+        receiveViewerMessage = requireValue(
+            vi.mocked(joplin.contentScripts.onMessage).mock.calls[0],
+            'the viewer message handler registration'
+        )[1] as (message: unknown) => void;
     });
 
     afterEach(() => {

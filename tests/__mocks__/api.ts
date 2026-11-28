@@ -8,6 +8,10 @@ export default {
         execute: vi.fn(),
         register: vi.fn().mockResolvedValue(undefined),
     },
+    contentScripts: {
+        register: vi.fn().mockResolvedValue(undefined),
+        onMessage: vi.fn().mockResolvedValue(undefined),
+    },
     settings: {
         globalValues: vi.fn(),
         values: vi.fn().mockResolvedValue({}),

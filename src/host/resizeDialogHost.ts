@@ -24,7 +24,7 @@ export interface ResizeDialogDefaults {
 }
 
 /** Precomputed CSS classes and HTML attributes used to render the resize dialog's initial state. */
-export interface InitialDialogState {
+interface InitialDialogState {
     // CSS classes
     resizeSectionClass: string;
     percentageModeRowClass: string;
@@ -58,7 +58,7 @@ const readDimension = (value: unknown): number | undefined =>
  * opens in the right state before its script runs. The rules themselves live in
  * getDialogFieldState, which the webview applies on every change.
  */
-export function getInitialDialogState(
+function getInitialDialogState(
     defaultSyntax: ImageSyntax,
     defaultResizeMode: ResizeMode,
     originalDimensionsDetermined: boolean
@@ -85,7 +85,7 @@ export function getInitialDialogState(
     };
 }
 
-export function getOriginalDimensionsText(context: ImageContext): string {
+function getOriginalDimensionsText(context: ImageContext): string {
     if (!context.originalDimensionsDetermined) {
         return 'Size unknown';
     }
@@ -113,15 +113,8 @@ function getTitleFieldHtml(context: ImageContext): string {
         <input type="text" id="imageTitle" name="imageTitle" value="${escapeHtmlAttribute(normalizeLineBreaks(context.title))}">`;
 }
 
-/**
- * Renders the dialog markup for one image. Exported so webview tests can drive the
- * real markup instead of a hand-maintained copy of it.
- */
-export function renderDialogHtml(
-    context: ImageContext,
-    defaults: ResizeDialogDefaults,
-    platform: DialogPlatform
-): string {
+/** Renders the dialog markup for one image. */
+function renderDialogHtml(context: ImageContext, defaults: ResizeDialogDefaults, platform: DialogPlatform): string {
     const originalWidth = context.originalDimensions.width;
     const originalHeight = context.originalDimensions.height;
     const defaultSyntax: ImageSyntax = 'html';

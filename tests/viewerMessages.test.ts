@@ -1,6 +1,9 @@
 import joplin from 'api';
-import { getViewerContextMenuImage, receiveViewerMessage } from '../src/host/viewerMessages';
+import { ContentScriptType } from 'api/types';
+import { getViewerContextMenuImage, registerViewerContentScript } from '../src/host/viewerMessages';
 import { MATCH_VIEWER_IMAGE_COMMAND, SELECT_VIEWER_IMAGE_COMMAND } from '../src/shared/editorCommands';
+import { VIEWER_CONTENT_SCRIPT_ID } from '../src/shared/viewerImageTarget';
+import { requireValue } from './helpers/requireValue';
 
 vi.mock('../src/shared/logger', () => ({
     logger: { debug: vi.fn(), info: vi.fn(), warn: vi.fn(), error: vi.fn() },
@@ -9,6 +12,7 @@ vi.mock('../src/shared/logger', () => ({
 const execute = vi.mocked(joplin.commands.execute);
 const target = { line: 2, lineEnd: 3, index: 0, resourceId: '0123456789abcdef0123456789abcdef' };
 let clock = Date.now();
+let receiveViewerMessage: (message: unknown) => void;
 
 describe('getViewerContextMenuImage', () => {
     beforeEach(async () => {
@@ -17,6 +21,13 @@ describe('getViewerContextMenuImage', () => {
         vi.setSystemTime(new Date(clock));
         execute.mockReset();
         execute.mockResolvedValue(true);
+        vi.mocked(joplin.contentScripts.register).mockClear();
+        vi.mocked(joplin.contentScripts.onMessage).mockClear();
+        await registerViewerContentScript();
+        receiveViewerMessage = requireValue(
+            vi.mocked(joplin.contentScripts.onMessage).mock.calls[0],
+            'the viewer message handler registration'
+        )[1] as (message: unknown) => void;
         // Drain any message a previous test left behind.
         vi.advanceTimersByTime(1000);
         const drained = getViewerContextMenuImage(Date.now());
@@ -27,6 +38,18 @@ describe('getViewerContextMenuImage', () => {
 
     afterEach(() => {
         vi.useRealTimers();
+    });
+
+    it('registers the markdown-it viewer script and its message handler', () => {
+        expect(joplin.contentScripts.register).toHaveBeenCalledExactlyOnceWith(
+            ContentScriptType.MarkdownItPlugin,
+            VIEWER_CONTENT_SCRIPT_ID,
+            './viewer/viewerContentScript.js'
+        );
+        expect(joplin.contentScripts.onMessage).toHaveBeenCalledExactlyOnceWith(
+            VIEWER_CONTENT_SCRIPT_ID,
+            expect.any(Function)
+        );
     });
 
     it('matches the target from a message that arrived before the menu without moving the cursor', async () => {

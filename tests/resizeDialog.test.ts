@@ -1,16 +1,13 @@
 // @vitest-environment jsdom
 
 import initializeResizeDialog from '../src/dialog/resizeDialog';
-import { renderDialogHtml, type ResizeDialogDefaults } from '../src/host/resizeDialogHost';
+import { ResizeDialog, type ResizeDialogDefaults } from '../src/host/resizeDialogHost';
 import { logger } from '../src/shared/logger';
 import type { ImageContext, ResizeMode } from '../src/shared/types';
+import { createDialogApi, serializeForm } from './helpers/resizeDialogHarness';
 
-/**
- * Builds the same markup the plugin host writes, so these tests break if the
- * dialog HTML and the webview's element hooks ever drift apart.
- */
-function dialogMarkup(width: number, height: number, defaults: ResizeDialogDefaults): string {
-    const context: ImageContext = {
+function imageContext(width: number, height: number): ImageContext {
+    return {
         type: 'markdown',
         syntax: `![Alt](https://example.com/image.png)`,
         source: 'https://example.com/image.png',
@@ -20,7 +17,6 @@ function dialogMarkup(width: number, height: number, defaults: ResizeDialogDefau
         originalDimensions: { width, height },
         originalDimensionsDetermined: true,
     };
-    return renderDialogHtml(context, defaults, 'desktop');
 }
 
 function defaultsFor(defaultResizeMode: ResizeMode, defaultPercentage = 50): ResizeDialogDefaults {
@@ -34,13 +30,18 @@ function setInputValue(name: string, value: string): void {
     input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
+async function mountDialog(width: number, height: number, defaults: ResizeDialogDefaults): Promise<void> {
+    const dialog = new ResizeDialog(createDialogApi(), 'desktop');
+    await dialog.open(imageContext(width, height), defaults);
+}
+
 describe('resize dialog webview', () => {
     afterEach(() => {
         document.body.replaceChildren();
     });
 
-    it('initializes each root only once', () => {
-        document.body.innerHTML = dialogMarkup(400, 300, defaultsFor('absolute'));
+    it('initializes each root only once', async () => {
+        await mountDialog(400, 300, defaultsFor('absolute'));
         const addListener = vi.spyOn(EventTarget.prototype, 'addEventListener');
 
         initializeResizeDialog();
@@ -53,16 +54,18 @@ describe('resize dialog webview', () => {
         addListener.mockRestore();
     });
 
-    it('initializes replacement HTML with its new dimensions', () => {
+    it('initializes replacement HTML with its new dimensions', async () => {
         // Mirrors a second open: Joplin remounts the webview with fresh markup and
         // re-runs this script against it.
-        document.body.innerHTML = dialogMarkup(800, 400, defaultsFor('absolute'));
+        const dialog = new ResizeDialog(createDialogApi(), 'desktop');
+
+        await dialog.open(imageContext(800, 400), defaultsFor('absolute'));
         initializeResizeDialog();
 
         setInputValue('absoluteWidth', '200');
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.value).toBe('100');
 
-        document.body.innerHTML = dialogMarkup(400, 300, defaultsFor('absolute'));
+        await dialog.open(imageContext(400, 300), defaultsFor('absolute'));
         initializeResizeDialog();
         expect(document.querySelector('#dialog-root')?.getAttribute('data-initialized')).toBe('true');
 
@@ -84,8 +87,8 @@ describe('resize dialog webview', () => {
         logError.mockRestore();
     });
 
-    it('retains mode switching and percentage previews', () => {
-        document.body.innerHTML = dialogMarkup(800, 400, defaultsFor('percentage', 25));
+    it('retains mode switching and percentage previews', async () => {
+        await mountDialog(800, 400, defaultsFor('percentage', 25));
         initializeResizeDialog();
 
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteWidth"]')?.value).toBe('200');
@@ -110,23 +113,30 @@ describe('resize dialog webview', () => {
         expect(document.querySelector<HTMLInputElement>('input[name="absoluteHeight"]')?.disabled).toBe(false);
     });
 
-    it('makes the resize section inert while Markdown syntax is selected', () => {
-        document.body.innerHTML = dialogMarkup(800, 400, defaultsFor('absolute'));
-        initializeResizeDialog();
-        const resizeSection = document.querySelector('[data-resize-section]');
-        expect(resizeSection?.hasAttribute('inert')).toBe(false);
+    it('makes the resize section inert while Markdown syntax is selected and submits Markdown syntax', async () => {
+        const dialogs = createDialogApi((form) => {
+            initializeResizeDialog();
+            const resizeSection = document.querySelector('[data-resize-section]');
+            expect(resizeSection?.hasAttribute('inert')).toBe(false);
 
-        const selectSyntax = (syntax: string): void => {
-            const radio = document.querySelector<HTMLInputElement>(`input[name="targetSyntax"][value="${syntax}"]`);
-            if (!radio) throw new Error(`Missing ${syntax} syntax.`);
-            radio.checked = true;
-            radio.dispatchEvent(new Event('change', { bubbles: true }));
-        };
+            const selectSyntax = (syntax: string): void => {
+                const radio = document.querySelector<HTMLInputElement>(`input[name="targetSyntax"][value="${syntax}"]`);
+                if (!radio) throw new Error(`Missing ${syntax} syntax.`);
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change', { bubbles: true }));
+            };
 
-        selectSyntax('markdown');
-        expect(resizeSection?.hasAttribute('inert')).toBe(true);
+            selectSyntax('markdown');
+            expect(resizeSection?.hasAttribute('inert')).toBe(true);
 
-        selectSyntax('html');
-        expect(resizeSection?.hasAttribute('inert')).toBe(false);
+            selectSyntax('html');
+            expect(resizeSection?.hasAttribute('inert')).toBe(false);
+
+            selectSyntax('markdown');
+            return { id: 'ok', formData: serializeForm(form) };
+        });
+
+        const result = await new ResizeDialog(dialogs, 'desktop').open(imageContext(800, 400), defaultsFor('absolute'));
+        expect(result).toMatchObject({ targetSyntax: 'markdown', altText: 'Alt' });
     });
 });

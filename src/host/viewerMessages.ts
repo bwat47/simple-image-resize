@@ -33,8 +33,8 @@ let latestMessage: ViewerMessage | null = null;
 let discardedThrough = -Infinity;
 const messageWaiters = new Set<() => void>();
 
-/** Record a message from the viewer script. Exported for tests. */
-export function receiveViewerMessage(message: unknown): void {
+/** Record a message from the viewer script. */
+function receiveViewerMessage(message: unknown): void {
     if (typeof message !== 'object' || message === null) return;
 
     const candidate = message as Partial<ViewerMessage>;

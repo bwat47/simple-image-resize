@@ -1,13 +1,7 @@
 import { markdown, markdownLanguage } from '@codemirror/lang-markdown';
 import { EditorState, Text } from '@codemirror/state';
 
-import {
-    findImagesOnLine,
-    getImageAtCursor,
-    isCursorInImageActivationRange,
-    posToOffset,
-    resolveReplaceChange,
-} from '../src/editor/editorImageQueries';
+import { getImageAtCursor, resolveReplaceChange } from '../src/editor/editorImageQueries';
 
 vi.mock('../src/shared/logger', () => ({
     logger: {
@@ -46,99 +40,6 @@ function stateWithCursor(doc: string): EditorState {
     });
 }
 
-const sliceAll = (state: EditorState, ranges: { from: number; to: number }[]): string[] =>
-    ranges.map((range) => state.doc.sliceString(range.from, range.to));
-
-describe('isCursorInImageActivationRange', () => {
-    test('allows cursor in leading whitespace before an image', () => {
-        const imageNode = { type: 'html' as const, from: 4, to: 76 };
-
-        expect(isCursorInImageActivationRange('    ', 0, imageNode)).toBe(true);
-        expect(isCursorInImageActivationRange('    ', 3, imageNode)).toBe(true);
-        expect(isCursorInImageActivationRange('    ', 4, imageNode)).toBe(true);
-        expect(isCursorInImageActivationRange('    ', 76, imageNode)).toBe(true);
-    });
-
-    test('does not allow cursor before image when preceding line text is not only whitespace', () => {
-        const imageNode = { type: 'html' as const, from: 7, to: 79 };
-
-        expect(isCursorInImageActivationRange('Text   ', 3, imageNode)).toBe(false);
-        expect(isCursorInImageActivationRange('Text   ', 6, imageNode)).toBe(false);
-        expect(isCursorInImageActivationRange('Text   ', 7, imageNode)).toBe(true);
-    });
-
-    test('rejects cursor past the end of the image', () => {
-        const imageNode = { type: 'markdown' as const, from: 0, to: 10, parts: null };
-
-        expect(isCursorInImageActivationRange('', 11, imageNode)).toBe(false);
-    });
-});
-
-describe('findImagesOnLine', () => {
-    test('finds a Markdown image (Image node)', () => {
-        const state = stateWithCursor(`![alt‸](:/${RESOURCE_ID} "title")`);
-        const images = findImagesOnLine(state);
-
-        expect(images).toMatchObject([{ type: 'markdown' }]);
-        expect(sliceAll(state, images)).toEqual([`![alt](:/${RESOURCE_ID} "title")`]);
-    });
-
-    test('finds an inline HTML img tag (HTMLTag node) surrounded by prose', () => {
-        const state = stateWithCursor('Before <img src="a.png" width="100"> af‸ter');
-        const images = findImagesOnLine(state);
-
-        expect(images).toMatchObject([{ type: 'html' }]);
-        expect(sliceAll(state, images)).toEqual(['<img src="a.png" width="100">']);
-    });
-
-    test('ignores non-img HTML tags', () => {
-        const state = stateWithCursor('Before <span class="x">te‸xt</span> after');
-
-        expect(findImagesOnLine(state)).toEqual([]);
-    });
-
-    test('finds an img nested inside an HTML block (HTMLBlock node)', () => {
-        const state = stateWithCursor('<div><img src="a.png" wid‸th="100"></div>');
-        const images = findImagesOnLine(state);
-
-        expect(images).toMatchObject([{ type: 'html' }]);
-        expect(sliceAll(state, images)).toEqual(['<img src="a.png" width="100">']);
-    });
-
-    test('finds multiple imgs in one HTML block on the same line', () => {
-        const state = stateWithCursor('<div><img src="a.png"><img src="b.png"></d‸iv>');
-
-        expect(sliceAll(state, findImagesOnLine(state))).toEqual(['<img src="a.png">', '<img src="b.png">']);
-    });
-
-    test('returns only the imgs intersecting the cursor line of a multi-line HTML block', () => {
-        const state = stateWithCursor('<div>\n<img src="a.png">\n<img src="b‸.png">\n</div>');
-
-        expect(sliceAll(state, findImagesOnLine(state))).toEqual(['<img src="b.png">']);
-    });
-
-    test('returns an empty list when the cursor line has no image', () => {
-        const state = stateWithCursor('Just some pro‸se here.');
-
-        expect(findImagesOnLine(state)).toEqual([]);
-    });
-
-    test('does not return images from other lines', () => {
-        const state = stateWithCursor(`![a](:/${RESOURCE_ID})\n\nplain te‸xt\n\n![b](:/${RESOURCE_ID})`);
-
-        expect(findImagesOnLine(state)).toEqual([]);
-    });
-
-    test('counts an image nested in alt text as part of the outer image, like markdown-it', () => {
-        const state = stateWithCursor(`![a ![in](:/${RESOURCE_ID}) c‸](:/${RESOURCE_ID}) ![b](:/${RESOURCE_ID})`);
-
-        expect(sliceAll(state, findImagesOnLine(state))).toEqual([
-            `![a ![in](:/${RESOURCE_ID}) c](:/${RESOURCE_ID})`,
-            `![b](:/${RESOURCE_ID})`,
-        ]);
-    });
-});
-
 describe('getImageAtCursor', () => {
     test('returns Markdown image details with a 0-indexed range', () => {
         const state = stateWithCursor(`intro\n![Al‸t](:/${RESOURCE_ID} "My title")`);
@@ -167,10 +68,6 @@ describe('getImageAtCursor', () => {
 
         expect(result.range.from).toEqual({ line: 1, ch: prefix.length });
         expect(result.range.to).toEqual({ line: 1, ch: prefix.length + image.length });
-
-        const from = posToOffset(state.doc, result.range.from);
-        const to = posToOffset(state.doc, result.range.to);
-        expect(state.doc.sliceString(from, to)).toBe(image);
     });
 
     test('detects an external HTML image nested in a div', () => {
@@ -187,20 +84,43 @@ describe('getImageAtCursor', () => {
         });
     });
 
-    test('activates when the cursor sits in indentation before the image', () => {
-        // Two spaces keeps this a paragraph (four would make it an indented code block).
-        const state = stateWithCursor(`‸  ![Alt](:/${RESOURCE_ID})`);
+    test('picks the right img when multiple imgs share an HTML block on the same line', () => {
+        const state = stateWithCursor('<div><img src="a.png"><img src="b‸.png"></div>');
 
         expect(getImageAtCursor(state)).toMatchObject({
+            type: 'html',
+            source: 'b.png',
+            syntax: '<img src="b.png">',
+        });
+    });
+
+    test('ignores non-img HTML tags', () => {
+        expect(getImageAtCursor(stateWithCursor('Before <span class="x">te‸xt</span> after'))).toBeNull();
+    });
+
+    test('activates when the cursor sits in indentation before the image or at its edges', () => {
+        // Two spaces keeps this a paragraph (four would make it an indented code block).
+        expect(getImageAtCursor(stateWithCursor(`‸  ![Alt](:/${RESOURCE_ID})`))).toMatchObject({
+            type: 'markdown',
+            range: { from: { line: 0, ch: 2 } },
+        });
+        expect(getImageAtCursor(stateWithCursor(`  ‸![Alt](:/${RESOURCE_ID})`))).toMatchObject({
+            type: 'markdown',
+            range: { from: { line: 0, ch: 2 } },
+        });
+        expect(getImageAtCursor(stateWithCursor(`  ![Alt](:/${RESOURCE_ID})‸`))).toMatchObject({
             type: 'markdown',
             range: { from: { line: 0, ch: 2 } },
         });
     });
 
+    test('returns null when the cursor is past the end of the image', () => {
+        expect(getImageAtCursor(stateWithCursor(`![Alt](:/${RESOURCE_ID}) ‸`))).toBeNull();
+    });
+
     test('returns null for a reference-style image, which has no inline destination', () => {
         const state = stateWithCursor(`![Al‸t][ref]\n\n[ref]: :/${RESOURCE_ID}`);
 
-        expect(findImagesOnLine(state)).toMatchObject([{ type: 'markdown', parts: null }]);
         expect(getImageAtCursor(state)).toBeNull();
     });
 
@@ -214,6 +134,16 @@ describe('getImageAtCursor', () => {
         const state = stateWithCursor(`![a](:/${RESOURCE_ID}) ![b‸](:/${RESOURCE_ID})`);
 
         expect(getImageAtCursor(state)).toMatchObject({ altText: 'b' });
+    });
+
+    test('treats an image nested in alt text as part of the outer image, like markdown-it', () => {
+        const state = stateWithCursor(`![a ![in](:/${RESOURCE_ID}) c‸](:/${RESOURCE_ID}) ![b](:/${RESOURCE_ID})`);
+
+        expect(getImageAtCursor(state)).toMatchObject({
+            type: 'markdown',
+            syntax: `![a ![in](:/${RESOURCE_ID}) c](:/${RESOURCE_ID})`,
+            altText: `a ![in](:/${RESOURCE_ID}) c`,
+        });
     });
 
     test('detects an image inside a GFM table cell', () => {
@@ -231,45 +161,30 @@ describe('getImageAtCursor', () => {
         expect(getImageAtCursor(stateWithCursor('nothing to see‸ here'))).toBeNull();
     });
 
-    test('returns null when the img tag has no src the parser can extract', () => {
-        const state = stateWithCursor('Before <img alt="bro‸ken"> after');
+    test('does not return images from other lines', () => {
+        const state = stateWithCursor(`![a](:/${RESOURCE_ID})\n\nplain te‸xt\n\n![b](:/${RESOURCE_ID})`);
 
-        expect(findImagesOnLine(state)).toHaveLength(1);
         expect(getImageAtCursor(state)).toBeNull();
     });
 
-    test('spans a multi-line range for an image whose HTML block wraps lines', () => {
-        const state = stateWithCursor('line one\n<div>\n<img src="a‸.png">\n</div>');
+    test('returns null when the img tag has no src the parser can extract', () => {
+        const state = stateWithCursor('Before <img alt="bro‸ken"> after');
+
+        expect(getImageAtCursor(state)).toBeNull();
+    });
+
+    test('detects only the img on the cursor line of a multi-line HTML block', () => {
+        const state = stateWithCursor('line one\n<div>\n<img src="a.png">\n<img src="b‸.png">\n</div>');
         const result = getImageAtCursor(state);
 
-        expect(result?.range).toEqual({
-            from: { line: 2, ch: 0 },
-            to: { line: 2, ch: '<img src="a.png">'.length },
+        expect(result).toMatchObject({
+            type: 'html',
+            source: 'b.png',
+            range: {
+                from: { line: 3, ch: 0 },
+                to: { line: 3, ch: '<img src="b.png">'.length },
+            },
         });
-    });
-});
-
-describe('posToOffset', () => {
-    const doc = Text.of(['abc', 'defgh', 'ij']);
-
-    test('converts a 0-indexed line/ch position to an absolute offset', () => {
-        expect(posToOffset(doc, { line: 0, ch: 0 })).toBe(0);
-        expect(posToOffset(doc, { line: 0, ch: 3 })).toBe(3);
-        expect(posToOffset(doc, { line: 1, ch: 2 })).toBe(6);
-        expect(posToOffset(doc, { line: 2, ch: 2 })).toBe(12);
-    });
-
-    test('clamps a line past the end of the document to the last line', () => {
-        expect(posToOffset(doc, { line: 99, ch: 0 })).toBe(10);
-    });
-
-    test('clamps a negative line to the first line', () => {
-        expect(posToOffset(doc, { line: -5, ch: 1 })).toBe(1);
-    });
-
-    test('clamps ch to the bounds of its line', () => {
-        expect(posToOffset(doc, { line: 1, ch: 99 })).toBe(9);
-        expect(posToOffset(doc, { line: 1, ch: -3 })).toBe(4);
     });
 });
 
@@ -296,6 +211,26 @@ describe('resolveReplaceChange', () => {
         });
 
         expect(change).toEqual({ from: 6, to: 18, insert: 'x' });
+    });
+
+    test('clamps out-of-range lines and columns to document bounds', () => {
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'ALL',
+                from: { line: -5, ch: -3 },
+                to: { line: 99, ch: 99 },
+                expectedText: 'hello world\nsecond line',
+            })
+        ).toEqual({ from: 0, to: doc.length, insert: 'ALL' });
+
+        expect(
+            resolveReplaceChange(doc, {
+                text: 'WORLD',
+                from: { line: 0, ch: 6 },
+                to: { line: 0, ch: 99 },
+                expectedText: 'world',
+            })
+        ).toEqual({ from: 6, to: 11, insert: 'WORLD' });
     });
 
     test('aborts when the document changed since detection', () => {

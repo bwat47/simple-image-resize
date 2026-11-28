@@ -14,7 +14,9 @@
     },
     "rules": {
         "complexity-crap": "off",
-        "dev-dependencies-in-production": "off"
+        "dev-dependencies-in-production": "off",
+        "test-only-exports": "warn",
+        "require-suppression-reason": "error"
     },
     "health": {
         "maxCognitive": 15,

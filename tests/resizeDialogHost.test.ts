@@ -1,203 +1,11 @@
+// @vitest-environment jsdom
+
 import type { DialogResult } from 'api/types';
-import {
-    getInitialDialogState,
-    getOriginalDimensionsText,
-    renderDialogHtml,
-    ResizeDialog,
-    type JoplinDialogApi,
-    type ResizeDialogDefaults,
-} from '../src/host/resizeDialogHost';
+import initializeResizeDialog from '../src/dialog/resizeDialog';
+import { ResizeDialog, type DialogPlatform, type ResizeDialogDefaults } from '../src/host/resizeDialogHost';
 import { desktopDialogCss } from '../src/host/resizeDialogStyles';
 import type { ImageContext } from '../src/shared/types';
-import { requireValue } from './helpers/requireValue';
-
-describe('getInitialDialogState', () => {
-    describe('HTML syntax with percentage mode', () => {
-        it('should enable HTML syntax and percentage mode', () => {
-            const state = getInitialDialogState('html', 'percentage', true);
-
-            // CSS classes
-            expect(state.resizeSectionClass).toBe('subgrid resize-section');
-            expect(state.percentageModeRowClass).toBe('segment');
-            expect(state.percentageRowClass).toBe('subgrid');
-            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
-            expect(state.heightRowClass).toBe('subgrid');
-
-            // Checked attributes
-            expect(state.htmlCheckedAttr).toBe(' checked');
-            expect(state.markdownCheckedAttr).toBe('');
-            expect(state.percentageModeCheckedAttr).toBe(' checked');
-            expect(state.absoluteModeCheckedAttr).toBe('');
-
-            // Disabled attributes
-            expect(state.percentageDisabledAttr).toBe('');
-            expect(state.percentageModeDisabledAttr).toBe('');
-            expect(state.absoluteDisabledAttr).toBe(' disabled');
-            expect(state.heightDisabledAttr).toBe(' disabled');
-        });
-    });
-
-    describe('HTML syntax with absolute mode', () => {
-        it('should enable HTML syntax and absolute mode', () => {
-            const state = getInitialDialogState('html', 'absolute', true);
-
-            // CSS classes
-            expect(state.resizeSectionClass).toBe('subgrid resize-section');
-            expect(state.percentageRowClass).toBe('subgrid is-disabled');
-            expect(state.absoluteGroupClass).toBe('subgrid');
-            expect(state.heightRowClass).toBe('subgrid');
-
-            // Checked attributes
-            expect(state.htmlCheckedAttr).toBe(' checked');
-            expect(state.markdownCheckedAttr).toBe('');
-            expect(state.percentageModeCheckedAttr).toBe('');
-            expect(state.absoluteModeCheckedAttr).toBe(' checked');
-
-            // Disabled attributes
-            expect(state.percentageDisabledAttr).toBe(' disabled');
-            expect(state.absoluteDisabledAttr).toBe('');
-            expect(state.heightDisabledAttr).toBe('');
-        });
-    });
-
-    describe('Markdown syntax with percentage mode', () => {
-        it('should enable Markdown syntax and disable all resize controls', () => {
-            const state = getInitialDialogState('markdown', 'percentage', true);
-
-            // CSS classes
-            expect(state.resizeSectionClass).toBe('subgrid resize-section is-locked');
-            expect(state.percentageRowClass).toBe('subgrid is-disabled');
-            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
-
-            // Checked attributes
-            expect(state.htmlCheckedAttr).toBe('');
-            expect(state.markdownCheckedAttr).toBe(' checked');
-            expect(state.percentageModeCheckedAttr).toBe(' checked');
-            expect(state.absoluteModeCheckedAttr).toBe('');
-
-            // Disabled attributes
-            expect(state.percentageDisabledAttr).toBe(' disabled');
-            expect(state.absoluteDisabledAttr).toBe(' disabled');
-        });
-    });
-
-    describe('Markdown syntax with absolute mode', () => {
-        it('should enable Markdown syntax and disable all resize controls', () => {
-            const state = getInitialDialogState('markdown', 'absolute', true);
-
-            // CSS classes
-            expect(state.resizeSectionClass).toBe('subgrid resize-section is-locked');
-            expect(state.percentageRowClass).toBe('subgrid is-disabled');
-            expect(state.absoluteGroupClass).toBe('subgrid is-disabled');
-
-            // Checked attributes
-            expect(state.htmlCheckedAttr).toBe('');
-            expect(state.markdownCheckedAttr).toBe(' checked');
-            expect(state.percentageModeCheckedAttr).toBe('');
-            expect(state.absoluteModeCheckedAttr).toBe(' checked');
-
-            // Disabled attributes
-            expect(state.percentageDisabledAttr).toBe(' disabled');
-            expect(state.absoluteDisabledAttr).toBe(' disabled');
-        });
-    });
-
-    describe('Edge cases and invariants', () => {
-        it('disables percentage mode and defaults to absolute when dimensions are unknown', () => {
-            const state = getInitialDialogState('html', 'percentage', false);
-
-            expect(state.percentageModeRowClass).toBe('segment is-disabled');
-            expect(state.percentageModeCheckedAttr).toBe('');
-            expect(state.percentageModeDisabledAttr).toBe(' disabled');
-            expect(state.percentageRowClass).toBe('subgrid is-disabled');
-            expect(state.absoluteModeCheckedAttr).toBe(' checked');
-            expect(state.absoluteGroupClass).toBe('subgrid');
-            expect(state.absoluteDisabledAttr).toBe('');
-            expect(state.heightRowClass).toBe('subgrid is-disabled');
-            expect(state.heightDisabledAttr).toBe(' disabled');
-        });
-
-        it('should ensure only one syntax is checked at a time', () => {
-            const htmlState = getInitialDialogState('html', 'percentage', true);
-            const markdownState = getInitialDialogState('markdown', 'percentage', true);
-
-            // HTML state
-            expect(htmlState.htmlCheckedAttr).toBe(' checked');
-            expect(htmlState.markdownCheckedAttr).toBe('');
-
-            // Markdown state
-            expect(markdownState.htmlCheckedAttr).toBe('');
-            expect(markdownState.markdownCheckedAttr).toBe(' checked');
-        });
-
-        it('should ensure only one resize mode is checked at a time', () => {
-            const percentageState = getInitialDialogState('html', 'percentage', true);
-            const absoluteState = getInitialDialogState('html', 'absolute', true);
-
-            // Percentage state
-            expect(percentageState.percentageModeCheckedAttr).toBe(' checked');
-            expect(percentageState.absoluteModeCheckedAttr).toBe('');
-
-            // Absolute state
-            expect(absoluteState.percentageModeCheckedAttr).toBe('');
-            expect(absoluteState.absoluteModeCheckedAttr).toBe(' checked');
-        });
-
-        it('should ensure exactly one resize control is enabled when HTML syntax is selected', () => {
-            const percentageState = getInitialDialogState('html', 'percentage', true);
-            const absoluteState = getInitialDialogState('html', 'absolute', true);
-
-            // Percentage mode: percentage enabled, absolute disabled
-            expect(percentageState.percentageDisabledAttr).toBe('');
-            expect(percentageState.absoluteDisabledAttr).toBe(' disabled');
-
-            // Absolute mode: percentage disabled, absolute enabled
-            expect(absoluteState.percentageDisabledAttr).toBe(' disabled');
-            expect(absoluteState.absoluteDisabledAttr).toBe('');
-        });
-
-        it('should lock resize section when Markdown syntax is selected', () => {
-            const markdownPercentage = getInitialDialogState('markdown', 'percentage', true);
-            const markdownAbsolute = getInitialDialogState('markdown', 'absolute', true);
-
-            expect(markdownPercentage.resizeSectionClass).toContain('is-locked');
-            expect(markdownAbsolute.resizeSectionClass).toContain('is-locked');
-            expect(markdownPercentage.resizeSectionInertAttr).toBe(' inert');
-            expect(markdownAbsolute.resizeSectionInertAttr).toBe(' inert');
-        });
-
-        it('should not lock resize section when HTML syntax is selected', () => {
-            const htmlPercentage = getInitialDialogState('html', 'percentage', true);
-            const htmlAbsolute = getInitialDialogState('html', 'absolute', true);
-
-            expect(htmlPercentage.resizeSectionClass).not.toContain('is-locked');
-            expect(htmlAbsolute.resizeSectionClass).not.toContain('is-locked');
-            expect(htmlPercentage.resizeSectionInertAttr).toBe('');
-            expect(htmlAbsolute.resizeSectionInertAttr).toBe('');
-        });
-    });
-
-    describe('original dimensions text', () => {
-        const context = {
-            type: 'markdown' as const,
-            syntax: '![Alt](https://example.com/image.png)',
-            source: 'https://example.com/image.png',
-            sourceType: 'external' as const,
-            altText: 'Alt',
-            title: '',
-            originalDimensions: { width: 400, height: 300 },
-            originalDimensionsDetermined: true,
-        };
-
-        it('displays detected dimensions', () => {
-            expect(getOriginalDimensionsText(context)).toBe('400 × 300 px');
-        });
-
-        it('does not display fallback values when dimensions are unknown', () => {
-            expect(getOriginalDimensionsText({ ...context, originalDimensionsDetermined: false })).toBe('Size unknown');
-        });
-    });
-});
+import { createDialogApi, serializeForm } from './helpers/resizeDialogHarness';
 
 const dialogContext: ImageContext = {
     type: 'markdown',
@@ -215,192 +23,277 @@ const dialogDefaults: ResizeDialogDefaults = {
     defaultPercentage: 50,
 };
 
-function createDialogApi() {
-    return {
-        create: vi.fn<JoplinDialogApi['create']>().mockResolvedValue('handle'),
-        setFitToContent: vi.fn<JoplinDialogApi['setFitToContent']>().mockResolvedValue(undefined),
-        addScript: vi.fn<JoplinDialogApi['addScript']>().mockResolvedValue(undefined),
-        setButtons: vi.fn<JoplinDialogApi['setButtons']>().mockResolvedValue(undefined),
-        setHtml: vi.fn<JoplinDialogApi['setHtml']>().mockResolvedValue(undefined),
-        open: vi.fn<JoplinDialogApi['open']>().mockResolvedValue({ id: 'cancel' }),
-    } satisfies JoplinDialogApi;
+function field(form: HTMLFormElement, name: string): HTMLInputElement {
+    const element = form.elements.namedItem(name);
+    if (!(element instanceof HTMLInputElement)) {
+        throw new Error(`Missing input "${name}"`);
+    }
+    return element;
 }
 
-describe('ResizeDialog', () => {
-    it('reuses one configured handle while rendering fresh content', async () => {
-        const dialogs = createDialogApi();
-        const dialog = new ResizeDialog(dialogs, 'desktop');
-
-        await dialog.open(dialogContext, dialogDefaults);
-        await dialog.open({ ...dialogContext, altText: 'Second image' }, dialogDefaults);
-
-        expect(dialogs.create).toHaveBeenCalledExactlyOnceWith('image-resize-dialog');
-        expect(dialogs.setFitToContent).toHaveBeenCalledOnce();
-        expect(dialogs.addScript).toHaveBeenCalledExactlyOnceWith('handle', './dialog/resizeDialog.js');
-        expect(dialogs.setButtons).toHaveBeenCalledOnce();
-        expect(dialogs.setHtml).toHaveBeenCalledTimes(2);
-        expect(requireValue(dialogs.setHtml.mock.calls[1], 'the second setHtml call')[1]).toContain(
-            'value="Second image"'
-        );
-        expect(dialogs.open).toHaveBeenCalledTimes(2);
-    });
-
-    it('silently ignores an overlapping open', async () => {
-        const dialogs = createDialogApi();
-        const pending: { close?: (result: DialogResult | null) => void } = {};
-        dialogs.open.mockReturnValue(
-            new Promise((resolve) => {
-                pending.close = resolve;
-            })
-        );
-        const dialog = new ResizeDialog(dialogs, 'desktop');
-
-        const first = dialog.open(dialogContext, dialogDefaults);
-        await vi.waitFor(() => expect(dialogs.open).toHaveBeenCalledOnce());
-
-        await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
-        expect(dialogs.open).toHaveBeenCalledOnce();
-
-        pending.close?.({ id: 'cancel' });
-        await first;
-    });
-
-    it('returns null for cancellation and an unexpected null result', async () => {
-        const dialogs = createDialogApi();
-        const dialog = new ResizeDialog(dialogs, 'desktop');
-
-        await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
-        dialogs.open.mockResolvedValueOnce(null);
-        await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
-    });
-
-    it('reconfigures the existing handle after configuration fails', async () => {
-        const dialogs = createDialogApi();
-        dialogs.setButtons.mockRejectedValueOnce(new Error('buttons failed'));
-        const dialog = new ResizeDialog(dialogs, 'desktop');
-
-        await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('buttons failed');
-        await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
-
-        // Joplin throws when the same dialog id is created twice, so the retry has to
-        // reuse the handle from the first attempt.
-        expect(dialogs.create).toHaveBeenCalledOnce();
-        expect(dialogs.setButtons).toHaveBeenCalledTimes(2);
-        expect(dialogs.open).toHaveBeenCalledOnce();
-    });
-
-    it('does not create a second view after creation fails', async () => {
-        const dialogs = createDialogApi();
-        dialogs.create.mockRejectedValue(new Error('view creation failed'));
-        const dialog = new ResizeDialog(dialogs, 'desktop');
-
-        await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
-        await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
-
-        expect(dialogs.create).toHaveBeenCalledOnce();
-        expect(dialogs.open).not.toHaveBeenCalled();
-    });
-
-    it('releases the open guard after an open failure', async () => {
-        const dialogs = createDialogApi();
-        dialogs.open.mockRejectedValueOnce(new Error('dialog failed'));
-        const dialog = new ResizeDialog(dialogs, 'desktop');
-
-        await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('dialog failed');
-        await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
-
-        expect(dialogs.create).toHaveBeenCalledOnce();
-        expect(dialogs.open).toHaveBeenCalledTimes(2);
-    });
-
-    it('returns submitted form data', async () => {
-        const dialogs = createDialogApi();
-        dialogs.open.mockResolvedValue({
-            id: 'ok',
-            formData: {
-                resizeForm: {
-                    targetSyntax: 'html',
-                    altText: 'Updated alt',
-                    imageTitle: 'Updated title',
-                    resizeMode: 'absolute',
-                    percentage: '75',
-                    absoluteWidth: '300',
-                    absoluteHeight: '225',
-                },
-            },
-        });
-
-        await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
-            targetSyntax: 'html',
-            altText: 'Updated alt',
-            title: 'Updated title',
-            resizeMode: 'absolute',
-            percentage: 75,
-            absoluteWidth: 300,
-            absoluteHeight: 225,
-        });
-    });
-
-    it.each(['invalid form data', {}, { resizeForm: null }, { resizeForm: 'invalid form' }])(
-        'ignores malformed form data %j',
-        async (formData) => {
-            const dialogs = createDialogApi();
-            dialogs.open.mockResolvedValue({ id: 'ok', formData });
-
-            await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toBeNull();
-        }
+async function openDialog(
+    options: {
+        context?: Partial<ImageContext>;
+        defaults?: Partial<ResizeDialogDefaults>;
+        platform?: DialogPlatform;
+        onOpen?: (form: HTMLFormElement) => DialogResult | null | Promise<DialogResult | null>;
+    } = {}
+) {
+    const dialogs = createDialogApi(options.onOpen ?? ((form) => ({ id: 'ok', formData: serializeForm(form) })));
+    const dialog = new ResizeDialog(dialogs, options.platform ?? 'desktop');
+    const result = await dialog.open(
+        { ...dialogContext, ...options.context },
+        { ...dialogDefaults, ...options.defaults }
     );
+    return { result, form: document.querySelector('form')!, dialogs };
+}
 
-    it('falls back for malformed form field types', async () => {
-        const dialogs = createDialogApi();
-        dialogs.open.mockResolvedValue({
-            id: 'ok',
-            formData: {
-                resizeForm: {
-                    targetSyntax: 'invalid',
-                    altText: 123,
-                    imageTitle: 456,
-                    resizeMode: 'invalid',
-                    percentage: {},
-                    absoluteWidth: 300,
-                    absoluteHeight: [],
-                },
-            },
-        });
-
-        await expect(new ResizeDialog(dialogs, 'desktop').open(dialogContext, dialogDefaults)).resolves.toEqual({
-            targetSyntax: 'html',
-            altText: '',
-            title: '',
-            resizeMode: dialogDefaults.defaultResizeMode,
-            percentage: undefined,
-            absoluteWidth: undefined,
-            absoluteHeight: undefined,
-        });
-    });
+afterEach(() => {
+    document.body.replaceChildren();
 });
 
-describe('renderDialogHtml', () => {
-    it('shows the title field only when the image has a title', () => {
-        expect(renderDialogHtml(dialogContext, dialogDefaults, 'desktop')).not.toContain('imageTitle');
+describe('ResizeDialog', () => {
+    describe('rendered markup and initial state', () => {
+        it('renders HTML syntax with percentage mode enabled by default', async () => {
+            const { form } = await openDialog({ defaults: { defaultResizeMode: 'percentage' } });
 
-        const html = renderDialogHtml({ ...dialogContext, title: 'Say "hi"' }, dialogDefaults, 'desktop');
-        expect(html).toContain('<input type="text" id="imageTitle" name="imageTitle" value="Say &quot;hi&quot;">');
-        expect(html.indexOf('id="imageTitle"')).toBeGreaterThan(html.indexOf('id="altText"'));
+            expect(form.querySelector<HTMLInputElement>('input[name="targetSyntax"][value="html"]')?.checked).toBe(
+                true
+            );
+            expect(form.querySelector<HTMLInputElement>('input[name="targetSyntax"][value="markdown"]')?.checked).toBe(
+                false
+            );
+            expect(form.querySelector('[data-resize-section]')?.hasAttribute('inert')).toBe(false);
+            expect(form.querySelector('[data-resize-section]')?.classList).not.toContain('is-locked');
+
+            expect(form.querySelector<HTMLInputElement>('input[name="resizeMode"][value="percentage"]')?.checked).toBe(
+                true
+            );
+            expect(form.querySelector<HTMLInputElement>('input[name="resizeMode"][value="percentage"]')?.disabled).toBe(
+                false
+            );
+            expect(form.querySelector<HTMLInputElement>('input[name="resizeMode"][value="absolute"]')?.checked).toBe(
+                false
+            );
+            expect(field(form, 'percentage').disabled).toBe(false);
+            expect(field(form, 'absoluteWidth').disabled).toBe(true);
+            expect(field(form, 'absoluteHeight').disabled).toBe(true);
+            expect(form.querySelector('[data-percentage-row]')?.classList).not.toContain('is-disabled');
+            expect(form.querySelector('[data-absolute-group]')?.classList).toContain('is-disabled');
+            expect(document.querySelector('.original-size')?.textContent).toBe('400 × 300 px');
+        });
+
+        it('renders HTML syntax with absolute mode enabled when configured as default', async () => {
+            const { form } = await openDialog({ defaults: { defaultResizeMode: 'absolute' } });
+
+            expect(form.querySelector<HTMLInputElement>('input[name="resizeMode"][value="absolute"]')?.checked).toBe(
+                true
+            );
+            expect(field(form, 'percentage').disabled).toBe(true);
+            expect(field(form, 'absoluteWidth').disabled).toBe(false);
+            expect(field(form, 'absoluteHeight').disabled).toBe(false);
+            expect(form.querySelector('[data-percentage-row]')?.classList).toContain('is-disabled');
+            expect(form.querySelector('[data-absolute-group]')?.classList).not.toContain('is-disabled');
+            expect(form.querySelector('[data-height-row]')?.classList).not.toContain('is-disabled');
+        });
+
+        it('disables percentage mode, dims height, and shows Size unknown when dimensions are unknown', async () => {
+            const { form } = await openDialog({
+                context: { originalDimensionsDetermined: false },
+                defaults: { defaultResizeMode: 'percentage' },
+            });
+
+            expect(document.querySelector('.original-size')?.textContent).toBe('Size unknown');
+            expect(form.querySelector('[data-percentage-mode-row]')?.classList).toContain('is-disabled');
+            expect(form.querySelector<HTMLInputElement>('input[name="resizeMode"][value="percentage"]')?.disabled).toBe(
+                true
+            );
+            expect(form.querySelector<HTMLInputElement>('input[name="resizeMode"][value="absolute"]')?.checked).toBe(
+                true
+            );
+            expect(field(form, 'percentage').disabled).toBe(true);
+            expect(field(form, 'absoluteWidth').disabled).toBe(false);
+            expect(field(form, 'absoluteHeight').disabled).toBe(true);
+            expect(form.querySelector('[data-height-row]')?.classList).toContain('is-disabled');
+            expect(field(form, 'absoluteHeight').hasAttribute('placeholder')).toBe(false);
+        });
+
+        it('shows the title field only when the image has a title', async () => {
+            const withoutTitle = await openDialog();
+            expect(withoutTitle.form.elements.namedItem('imageTitle')).toBeNull();
+
+            const withTitle = await openDialog({ context: { title: 'Say "hi"' } });
+            const titleInput = field(withTitle.form, 'imageTitle');
+            expect(titleInput.value).toBe('Say "hi"');
+            expect(
+                field(withTitle.form, 'altText').compareDocumentPosition(titleInput) & Node.DOCUMENT_POSITION_FOLLOWING
+            ).not.toBe(0);
+        });
+
+        it('renders line breaks in alt text and title as spaces', async () => {
+            const { form } = await openDialog({
+                context: { altText: 'a\r\nb', title: 'c\nd\re' },
+            });
+
+            expect(field(form, 'altText').value).toBe('a b');
+            expect(field(form, 'imageTitle').value).toBe('c d e');
+        });
+
+        it('fixes the dialog width on desktop only', async () => {
+            await openDialog({ platform: 'desktop' });
+            expect(document.querySelector('style')?.textContent).toContain(desktopDialogCss);
+
+            await openDialog({ platform: 'mobile' });
+            expect(document.querySelector('style')?.textContent).not.toContain(desktopDialogCss);
+        });
     });
 
-    it('renders line breaks in alt text and title as spaces', () => {
-        const html = renderDialogHtml(
-            { ...dialogContext, altText: 'a\r\nb', title: 'c\nd\re' },
-            dialogDefaults,
-            'desktop'
+    describe('lifecycle and form submission', () => {
+        it('reuses one configured handle while rendering fresh content', async () => {
+            const dialogs = createDialogApi();
+            const dialog = new ResizeDialog(dialogs, 'desktop');
+
+            await dialog.open(dialogContext, dialogDefaults);
+            await dialog.open({ ...dialogContext, altText: 'Second image' }, dialogDefaults);
+
+            expect(dialogs.create).toHaveBeenCalledExactlyOnceWith('image-resize-dialog');
+            expect(dialogs.setFitToContent).toHaveBeenCalledOnce();
+            expect(dialogs.addScript).toHaveBeenCalledExactlyOnceWith('handle', './dialog/resizeDialog.js');
+            expect(dialogs.setButtons).toHaveBeenCalledOnce();
+            expect(dialogs.setHtml).toHaveBeenCalledTimes(2);
+            expect(field(document.querySelector('form')!, 'altText').value).toBe('Second image');
+            expect(dialogs.open).toHaveBeenCalledTimes(2);
+        });
+
+        it('silently ignores an overlapping open', async () => {
+            const pending: { close?: (result: DialogResult | null) => void } = {};
+            const dialogs = createDialogApi(
+                () =>
+                    new Promise((resolve) => {
+                        pending.close = resolve;
+                    })
+            );
+            const dialog = new ResizeDialog(dialogs, 'desktop');
+
+            const first = dialog.open(dialogContext, dialogDefaults);
+            await vi.waitFor(() => expect(dialogs.open).toHaveBeenCalledOnce());
+
+            await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
+            expect(dialogs.open).toHaveBeenCalledOnce();
+
+            pending.close?.({ id: 'cancel' });
+            await first;
+        });
+
+        it('returns null for cancellation and an unexpected null result', async () => {
+            const dialogs = createDialogApi();
+            const dialog = new ResizeDialog(dialogs, 'desktop');
+
+            await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
+            dialogs.open.mockResolvedValueOnce(null);
+            await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
+        });
+
+        it('reconfigures the existing handle after configuration fails', async () => {
+            const dialogs = createDialogApi();
+            dialogs.setButtons.mockRejectedValueOnce(new Error('buttons failed'));
+            const dialog = new ResizeDialog(dialogs, 'desktop');
+
+            await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('buttons failed');
+            await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
+
+            // Joplin throws when the same dialog id is created twice, so the retry has to
+            // reuse the handle from the first attempt.
+            expect(dialogs.create).toHaveBeenCalledOnce();
+            expect(dialogs.setButtons).toHaveBeenCalledTimes(2);
+            expect(dialogs.open).toHaveBeenCalledOnce();
+        });
+
+        it('does not create a second view after creation fails', async () => {
+            const dialogs = createDialogApi();
+            dialogs.create.mockRejectedValue(new Error('view creation failed'));
+            const dialog = new ResizeDialog(dialogs, 'desktop');
+
+            await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
+            await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('view creation failed');
+
+            expect(dialogs.create).toHaveBeenCalledOnce();
+            expect(dialogs.open).not.toHaveBeenCalled();
+        });
+
+        it('releases the open guard after an open failure', async () => {
+            const dialogs = createDialogApi();
+            dialogs.open.mockRejectedValueOnce(new Error('dialog failed'));
+            const dialog = new ResizeDialog(dialogs, 'desktop');
+
+            await expect(dialog.open(dialogContext, dialogDefaults)).rejects.toThrow('dialog failed');
+            await expect(dialog.open(dialogContext, dialogDefaults)).resolves.toBeNull();
+
+            expect(dialogs.create).toHaveBeenCalledOnce();
+            expect(dialogs.open).toHaveBeenCalledTimes(2);
+        });
+
+        it('round-trips submitted form data from the rendered dialog', async () => {
+            const { result } = await openDialog({
+                context: { title: 'Initial title' },
+                defaults: { defaultResizeMode: 'absolute' },
+                onOpen: (form) => {
+                    initializeResizeDialog();
+                    field(form, 'altText').value = 'Updated alt';
+                    field(form, 'imageTitle').value = 'Updated title';
+                    field(form, 'absoluteWidth').value = '300';
+                    field(form, 'absoluteWidth').dispatchEvent(new Event('input', { bubbles: true }));
+                    return { id: 'ok', formData: serializeForm(form) };
+                },
+            });
+
+            expect(result).toEqual({
+                targetSyntax: 'html',
+                altText: 'Updated alt',
+                title: 'Updated title',
+                resizeMode: 'absolute',
+                percentage: undefined,
+                absoluteWidth: 300,
+                absoluteHeight: 225,
+            });
+        });
+
+        it.each(['invalid form data', {}, { resizeForm: null }, { resizeForm: 'invalid form' }])(
+            'ignores malformed form data %j',
+            async (formData) => {
+                const { result } = await openDialog({ onOpen: () => ({ id: 'ok', formData }) });
+
+                expect(result).toBeNull();
+            }
         );
-        expect(html).toContain('id="altText" name="altText" value="a b"');
-        expect(html).toContain('id="imageTitle" name="imageTitle" value="c d e"');
-    });
 
-    it('fixes the dialog width on desktop only', () => {
-        expect(renderDialogHtml(dialogContext, dialogDefaults, 'desktop')).toContain(desktopDialogCss);
-        expect(renderDialogHtml(dialogContext, dialogDefaults, 'mobile')).not.toContain(desktopDialogCss);
+        it('falls back for malformed form field types', async () => {
+            const { result } = await openDialog({
+                onOpen: () => ({
+                    id: 'ok',
+                    formData: {
+                        resizeForm: {
+                            targetSyntax: 'invalid',
+                            altText: 123,
+                            imageTitle: 456,
+                            resizeMode: 'invalid',
+                            percentage: {},
+                            absoluteWidth: 300,
+                            absoluteHeight: [],
+                        },
+                    },
+                }),
+            });
+
+            expect(result).toEqual({
+                targetSyntax: 'html',
+                altText: '',
+                title: '',
+                resizeMode: dialogDefaults.defaultResizeMode,
+                percentage: undefined,
+                absoluteWidth: undefined,
+                absoluteHeight: undefined,
+            });
+        });
     });
 });
